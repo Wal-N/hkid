@@ -1,7 +1,6 @@
-package main.java;
+package hkid;
 
-import java.util.Arrays;
-import java.util.Random;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,10 +9,10 @@ import java.util.regex.Pattern;
  * This class allows for generating, validating, and formatting HKID numbers according to the official specifications.
  * It supports creating HKID numbers with specific or random values and offers methods to retrieve or modify components of an HKID number.
  * <p>
- * Methods of this class can throw custom exceptions {@link InvalidHKIDNumberFormatException} and {@link InvalidCheckDigitException}
+ * Methods of this class can throw custom exceptions {@link InvalidHkidNumFormatException} and {@link InvalidCheckDigitException}
  * to indicate problems with the provided HKID number format or check digit, respectively.
  */
-public class HKIDNumber {
+public class HkidNum {
     /**
      * The prefix of the HKID number, which can be one or two letters (A-Z).
      */
@@ -29,78 +28,88 @@ public class HKIDNumber {
      */
     private Character checkDigit;
 
-    private static final Random RANDOM = new Random();
+    private static final Pattern HKID_NUM_PATTERN = Pattern.compile("^([A-Z]{1,2})(\\d{6})(?:([\\dA])|\\(([\\dA])\\))?$");
 
 
     /**
-     * Constructs a new {@code HKIDNumber} instance by parsing the provided HKID number string.
+     * Constructs a new {@code HkidNum} instance by parsing the provided HKID number string.
      * The input string may include or exclude the check digit and parentheses around the check digit.
      *
-     * @param hkidNumberStr The HKID number string to parse. Acceptable formats include "X123456(A)", "XX123456A", or "X123456".
-     *                      The check digit and parentheses are optional.
-     * @throws InvalidHKIDNumberFormatException If the input string is null, empty, does not match expected patterns,
-     *                                          or contains characters that are not allowed.
-     * @throws InvalidCheckDigitException       If the provided check digit is incorrect.
+     * @param hkidNum The HKID number string to parse. Acceptable formats include "X123456(A)", "XX123456A", or "X123456".
+     *                The check digit and parentheses are optional.
+     * @throws InvalidHkidNumFormatException If the input string is null, empty, does not match expected patterns,
+     *                                    or contains characters that are not allowed.
+     * @throws InvalidCheckDigitException If the provided check digit is incorrect.
      */
-    public HKIDNumber(String hkidNumberStr) {
-        if (hkidNumberStr == null || hkidNumberStr.isEmpty()) {
-            throw new InvalidHKIDNumberFormatException("HKID number cannot be null or empty.");
+    public HkidNum(String hkidNum) {
+        if (hkidNum == null || hkidNum.isEmpty()) {
+            throw new InvalidHkidNumFormatException("HKID number cannot be null or empty.");
         }
-        hkidNumberStr = hkidNumberStr.toUpperCase();
+        hkidNum = hkidNum.trim().toUpperCase(Locale.ROOT);
 
         // Extract parts
-        Format format = Format.determine(hkidNumberStr);
-        Matcher matcher = Pattern.compile(format.regex).matcher(hkidNumberStr);
-        matcher.matches();
+        Matcher matcher = HKID_NUM_PATTERN.matcher(hkidNum);
+        if (matcher.matches()) {
+            // Set Prefix, Numerals and generate Check Digit
+            setPrefix(matcher.group(1));
+            setNumerals(matcher.group(2));
 
-        // Set Prefix, Numerals and generate Check Digit
-        setPrefix(matcher.group(1));
-        setNumerals(matcher.group(2));
-
-        // Check input Check Digit is correct (if any)
-        switch (format) {
-            case WithoutParentheses:
-            case Complete:
-                if (!matcher.group(3).equals(this.checkDigit.toString())) {
-                    throw new InvalidCheckDigitException("Invalid check digit for HKID number: " + hkidNumberStr);
-                }
-                break;
-            case WithoutCheckDigit:
-            default:
-                break;
+            // Check input Check Digit is correct (if any)
+            String inputCheckDigit = matcher.group(3) != null ? matcher.group(3) : (matcher.group(4) != null ? matcher.group(4) : null);
+            if (inputCheckDigit != null && !inputCheckDigit.equals(this.checkDigit.toString())) {
+                throw new InvalidCheckDigitException("Invalid check digit for HKID number: " + hkidNum);
+            }
+        } else {
+            throw new InvalidHkidNumFormatException("Invalid format for HKID number: " + hkidNum);
         }
     }
 
     /**
-     * Constructs a new {@code HKIDNumber} instance using the specified prefix and numerals.
+     * Constructs a new {@code HkidNum} instance using the specified prefix and numerals.
      * This constructor automatically calculates and assigns the check digit based on the provided prefix and numerals.
      * The generated instance will represent a complete HKID number including a valid check digit.
      *
-     * @param prefix   The prefix part of the HKID number. It should consist of one or two alphabetical characters.
+     * @param prefix The prefix part of the HKID number. It should consist of one or two alphabetical characters.
      * @param numerals The numerals part of the HKID number. It should consist of six digits.
-     * @throws InvalidHKIDNumberFormatException If either the prefix or numerals are null, empty, do not match expected patterns,
-     *                                          or contain characters that are not allowed.
-     * @throws InvalidCheckDigitException       If the calculation of the check digit fails due to invalid input parameters.
+     * @throws InvalidHkidNumFormatException If either the prefix or numerals are null, empty, do not match expected patterns,
+     *                                       or contain characters that are not allowed.
+     * @throws InvalidCheckDigitException If the calculation of the check digit fails due to invalid input parameters.
      */
-    HKIDNumber(String prefix, String numerals) {
+    public HkidNum(String prefix, String numerals) {
         this(prefix, numerals, null);
     }
 
     /**
-     * Constructs a new {@code HKIDNumber} instance using the specified prefix, numerals, and check digit.
+     * Constructs a new {@code HkidNum} instance using the specified prefix, numerals, and check digit.
      * This constructor allows for the explicit specification of the check digit, bypassing automatic calculation.
-     * It is useful for creating {@code HKIDNumber} instances that need to match existing HKID numbers exactly, including their check digits.
+     * It is useful for creating {@code HkidNum} instances that need to match existing HKID numbers exactly, including their check digits.
      *
-     * @param prefix     The prefix part of the HKID number. It should consist of one or two alphabetical characters.
-     * @param numerals   The numerals part of the HKID number. It should consist of six digits.
+     * @param prefix The prefix part of the HKID number. It should consist of one or two alphabetical characters.
+     * @param numerals The numerals part of the HKID number. It should consist of six digits.
      * @param checkDigit The check digit of the HKID number. It is a single alphabetical character or digit. This parameter is optional;
      *                   if null or empty, the check digit will be automatically calculated.
-     * @throws InvalidHKIDNumberFormatException If either the prefix or numerals are null, empty, do not match expected patterns,
-     *                                          or contain characters that are not allowed.
-     * @throws InvalidCheckDigitException       If the provided check digit is incorrect or if the calculation of the check digit fails due to invalid input parameters.
+     * @throws InvalidHkidNumFormatException If either the prefix or numerals are null, empty, do not match expected patterns,
+     *                                       or contain characters that are not allowed.
+     * @throws InvalidCheckDigitException If the provided check digit is incorrect or if the calculation of the check digit fails due to invalid input parameters.
      */
-    HKIDNumber(String prefix, String numerals, String checkDigit) {
+    public HkidNum(String prefix, String numerals, String checkDigit) {
         this((prefix != null ? prefix : "") + (numerals != null ? numerals : "") + (checkDigit != null ? checkDigit : ""));
+    }
+
+    public static boolean validateCheckDigit(String hkidNumWithoutCheckDigit, String checkDigit) {
+        if (hkidNumWithoutCheckDigit == null || checkDigit == null) {
+            return false;
+        }
+        if (!hkidNumWithoutCheckDigit.trim().matches("^[A-Za-z]{1,2}\\d{6}$")) {
+            return false;
+        }
+
+        try {
+            HkidNum hkidNum = new HkidNum(hkidNumWithoutCheckDigit);
+            return hkidNum.getCheckDigit().equals(checkDigit.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     /**
@@ -198,16 +207,17 @@ public class HKIDNumber {
      * The prefix must consist of one or two uppercase letters (A-Z). This method also recalculates the check digit.
      *
      * @param prefix The new prefix to set for the HKID number. Cannot be null.
-     * @throws InvalidHKIDNumberFormatException If the prefix is null, does not match the required format, or contains characters that are not allowed.
+     * @throws InvalidHkidNumFormatException If the prefix is null, does not match the required format, or contains characters that are not allowed.
      */
     public void setPrefix(String prefix) {
         if (prefix == null || prefix.isEmpty()) {
-            throw new InvalidHKIDNumberFormatException("Prefix of HKID Number cannot be null or empty.");
+            throw new InvalidHkidNumFormatException("Prefix of HKID Number cannot be null or empty.");
         }
+        prefix = prefix.toUpperCase(Locale.ROOT);
         if (!prefix.matches("^[A-Z]{1,2}$")) {
-            throw new InvalidHKIDNumberFormatException("Invalid prefix format: " + prefix);
+            throw new InvalidHkidNumFormatException("Invalid prefix format: " + prefix);
         }
-        this.prefix = prefix.toUpperCase();
+        this.prefix = prefix;
 
         // Recalculate Check Digit
         genCheckDigit();
@@ -228,14 +238,14 @@ public class HKIDNumber {
      * The numerals must consist of exactly six digits. This method also recalculates the check digit.
      *
      * @param numerals The new numerals to set for the HKID number. Cannot be null.
-     * @throws InvalidHKIDNumberFormatException If the numerals is null or do not match the required format.
+     * @throws InvalidHkidNumFormatException If the numerals is null or do not match the required format.
      */
     public void setNumerals(String numerals) {
         if (numerals == null || numerals.isEmpty()) {
-            throw new InvalidHKIDNumberFormatException("Numerals of HKID Number cannot be null or empty.");
+            throw new InvalidHkidNumFormatException("Numerals of HKID Number cannot be null or empty.");
         }
         if (!numerals.matches("^\\d{6}$")) {
-            throw new InvalidHKIDNumberFormatException("Numerals must be exactly 6 digits long.");
+            throw new InvalidHkidNumFormatException("Numerals must be exactly 6 digits long.");
         }
         this.numerals = numerals;
 
@@ -253,92 +263,21 @@ public class HKIDNumber {
         return checkDigit.toString();
     }
 
-    // Static methods
-
-    /**
-     * Generates a new {@code HKIDNumber} instance with a randomly generated HKID number, using only defined prefixes.
-     *
-     * @return An {@code HKIDNumber} instance with a randomly generated HKID number.
-     */
-    public static HKIDNumber genRandomHkidNumber() {
-        return genRandomHkidNumber(true);
-    }
-
-    /**
-     * Generates a new {@code HKIDNumber} instance with a randomly generated HKID number, optionally using only defined prefixes.
-     *
-     * @param onlyDefinedPrefix Specifies whether to use only predefined prefixes. If {@code true}, only defined prefixes are used.
-     *                          Otherwise, any valid prefix may be generated.
-     * @return An {@code HKIDNumber} instance with a randomly generated HKID number.
-     */
-    public static HKIDNumber genRandomHkidNumber(Boolean onlyDefinedPrefix) {
-        // Prepare Prefix
-        String prefix = "";
-        if (onlyDefinedPrefix == null || onlyDefinedPrefix) {
-            prefix = DefinedPrefix.values()[RANDOM.nextInt(DefinedPrefix.values().length)].name();
-        } else {
-            // Random number of prefix letters (1 or 2)
-            int prefixLength = 1 + RANDOM.nextInt(2);
-            for (int i = 0; i < prefixLength; i++) {
-                // Random "A"-"Z"
-                prefix += (char) (RANDOM.nextInt(26) + 65);
-            }
-        }
-
-        // Prepare Numerals ("000000" - "999999")
-        String numerals = String.format("%06d", RANDOM.nextInt(1000000));
-
-        return new HKIDNumber(prefix, numerals);
-    }
-
-    /**
-     * Validates the HKID number with the specified check digit.
-     *
-     * @param hkidNumberStr The HKID number to be validated, without the check digit.
-     * @param checkDigit The check digit to be validated against the HKID number.
-     * @return true if check digit and HKID Number format is valid; otherwise, false.
-     */
-    public static boolean validateCheckDigit(String hkidNumberStr, String checkDigit) {
-        try {
-            if (Format.determine(hkidNumberStr) == Format.WithoutCheckDigit) {
-                HKIDNumber hkidNumber = new HKIDNumber(hkidNumberStr);
-                return hkidNumber.getCheckDigit().equals(checkDigit);
-            }
-        } catch (InvalidHKIDNumberFormatException | InvalidCheckDigitException e) {
-        }
-        return false;
-    }
-
     // Enums
 
     /**
      * Enum defining the format options for string representation of HKID numbers.
      */
     public enum Format {
-        WithoutCheckDigit("%s%s", "^([A-Z]{1,2})(\\d{6})$"),            // X123456 or XX123456
-        WithoutParentheses("%s%s%c", "^([A-Z]{1,2})(\\d{6})([\\dA])$"),   // X123456A or XX123456A
-        Complete("%s%s(%c)", "^([A-Z]{1,2})(\\d{6})\\(([\\dA])\\)$");     // X123456(A) or XX123456(A)
+        WithoutCheckDigit("%s%s", "^[A-Z]{1,2}\\d{6}$"),            // X123456 or XX123456
+        WithoutParentheses("%s%s%c", "^[A-Z]{1,2}\\d{6}[\\dA]$"),   // X123456A or XX123456A
+        Complete("%s%s(%c)", "^[A-Z]{1,2}\\d{6}\\([\\dA]\\)$");     // X123456(A) or XX123456(A)
 
         private final String strFormat;
         private final String regex;
-
         Format(String strFormat, String regex) {
             this.strFormat = strFormat;
             this.regex = regex;
-        }
-
-        /**
-         * Static method to find the Format enum based on the string representation of an HKID number.
-         *
-         * @param hkidNumberStr The HKID number as a string.
-         * @return The corresponding Format enum.
-         * @throws InvalidHKIDNumberFormatException if the string does not match any defined format.
-         */
-        public static Format determine(String hkidNumberStr) {
-            return Arrays.stream(Format.values())
-                    .filter(format -> hkidNumberStr.matches(format.regex))
-                    .findFirst()
-                    .orElseThrow(() -> new InvalidHKIDNumberFormatException("Invalid format for HKID number: " + hkidNumberStr));
         }
     }
 
@@ -426,14 +365,14 @@ public class HKIDNumber {
      * This exception is used to signal validation errors specifically related to the format of the HKID number,
      * allowing calling code to catch and handle format-specific issues distinctly from other types of input errors.
      */
-    public static class InvalidHKIDNumberFormatException extends IllegalArgumentException {
+    public static class InvalidHkidNumFormatException extends IllegalArgumentException {
         /**
-         * Constructs an {@code InvalidHKIDNumberFormatException} with the specified detail message.
+         * Constructs an {@code InvalidHkidFormatException} with the specified detail message.
          * The message provides additional information about the invalid format encountered.
          *
          * @param message the detail message. The detail message is saved for later retrieval by the {@link Throwable#getMessage()} method.
          */
-        public InvalidHKIDNumberFormatException(String message) {
+        public InvalidHkidNumFormatException(String message) {
             super(message);
         }
     }
