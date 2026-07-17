@@ -6,47 +6,54 @@ import java.util.Locale;
  * Sex marker printed on an HKID card.
  */
 public enum Sex {
-    MALE("M", "Male"),
-    FEMALE("F", "Female");
+    MALE("男", "M"),
+    FEMALE("女", "F");
 
-    private final String code;
-    private final String description;
+    private final String chiMarker;
+    private final String engMarker;
 
-    Sex(String code, String description) {
-        this.code = code;
-        this.description = description;
+    Sex(String chiMarker, String engMarker) {
+        this.chiMarker = chiMarker;
+        this.engMarker = engMarker;
     }
 
-    public String getCode() {
-        return code;
+    public String getChiMarker() {
+        return chiMarker;
     }
 
-    public String getDescription() {
-        return description;
+    public String getEngMarker() {
+        return engMarker;
+    }
+
+    /**
+     * Returns the value as printed on the smart HKID card, for example "男 M".
+     */
+    public String getPrintedValue() {
+        return chiMarker + " " + engMarker;
     }
 
     /**
      * Parses the HKID card marker, accepting either upper or lower case text.
      */
-    public static Sex fromCode(String code) {
-        if (code == null) {
-            throw new IllegalArgumentException("Sex code cannot be null");
+    public static Sex fromEngMarker(String engMarker) {
+        if (engMarker == null) {
+            throw new IllegalArgumentException("English sex marker cannot be null");
         }
 
-        String normalizedCode = code.trim().toUpperCase(Locale.ROOT);
+        String normalizedMarker = engMarker.trim().toUpperCase(Locale.ROOT);
         for (Sex sex : values()) {
-            if (sex.code.equals(normalizedCode)) {
+            if (sex.engMarker.equals(normalizedMarker)) {
                 return sex;
             }
         }
-        throw new IllegalArgumentException("Sex code must be M or F");
+        throw new IllegalArgumentException("English sex marker must be M or F");
     }
 
     /**
-     * Keeps log and string output aligned with the printed card marker.
+     * Keeps human-readable output aligned with the value printed on the card.
      */
     @Override
     public String toString() {
-        return code;
+        return getPrintedValue();
     }
 }

@@ -46,33 +46,33 @@ class HkidNumTest {
 
     @Test
     void settersRecalculateCheckDigit() {
-        HkidNum hkid = new HkidNum("A123456(3)");
+        HkidNum hkidNum = new HkidNum("A123456(3)");
 
-        hkid.setPrefix("B");
-        assertEquals("B", hkid.getPrefix());
-        assertEquals("6", hkid.getCheckDigit());
+        hkidNum.setPrefix("B");
+        assertEquals("B", hkidNum.getPrefix());
+        assertEquals("6", hkidNum.getCheckDigit());
 
-        hkid.setNumerals("654321");
-        assertEquals("654321", hkid.getNumerals());
-        assertEquals("4", hkid.getCheckDigit());
+        hkidNum.setNumerals("654321");
+        assertEquals("654321", hkidNum.getNumerals());
+        assertEquals("4", hkidNum.getCheckDigit());
     }
 
     @Test
     void settersRejectInvalidValues() {
-        HkidNum hkid = new HkidNum("A123456(3)");
+        HkidNum hkidNum = new HkidNum("A123456(3)");
 
-        assertThrows(HkidNum.InvalidHkidNumFormatException.class, () -> hkid.setPrefix("1"));
-        assertThrows(HkidNum.InvalidHkidNumFormatException.class, () -> hkid.setNumerals("ABCDE"));
+        assertThrows(HkidNum.InvalidHkidNumFormatException.class, () -> hkidNum.setPrefix("1"));
+        assertThrows(HkidNum.InvalidHkidNumFormatException.class, () -> hkidNum.setNumerals("ABCDE"));
     }
 
     @Test
     void formatsOutput() {
-        HkidNum hkid = new HkidNum("A123456(3)");
+        HkidNum hkidNum = new HkidNum("A123456(3)");
 
-        assertEquals("A123456", hkid.toString());
-        assertEquals("A123456", hkid.toString(HkidNum.Format.WithoutCheckDigit));
-        assertEquals("A1234563", hkid.toString(HkidNum.Format.WithoutParentheses));
-        assertEquals("A123456(3)", hkid.toString(HkidNum.Format.Complete));
+        assertEquals("A123456", hkidNum.toString());
+        assertEquals("A123456", hkidNum.toString(HkidNum.Format.WithoutCheckDigit));
+        assertEquals("A1234563", hkidNum.toString(HkidNum.Format.WithoutParentheses));
+        assertEquals("A123456(3)", hkidNum.toString(HkidNum.Format.Complete));
     }
 
     @Test
@@ -87,9 +87,13 @@ class HkidNumTest {
 
     @Test
     void generatesRandomNumber() {
-        HkidNum hkid = HkidNumUtil.genRandomHkidNum();
+        HkidNum hkidNum = HkidNumUtil.genRandomHkidNum();
 
-        assertNotNull(hkid);
-        assertDoesNotThrow(() -> new HkidNum(hkid.toString(HkidNum.Format.Complete)));
+        assertNotNull(hkidNum);
+        assertDoesNotThrow(() -> new HkidNum(hkidNum.toString(HkidNum.Format.Complete)));
+
+        System.out.println("HKID Number: " + hkidNum);
+        System.out.println("HKID Number (Without Parentheses): " + hkidNum.toString(HkidNum.Format.WithoutParentheses));
+        System.out.println("HKID Number (Complete): " + hkidNum.toString(HkidNum.Format.Complete));
     }
 }

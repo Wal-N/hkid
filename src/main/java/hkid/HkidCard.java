@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -12,29 +11,32 @@ import java.util.Optional;
 /**
  * Represents the data printed on a Hong Kong Identity Card.
  */
-public class HKID {
+public class HkidCard {
+    static final LocalDate CURRENT_SMART_HKID_START_DATE = LocalDate.of(2018, 11, 26);
+
     private HkidNum hkidNum;
     private ChiName chiName;
     private EngName engName;
     private Sex sex;
     private LocalDate dateOfBirth;
-    private List<DefinedSymbol> symbols = new ArrayList<>();
-    private YearMonth dateOfIssue;
+    private HkidSymbols symbols = HkidSymbols.empty();
+    private YearMonth firstRegistrationYearMonth;
     private LocalDate dateOfRegistration;
 
     private static final DateTimeFormatter DOB_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-    private static final DateTimeFormatter DOI_FORMATTER = DateTimeFormatter.ofPattern("MM-yy");
+    private static final DateTimeFormatter FIRST_REGISTRATION_YEAR_MONTH_FORMATTER =
+            DateTimeFormatter.ofPattern("MM-yy");
     private static final DateTimeFormatter DOR_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yy");
 
     /**
-     * Constructs an HKID instance.
+     * Constructs an HkidCard instance.
      */
-    public HKID() {
+    public HkidCard() {
     }
 
     @Override
     public String toString() {
-        return String.format("%s[hkidNum=%s, chiName=%s, engName=%s, chiCommercialCode=%s, sex=%s, dateOfBirth=%s, symbols=%s, dateOfIssue=%s, dateOfRegistration=%s]",
+        return String.format("%s[hkidNum=%s, chiName=%s, engName=%s, chiCommercialCode=%s, sex=%s, dateOfBirth=%s, symbols=%s, firstRegistrationYearMonth=%s, dateOfRegistration=%s]",
                 getClass().getSimpleName(),
                 getHkidNumStr(HkidNum.Format.Complete),
                 getChiName(),
@@ -43,7 +45,7 @@ public class HKID {
                 getSex(),
                 getDateOfBirthStr(),
                 getSymbols(),
-                getDateOfIssueStr(),
+                getFirstRegistrationYearMonthStr(),
                 getDateOfRegistrationStr());
     }
 
@@ -74,15 +76,11 @@ public class HKID {
      * personal name, or commercial codes are needed separately.
      */
     public String getChiName() {
-        return getChiFullName();
+        return chiName != null ? chiName.getFullName() : null;
     }
 
     public ChiName getChiNameInfo() {
         return chiName;
-    }
-
-    public String getChiFullName() {
-        return chiName != null ? chiName.getFullName() : null;
     }
 
     public void setChiName(ChiName chiName) {
@@ -118,15 +116,11 @@ public class HKID {
      * and personal name are needed separately.
      */
     public String getEngName() {
-        return getEngFullName();
+        return engName != null ? engName.getFullName() : null;
     }
 
     public EngName getEngNameInfo() {
         return engName;
-    }
-
-    public String getEngFullName() {
-        return engName != null ? engName.getFullName() : null;
     }
 
     public void setEngName(EngName engName) {
@@ -153,11 +147,19 @@ public class HKID {
         return sex;
     }
 
+    public String getSexChiMarker() {
+        return sex != null ? sex.getChiMarker() : null;
+    }
+
+    public String getSexEngMarker() {
+        return sex != null ? sex.getEngMarker() : null;
+    }
+
     /**
-     * Returns the HKID card sex marker, currently "M" or "F".
+     * Returns the sex value as printed on the smart HKID card, for example "男 M".
      */
-    public String getSexCode() {
-        return sex != null ? sex.getCode() : null;
+    public String getSexPrintedValue() {
+        return sex != null ? sex.getPrintedValue() : null;
     }
 
     public void setSex(Sex sex) {
@@ -165,10 +167,10 @@ public class HKID {
     }
 
     /**
-     * Convenience setter for parser/OCR input where the card value is read as text.
+     * Convenience setter for parser/OCR input containing the English marker.
      */
-    public void setSexCode(String sexCode) {
-        this.sex = sexCode != null ? Sex.fromCode(sexCode) : null;
+    public void setSexEngMarker(String sexEngMarker) {
+        this.sex = sexEngMarker != null ? Sex.fromEngMarker(sexEngMarker) : null;
     }
 
     public LocalDate getDateOfBirth() {
@@ -186,54 +188,64 @@ public class HKID {
         if (dateOfBirth != null && dateOfRegistration != null && dateOfRegistration.isBefore(dateOfBirth)) {
             throw new IllegalArgumentException("Date of registration cannot be before date of birth");
         }
+        if (dateOfBirth != null && firstRegistrationYearMonth != null
+                && firstRegistrationYearMonth.isBefore(YearMonth.from(dateOfBirth))) {
+            throw new IllegalArgumentException("First registration month cannot be before date of birth");
+        }
+        if (dateOfBirth != null) {
+            symbols.validateAge(dateOfBirth, LocalDate.now());
+        }
         this.dateOfBirth = dateOfBirth;
     }
 
     /**
-     * HKID cards can display multiple symbols, for example "***AZ".
+     * Returns the validated symbols printed on the current smart HKID card.
      */
-    public List<DefinedSymbol> getSymbols() {
-        return Collections.unmodifiableList(symbols);
+    public HkidSymbols getSymbols() {
+        return symbols;
     }
 
-    public void setSymbols(List<DefinedSymbol> symbols) {
-        this.symbols = symbols == null
-                ? new ArrayList<DefinedSymbol>()
-                : new ArrayList<DefinedSymbol>(symbols);
+    public String getSymbolCodes() {
+        return symbols.toString();
     }
 
-    public void addSymbol(DefinedSymbol symbol) {
-        if (symbol != null) {
-            symbols.add(symbol);
+    public void setSymbols(HkidSymbols symbols) {
+        if (symbols == null) {
+            throw new IllegalArgumentException("HKID symbols cannot be null");
         }
-    }
-
-    public DefinedSymbol getSymbol() {
-        return symbols.isEmpty() ? null : symbols.get(0);
-    }
-
-    public void setSymbol(DefinedSymbol symbol) {
-        symbols.clear();
-        addSymbol(symbol);
-    }
-
-    public YearMonth getDateOfIssue() {
-        return dateOfIssue;
-    }
-
-    public String getDateOfIssueStr() {
-        return dateOfIssue != null ? dateOfIssue.format(DOI_FORMATTER) : null;
-    }
-
-    public void setDateOfIssue(YearMonth dateOfIssue) {
-        if (dateOfIssue != null && dateOfIssue.isAfter(YearMonth.now())) {
-            throw new IllegalArgumentException("Date of issue cannot be in the future");
+        if (dateOfBirth != null) {
+            symbols.validateAge(dateOfBirth, LocalDate.now());
         }
-        if (dateOfIssue != null && dateOfRegistration != null
-                && dateOfIssue.isBefore(YearMonth.from(dateOfRegistration))) {
-            throw new IllegalArgumentException("Date of issue cannot be before date of registration");
+        this.symbols = symbols;
+    }
+
+    public void setSymbolCodes(String symbolCodes) {
+        setSymbols(HkidSymbols.parse(symbolCodes));
+    }
+
+    public YearMonth getFirstRegistrationYearMonth() {
+        return firstRegistrationYearMonth;
+    }
+
+    public String getFirstRegistrationYearMonthStr() {
+        return firstRegistrationYearMonth != null
+                ? firstRegistrationYearMonth.format(FIRST_REGISTRATION_YEAR_MONTH_FORMATTER)
+                : null;
+    }
+
+    public void setFirstRegistrationYearMonth(YearMonth firstRegistrationYearMonth) {
+        if (firstRegistrationYearMonth != null && firstRegistrationYearMonth.isAfter(YearMonth.now())) {
+            throw new IllegalArgumentException("First registration month cannot be in the future");
         }
-        this.dateOfIssue = dateOfIssue;
+        if (firstRegistrationYearMonth != null && dateOfBirth != null
+                && firstRegistrationYearMonth.isBefore(YearMonth.from(dateOfBirth))) {
+            throw new IllegalArgumentException("First registration month cannot be before date of birth");
+        }
+        if (firstRegistrationYearMonth != null && dateOfRegistration != null
+                && firstRegistrationYearMonth.isAfter(YearMonth.from(dateOfRegistration))) {
+            throw new IllegalArgumentException("First registration month cannot be after date of registration");
+        }
+        this.firstRegistrationYearMonth = firstRegistrationYearMonth;
     }
 
     public LocalDate getDateOfRegistration() {
@@ -248,12 +260,16 @@ public class HKID {
         if (dateOfRegistration != null && dateOfRegistration.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Date of registration cannot be in the future");
         }
+        if (dateOfRegistration != null && dateOfRegistration.isBefore(CURRENT_SMART_HKID_START_DATE)) {
+            throw new IllegalArgumentException(
+                    "Current smart HKID registration date cannot be before 26-11-2018");
+        }
         if (dateOfRegistration != null && dateOfBirth != null && dateOfRegistration.isBefore(dateOfBirth)) {
             throw new IllegalArgumentException("Date of registration cannot be before date of birth");
         }
-        if (dateOfRegistration != null && dateOfIssue != null
-                && dateOfIssue.isBefore(YearMonth.from(dateOfRegistration))) {
-            throw new IllegalArgumentException("Date of issue cannot be before date of registration");
+        if (dateOfRegistration != null && firstRegistrationYearMonth != null
+                && firstRegistrationYearMonth.isAfter(YearMonth.from(dateOfRegistration))) {
+            throw new IllegalArgumentException("Date of registration cannot be before first registration month");
         }
         this.dateOfRegistration = dateOfRegistration;
     }

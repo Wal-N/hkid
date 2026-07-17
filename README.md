@@ -9,14 +9,20 @@ card, including names, sex marker, card symbols, and registration dates.
 - `hkid.HkidNum` represents an HKID number with a one- or two-letter prefix,
   six numerals, and a calculated check digit.
 - `hkid.HkidNumUtil` generates random HKID numbers.
-- `hkid.HKID` represents the data printed on an HKID card.
-- `hkid.HKIDUtil` generates sample `HKID` objects and random dates.
+- `hkid.HkidCard` represents the data printed on an HKID card.
+- `hkid.HkidCardUtil` generates sample `HkidCard` objects and random dates.
+- `hkid.HkidNameUtil` generates Chinese names with matching commercial codes
+  and Hong Kong Government Cantonese romanised English names.
+- `hkid.GeneratedName` contains the generated `ChiName`, `EngName`,
+  commercial codes, and romanisation syllables.
 - `hkid.ChiName` and `hkid.ChiNameUtil` validate Chinese names and four-digit
   commercial codes.
 - `hkid.EngName` and `hkid.EngNameUtil` validate English names.
-- `hkid.Sex` represents the printed sex marker, currently `M` or `F`.
-- `hkid.DefinedSymbol` lists supported HKID card symbols such as `***`, `A`,
-  `Z`, and related markers.
+- `hkid.Sex` represents the Chinese and English sex markers printed on the
+  smart HKID, forming the complete value `男 M` or `女 F`.
+- `hkid.HkidSymbol` defines the symbols supported by the current smart HKID.
+- `hkid.HkidSymbols` parses, orders, and validates complete symbol strings such
+  as `***AZ`.
 
 ## Requirements
 
@@ -31,19 +37,25 @@ Run the full JUnit 5 test suite:
 mvn test
 ```
 
+In IntelliJ IDEA, import `pom.xml` as a Maven project so that
+`src/main/resources` is included on the runtime classpath. If the project is
+opened as a plain Java module, mark `src/main/resources` as **Resources Root**.
+
 Build the jar without rerunning tests:
 
 ```powershell
 mvn -DskipTests package
 ```
 
-If Maven is not installed, you can still compile and run the sample class from
+If Maven is not installed, you can still compile the main classes from
 PowerShell:
 
 ```powershell
 javac -encoding UTF-8 -d out (Get-ChildItem src\main\java -Recurse -Filter *.java | ForEach-Object { $_.FullName })
-java -cp out hkid.HkidTest
 ```
+
+`HkidCardTest` is a JUnit integration test under `src/test/java` and is not included
+in the published jar.
 
 ## HKID Number Usage
 
@@ -129,9 +141,50 @@ public class Example {
 By default, random numbers use one of the predefined prefixes in
 `HkidNum.DefinedPrefix`. Pass `false` to allow any one- or two-letter prefix.
 
+## Random Names
+
+`HkidNameUtil` generates a Chinese name, matching Chinese Commercial Codes, and
+an English name using Hong Kong Government Cantonese Romanisation.
+The no-argument `genRandomName()` has a 10% chance of generating a one-character
+personal name and a 90% chance of generating a two-character personal name.
+
+```java
+package hkid;
+
+public class Example {
+    public static void main(String[] args) {
+        GeneratedName oneCharName = HkidNameUtil.genRandomName(1);
+        GeneratedName twoCharName = HkidNameUtil.genRandomName(2);
+
+        System.out.println(oneCharName.getChiFullName());
+        System.out.println(oneCharName.getCommercialCodes());
+        System.out.println(oneCharName.getRomanisation());
+        System.out.println(oneCharName.getEngFullName());
+
+        System.out.println(twoCharName.getChiFullName());
+        System.out.println(twoCharName.getCommercialCodes());
+        System.out.println(twoCharName.getRomanisation());
+        System.out.println(twoCharName.getEngFullName());
+    }
+}
+```
+
+Seed data lives in `src/main/resources/hkid/chinese-name-seed.csv`. It is a
+small starter database, not a complete Chinese name database. The columns are:
+
+```text
+commercialCode,character,romanisation,commonSurname,weight
+```
+
+Rows with `commonSurname=true` are used as surname seeds; rows with
+`commonSurname=false` are used as personal-name seeds. `weight` biases random
+selection within each group. Each seed row stores one canonical romanisation
+because Hong Kong Government Cantonese Romanisation can have multiple accepted
+spellings for the same character.
+
 ## Complete HKID Card Data
 
-Use `HKID` when you need to model more than the card number:
+Use `HkidCard` when you need to model more than the card number:
 
 ```java
 package hkid;
@@ -142,21 +195,25 @@ import java.util.Arrays;
 
 public class Example {
     public static void main(String[] args) {
-        HKID card = new HKID();
+        HkidCard card = new HkidCard();
         card.setHkidNum(new HkidNum("A123456(3)"));
-        card.setChiName(new ChiName("\u9673", "\u5927\u6587",
-                Arrays.asList("1234", "5678", "9999")));
+        card.setChiName(new ChiName("陳", "大文",
+                Arrays.asList("7115", "1129", "2429")));
         card.setEngName(new EngName("Chan", "Tai Man"));
         card.setSex(Sex.MALE);
         card.setDateOfBirth(LocalDate.of(1990, 1, 15));
-        card.setSymbols(Arrays.asList(DefinedSymbol.ThreeStars, DefinedSymbol.A));
-        card.setDateOfRegistration(LocalDate.of(2005, 6, 1));
-        card.setDateOfIssue(YearMonth.of(2005, 6));
+        card.setSymbols(HkidSymbols.of(
+                HkidSymbol.ADULT_RE_ENTRY_PERMIT,
+                HkidSymbol.RIGHT_OF_ABODE,
+                HkidSymbol.BORN_IN_HONG_KONG));
+        card.setFirstRegistrationYearMonth(YearMonth.of(2001, 6));
+        card.setDateOfRegistration(LocalDate.of(2020, 6, 1));
 
         System.out.println(card.getHkidNumStr(HkidNum.Format.Complete));
         System.out.println(card.getChiName());
         System.out.println(card.getEngName());
-        System.out.println(card.getSexCode());
+        System.out.println(card.getSexEngMarker());
+        System.out.println(card.getSexPrintedValue());
         System.out.println(card.getAge().orElse(null));
     }
 }
@@ -169,12 +226,46 @@ package hkid;
 
 public class Example {
     public static void main(String[] args) {
-        HKID card = HKIDUtil.genRandomHkid();
+        HkidCard card = HkidCardUtil.genRandomCard();
 
         System.out.println(card);
         System.out.println(card.getHkidNumStr(HkidNum.Format.Complete));
     }
 }
+```
+
+Generated cards use a random `M` or `F` sex marker and an age from 11 to 100.
+The current-card registration date is no earlier than 26 November 2018 and is
+within the latest ten years. The month and year of first registration is between
+the holder's 11th birthday and the current-card registration date. The generated
+age symbol is `*` for ages 11-17 and `***` for ages 18 or above.
+
+## Current Smart HKID Symbols
+
+Only symbols used by the current smart HKID are supported. Parse a complete
+symbol string directly from card or OCR input. Definitions follow the
+[Immigration Department ROP133](https://www.immd.gov.hk/pdforms/rop133.pdf).
+
+```java
+HkidSymbols symbols = HkidSymbols.parse("***AZBN");
+
+System.out.println(symbols); // ***AZBN
+System.out.println(symbols.asList());
+```
+
+The parser accepts symbol letters without regard to case, returns symbols in
+the official category order, and rejects duplicate, conflicting, unknown, or
+legacy symbols. The re-entry permit, residential status, and reported place of
+birth categories allow at most one symbol each. `B` and `N` may appear together.
+
+An `HkidCard` can also read or set the complete printed value:
+
+```java
+HkidCard card = new HkidCard();
+card.setDateOfBirth(LocalDate.of(1990, 1, 15));
+card.setSymbolCodes("***AZ");
+
+System.out.println(card.getSymbolCodes()); // ***AZ
 ```
 
 ## Validation Rules
@@ -188,13 +279,16 @@ public class Example {
   maximum length of six characters.
 - Chinese commercial codes must be four digits each. When a Chinese name is set,
   the number of commercial codes must match the number of Chinese characters.
+- Generated names keep the Chinese name, commercial codes, and romanisation
+  syllables aligned character-by-character.
 - English name parts must start with a letter and may contain letters, spaces,
   dots, apostrophes, or hyphens.
-- Sex codes are parsed with `Sex.fromCode("M")` or `Sex.fromCode("F")`.
-- HKID card dates reject future values and inconsistent birth, registration,
-  and issue ordering.
-
-## Known Limitations
-
-Some Traditional Chinese description strings in the enum reference data are
-currently not corrected in this codebase. They are left unchanged here.
+- English sex markers are parsed with `Sex.fromEngMarker("M")` or
+  `Sex.fromEngMarker("F")`;
+  `Sex.getPrintedValue()` returns the corresponding `男 M` or `女 F` card value.
+- Current smart HKID symbols reject duplicate or conflicting categories, and
+  `*` or `***` must match the holder's age.
+- The month and year of first registration cannot be before the holder's birth
+  month or after the current-card registration date.
+- Current smart HKID registration dates cannot be before 26 November 2018, and
+  all card dates reject future or inconsistent values.

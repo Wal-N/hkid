@@ -7,7 +7,6 @@ import java.time.YearMonth;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -35,54 +34,83 @@ class NameAndCardTest {
 
     @Test
     void hkidReturnsEmptyCommercialCodeListWhenChineseNameIsMissing() {
-        HKID hkid = new HKID();
+        HkidCard hkid = new HkidCard();
 
         assertTrue(hkid.getChiCommercialCode().isEmpty());
     }
 
     @Test
-    void hkidProtectsSymbolListFromExternalMutation() {
-        HKID hkid = new HKID();
-        hkid.setSymbols(Arrays.asList(DefinedSymbol.ThreeStars, DefinedSymbol.A));
+    void hkidReadsAndSetsSymbolCodes() {
+        HkidCard hkid = new HkidCard();
+        HkidSymbols symbols = HkidSymbols.of(
+                HkidSymbol.ADULT_RE_ENTRY_PERMIT,
+                HkidSymbol.RIGHT_OF_ABODE,
+                HkidSymbol.BORN_IN_HONG_KONG);
+        hkid.setSymbols(symbols);
 
-        assertThrows(UnsupportedOperationException.class, () -> hkid.getSymbols().add(DefinedSymbol.Z));
-        assertEquals(Arrays.asList(DefinedSymbol.ThreeStars, DefinedSymbol.A), hkid.getSymbols());
+        assertEquals(symbols, hkid.getSymbols());
+        assertEquals("***AZ", hkid.getSymbolCodes());
     }
 
     @Test
     void hkidValidatesDateOrder() {
-        HKID hkid = new HKID();
+        HkidCard hkid = new HkidCard();
         hkid.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        hkid.setDateOfRegistration(LocalDate.of(2005, 6, 1));
-        hkid.setDateOfIssue(YearMonth.of(2005, 6));
+        hkid.setFirstRegistrationYearMonth(YearMonth.of(2001, 6));
+        hkid.setDateOfRegistration(LocalDate.of(2020, 6, 1));
 
+        assertEquals("06-01", hkid.getFirstRegistrationYearMonthStr());
         assertThrows(IllegalArgumentException.class, () -> hkid.setDateOfBirth(LocalDate.now().plusDays(1)));
-        assertThrows(IllegalArgumentException.class, () -> hkid.setDateOfRegistration(LocalDate.of(1989, 12, 31)));
-        assertThrows(IllegalArgumentException.class, () -> hkid.setDateOfIssue(YearMonth.of(2005, 5)));
+        assertThrows(IllegalArgumentException.class,
+                () -> hkid.setDateOfRegistration(HkidCard.CURRENT_SMART_HKID_START_DATE.minusDays(1)));
+        assertThrows(IllegalArgumentException.class,
+                () -> hkid.setFirstRegistrationYearMonth(YearMonth.of(1989, 12)));
+        assertThrows(IllegalArgumentException.class,
+                () -> hkid.setFirstRegistrationYearMonth(YearMonth.of(2020, 7)));
+        assertThrows(IllegalArgumentException.class,
+                () -> hkid.setDateOfBirth(LocalDate.of(2002, 1, 1)));
+
+        hkid.setFirstRegistrationYearMonth(YearMonth.of(2020, 6));
+        assertThrows(IllegalArgumentException.class,
+                () -> hkid.setDateOfRegistration(LocalDate.of(2020, 5, 31)));
     }
 
     @Test
-    void sexParsesCaseInsensitiveCode() {
-        assertEquals(Sex.MALE, Sex.fromCode("m"));
-        assertEquals("F", Sex.FEMALE.toString());
-        assertThrows(IllegalArgumentException.class, () -> Sex.fromCode("X"));
+    void sexParsesCaseInsensitiveEnglishMarker() {
+        assertEquals(Sex.MALE, Sex.fromEngMarker("m"));
+        assertEquals("男", Sex.MALE.getChiMarker());
+        assertEquals("M", Sex.MALE.getEngMarker());
+        assertEquals("男 M", Sex.MALE.getPrintedValue());
+        assertEquals("女 F", Sex.FEMALE.toString());
+        assertThrows(IllegalArgumentException.class, () -> Sex.fromEngMarker("X"));
     }
 
     @Test
-    void definedSymbolExposesPrintedValue() {
-        assertEquals("***", DefinedSymbol.ThreeStars.getStr());
-        assertEquals("***", DefinedSymbol.ThreeStars.toString());
-        assertFalse(DefinedSymbol.A.getDescription().isEmpty());
-    }
+    void hkidExposesSexMarkersAndPrintedValueSeparately() {
+        HkidCard hkid = new HkidCard();
+        hkid.setSex(Sex.FEMALE);
 
-    @Test
-    void generatedHkidContainsExpectedSampleData() {
-        HKID hkid = HKIDUtil.genRandomHkid();
+        assertEquals("女", hkid.getSexChiMarker());
+        assertEquals("F", hkid.getSexEngMarker());
+        assertEquals("女 F", hkid.getSexPrintedValue());
 
-        assertEquals("陳大文", hkid.getChiName());
-        assertEquals("Chan, Tai Man", hkid.getEngName());
+        hkid.setSexEngMarker("m");
         assertEquals(Sex.MALE, hkid.getSex());
-        assertEquals(Arrays.asList("1234", "5678", "9999"), hkid.getChiCommercialCode());
-        assertEquals(Arrays.asList(DefinedSymbol.ThreeStars, DefinedSymbol.A, DefinedSymbol.Z), hkid.getSymbols());
+    }
+
+    @Test
+    void hkidValidatesEligibilitySymbolAgainstAge() {
+        LocalDate today = LocalDate.now();
+
+        HkidCard minor = new HkidCard();
+        minor.setDateOfBirth(today.minusYears(17));
+        minor.setSymbolCodes("*AZ");
+        assertThrows(IllegalArgumentException.class, () -> minor.setSymbolCodes("***AZ"));
+
+        HkidCard adult = new HkidCard();
+        adult.setSymbolCodes("***AZ");
+        adult.setDateOfBirth(today.minusYears(18));
+        assertThrows(IllegalArgumentException.class, () -> adult.setDateOfBirth(today.minusYears(17)));
+        assertThrows(IllegalArgumentException.class, () -> adult.setSymbolCodes("*AZ"));
     }
 }
