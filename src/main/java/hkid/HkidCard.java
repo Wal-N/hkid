@@ -61,7 +61,7 @@ public class HkidCard {
     }
 
     public String getHkidNumMaskedStr() {
-        return HkidNumUtil.maskHkidNum(hkidNum);
+        return hkidNum != null ? hkidNum.getHMaskedStr() : null;
     }
 
     public void setHkidNum(HkidNum hkidNum) {

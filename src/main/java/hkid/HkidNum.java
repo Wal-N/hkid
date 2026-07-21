@@ -198,6 +198,15 @@ public class HkidNum {
     }
 
     /**
+     * Returns a string representation of the masked HKID number, leaving only the last three numerals visible.
+     *
+     * @return the masked HKID number, or {@code null} when {@code hkidNum} is null
+     */
+    public String getHMaskedStr() {
+        return HkidNumUtil.maskHkidNum(this);
+    }
+
+    /**
      * Provides a descriptive text for the prefix of the HKID number based on predefined categories.
      *
      * @return A description of the prefix, or a fallback message when the prefix has no predefined category.
