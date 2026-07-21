@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -87,6 +88,13 @@ class HkidNumTest {
         assertEquals("A123456", hkidNum.toString(HkidNum.Format.WithoutCheckDigit));
         assertEquals("A1234563", hkidNum.toString(HkidNum.Format.WithoutParentheses));
         assertEquals("A123456(3)", hkidNum.toString(HkidNum.Format.Complete));
+    }
+
+    @Test
+    void masksAllButLastThreeNumerals() {
+        assertEquals("****456(*)", HkidNumUtil.maskHkidNum(new HkidNum("A123456(3)")));
+        assertEquals("*****456(*)", HkidNumUtil.maskHkidNum(new HkidNum("WX123456")));
+        assertNull(HkidNumUtil.maskHkidNum(null));
     }
 
     @Test

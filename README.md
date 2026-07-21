@@ -228,12 +228,7 @@ public class Example {
         card.setFirstRegistrationYearMonth(YearMonth.of(2001, 6));
         card.setDateOfRegistration(LocalDate.of(2020, 6, 1));
 
-        System.out.println(card.getHkidNumStr(HkidNum.Format.Complete));
-        System.out.println(card.getChiName());
-        System.out.println(card.getEngName());
-        System.out.println(card.getSexEngMarker());
-        System.out.println(card.getSexPrintedValue());
-        System.out.println(card.getAge().orElse(null));
+        System.out.println(card);
     }
 }
 ```
@@ -248,9 +243,15 @@ public class Example {
         HkidCard card = HkidCardUtil.genRandomCard();
 
         System.out.println(card);
-        System.out.println(card.getHkidNumStr(HkidNum.Format.Complete));
     }
 }
+```
+
+`HkidCard.toString()` only includes the masked HKID number and date of
+registration, for example:
+
+```text
+HkidCard[hkidNum=****456(*), dateOfRegistration=01-06-20]
 ```
 
 Generated cards use a random `M` or `F` sex marker and an age from 11 to 100.

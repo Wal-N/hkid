@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Utility methods for generating HKID numbers.
+ * Utility methods for working with HKID numbers.
  */
 public final class HkidNumUtil {
     private HkidNumUtil() {
@@ -24,6 +24,21 @@ public final class HkidNumUtil {
      */
     public static HkidNum genRandomHkidNum(boolean onlyDefinedPrefix) {
         return genRandomHkidNum(onlyDefinedPrefix, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Masks an HKID number, leaving only the last three numerals visible.
+     * The prefix, first three numerals, and check digit are replaced by asterisks.
+     *
+     * @param hkidNum HKID number to mask
+     * @return the masked HKID number, or {@code null} when {@code hkidNum} is null
+     */
+    public static String maskHkidNum(HkidNum hkidNum) {
+        if (hkidNum == null) {
+            return null;
+        }
+        String prefixAndLeadingNumeralsMask = hkidNum.getPrefix().length() == 2 ? "*****" : "****";
+        return prefixAndLeadingNumeralsMask + hkidNum.getNumerals().substring(3) + "(*)";
     }
 
     static HkidNum genRandomHkidNum(Random random, HkidNum.DefinedPrefix... allowedPrefixes) {

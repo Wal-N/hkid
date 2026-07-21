@@ -59,6 +59,18 @@ class HkidCardTest {
     }
 
     @Test
+    void toStringOnlyShowsMaskedHkidNumberAndDateOfRegistration() {
+        HkidCard card = new HkidCard();
+        card.setHkidNum(new HkidNum("A123456(3)"));
+        card.setDateOfRegistration(LocalDate.of(2020, 6, 1));
+
+        String value = card.toString();
+
+        assertEquals("HkidCard[hkidNum=****456(*), dateOfRegistration=01-06-20]", value);
+        assertFalse(value.contains(card.getHkidNumStr(HkidNum.Format.Complete)));
+    }
+
+    @Test
     void generatedPrefixMatchesHongKongBirthRegistrationPeriod() {
         for (int seed = 0; seed < 500; seed++) {
             HkidCard card = HkidCardUtil.genRandomCard(new Random(seed), TODAY);

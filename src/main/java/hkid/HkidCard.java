@@ -36,16 +36,9 @@ public class HkidCard {
 
     @Override
     public String toString() {
-        return String.format("%s[hkidNum=%s, chiName=%s, engName=%s, chiCommercialCode=%s, sex=%s, dateOfBirth=%s, symbols=%s, firstRegistrationYearMonth=%s, dateOfRegistration=%s]",
+        return String.format("%s[hkidNum=%s, dateOfRegistration=%s]",
                 getClass().getSimpleName(),
-                getHkidNumStr(HkidNum.Format.Complete),
-                getChiName(),
-                getEngName(),
-                getChiCommercialCode(),
-                getSex(),
-                getDateOfBirthStr(),
-                getSymbols(),
-                getFirstRegistrationYearMonthStr(),
+                getHkidNumMaskedStr(),
                 getDateOfRegistrationStr());
     }
 
@@ -65,6 +58,10 @@ public class HkidCard {
 
     public String getHkidNumStr(HkidNum.Format format) {
         return hkidNum != null ? hkidNum.toString(format) : null;
+    }
+
+    public String getHkidNumMaskedStr() {
+        return HkidNumUtil.maskHkidNum(hkidNum);
     }
 
     public void setHkidNum(HkidNum hkidNum) {
