@@ -66,6 +66,7 @@ class HkidCardTest {
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
                 .isAfter(YearMonth.from(hkidCard.getDateOfRegistration())));
         assertEquals(hkidCard.getChiName().length(), hkidCard.getChiCommercialCode().size());
+        hkidCard.validateAsOf(TODAY);
     }
 
     private static final class BoundaryRandom extends Random {

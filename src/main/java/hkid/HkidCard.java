@@ -192,9 +192,7 @@ public class HkidCard {
                 && firstRegistrationYearMonth.isBefore(YearMonth.from(dateOfBirth))) {
             throw new IllegalArgumentException("First registration month cannot be before date of birth");
         }
-        if (dateOfBirth != null) {
-            symbols.validateAge(dateOfBirth, LocalDate.now());
-        }
+        validatePrintedAge(dateOfBirth, symbols, dateOfRegistration);
         this.dateOfBirth = dateOfBirth;
     }
 
@@ -213,9 +211,7 @@ public class HkidCard {
         if (symbols == null) {
             throw new IllegalArgumentException("HKID symbols cannot be null");
         }
-        if (dateOfBirth != null) {
-            symbols.validateAge(dateOfBirth, LocalDate.now());
-        }
+        validatePrintedAge(dateOfBirth, symbols, dateOfRegistration);
         this.symbols = symbols;
     }
 
@@ -271,7 +267,42 @@ public class HkidCard {
                 && firstRegistrationYearMonth.isAfter(YearMonth.from(dateOfRegistration))) {
             throw new IllegalArgumentException("Date of registration cannot be before first registration month");
         }
+        validatePrintedAge(dateOfBirth, symbols, dateOfRegistration);
         this.dateOfRegistration = dateOfRegistration;
+    }
+
+    /**
+     * Validates the card's dated fields and age-dependent symbols as of the
+     * supplied date. Card-face consistency is always checked against the date of
+     * registration; this method is intended for checking a historical card at a
+     * later (or earlier) point in time.
+     *
+     * @param referenceDate date on which the card is being checked
+     */
+    public void validateAsOf(LocalDate referenceDate) {
+        if (referenceDate == null) {
+            throw new IllegalArgumentException("Reference date cannot be null");
+        }
+        if (dateOfBirth != null && dateOfBirth.isAfter(referenceDate)) {
+            throw new IllegalArgumentException("Date of birth cannot be after the reference date");
+        }
+        if (dateOfRegistration != null && dateOfRegistration.isAfter(referenceDate)) {
+            throw new IllegalArgumentException("Date of registration cannot be after the reference date");
+        }
+        if (firstRegistrationYearMonth != null
+                && firstRegistrationYearMonth.isAfter(YearMonth.from(referenceDate))) {
+            throw new IllegalArgumentException("First registration month cannot be after the reference date");
+        }
+        if (dateOfBirth != null) {
+            symbols.validateAge(dateOfBirth, referenceDate);
+        }
+    }
+
+    private static void validatePrintedAge(
+            LocalDate dateOfBirth, HkidSymbols symbols, LocalDate dateOfRegistration) {
+        if (dateOfBirth != null && dateOfRegistration != null) {
+            symbols.validateAge(dateOfBirth, dateOfRegistration);
+        }
     }
 
     private ChiName ensureChiName() {

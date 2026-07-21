@@ -35,9 +35,12 @@ public final class HkidCardUtil {
         }
 
         LocalDate dateOfBirth = generateRandomDateOfBirth(random, today);
+        HkidSymbol ageSymbol = generateAgeSymbol(dateOfBirth, today);
+        int minimumRegistrationAge = ageSymbol == HkidSymbol.ADULT_RE_ENTRY_PERMIT ? 18 : MIN_AGE;
         LocalDate earliestRegistrationDate = laterDate(
                 today.minusYears(RECENT_CARD_YEARS), HkidCard.CURRENT_SMART_HKID_START_DATE);
-        earliestRegistrationDate = laterDate(earliestRegistrationDate, dateOfBirth.plusYears(MIN_AGE));
+        earliestRegistrationDate = laterDate(
+                earliestRegistrationDate, dateOfBirth.plusYears(minimumRegistrationAge));
         LocalDate dateOfRegistration = generateRandomDateInRangeInclusive(
                 earliestRegistrationDate, today, random);
         YearMonth firstRegistrationYearMonth = generateRandomYearMonthInRangeInclusive(
@@ -54,7 +57,7 @@ public final class HkidCardUtil {
         card.setSex(generateRandomSex(random));
         card.setDateOfBirth(dateOfBirth);
         card.setSymbols(HkidSymbols.of(
-                generateAgeSymbol(dateOfBirth, today),
+                ageSymbol,
                 HkidSymbol.RIGHT_OF_ABODE,
                 HkidSymbol.BORN_IN_HONG_KONG));
         card.setDateOfRegistration(dateOfRegistration);

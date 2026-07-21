@@ -99,18 +99,38 @@ class NameAndCardTest {
     }
 
     @Test
-    void hkidValidatesEligibilitySymbolAgainstAge() {
-        LocalDate today = LocalDate.now();
+    void hkidValidatesEligibilitySymbolAgainstAgeAtRegistration() {
+        HkidCard impossibleAdultCard = new HkidCard();
+        impossibleAdultCard.setDateOfBirth(LocalDate.of(2008, 1, 1));
+        impossibleAdultCard.setSymbolCodes("***AZ");
 
-        HkidCard minor = new HkidCard();
-        minor.setDateOfBirth(today.minusYears(17));
-        minor.setSymbolCodes("*AZ");
-        assertThrows(IllegalArgumentException.class, () -> minor.setSymbolCodes("***AZ"));
+        assertThrows(IllegalArgumentException.class,
+                () -> impossibleAdultCard.setDateOfRegistration(LocalDate.of(2020, 6, 1)));
 
-        HkidCard adult = new HkidCard();
-        adult.setSymbolCodes("***AZ");
-        adult.setDateOfBirth(today.minusYears(18));
-        assertThrows(IllegalArgumentException.class, () -> adult.setDateOfBirth(today.minusYears(17)));
-        assertThrows(IllegalArgumentException.class, () -> adult.setSymbolCodes("*AZ"));
+        HkidCard impossibleAdultCardLoadedInAnotherOrder = new HkidCard();
+        impossibleAdultCardLoadedInAnotherOrder.setDateOfRegistration(LocalDate.of(2020, 6, 1));
+        impossibleAdultCardLoadedInAnotherOrder.setSymbolCodes("***AZ");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> impossibleAdultCardLoadedInAnotherOrder.setDateOfBirth(LocalDate.of(2008, 1, 1)));
+
+        HkidCard impossibleMinorCard = new HkidCard();
+        impossibleMinorCard.setDateOfRegistration(LocalDate.of(2020, 6, 1));
+        impossibleMinorCard.setDateOfBirth(LocalDate.of(1990, 1, 1));
+
+        assertThrows(IllegalArgumentException.class, () -> impossibleMinorCard.setSymbolCodes("*AZ"));
     }
+
+    @Test
+    void hkidCanLoadHistoricalJuvenileCardAndValidateItAsOfAnotherDate() {
+        HkidCard card = new HkidCard();
+        card.setDateOfBirth(LocalDate.of(2008, 1, 1));
+        card.setSymbolCodes("*AZ");
+        card.setDateOfRegistration(LocalDate.of(2020, 6, 1));
+
+        card.validateAsOf(LocalDate.of(2025, 12, 31));
+        assertThrows(IllegalArgumentException.class,
+                () -> card.validateAsOf(LocalDate.of(2026, 1, 1)));
+    }
+
 }

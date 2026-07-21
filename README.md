@@ -286,8 +286,11 @@ System.out.println(card.getSymbolCodes()); // ***AZ
 - English sex markers are parsed with `Sex.fromEngMarker("M")` or
   `Sex.fromEngMarker("F")`;
   `Sex.getPrintedValue()` returns the corresponding `男 M` or `女 F` card value.
-- Current smart HKID symbols reject duplicate or conflicting categories, and
-  `*` or `***` must match the holder's age.
+- Current smart HKID symbols reject duplicate or conflicting categories. `*` or
+  `***` must match the holder's age on the current-card registration date, so a
+  historical juvenile card can still be represented after its holder turns 18.
+- Use `validateAsOf(date)` to check the dated fields and age symbol at another
+  point in time.
 - The month and year of first registration cannot be before the holder's birth
   month or after the current-card registration date.
 - Current smart HKID registration dates cannot be before 26 November 2018, and
