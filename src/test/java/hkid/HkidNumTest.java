@@ -17,6 +17,8 @@ class HkidNumTest {
         assertEquals("C123456(9)", new HkidNum("C1234569").toString(HkidNum.Format.Complete));
         assertEquals("DE123456(2)", new HkidNum("DE1234562").toString(HkidNum.Format.Complete));
         assertEquals("Z999999(0)", new HkidNum("Z999999(0)").toString(HkidNum.Format.Complete));
+        assertEquals("A123456(3)", new HkidNum("A", "123456").toString(HkidNum.Format.Complete));
+        assertEquals("A123456(3)", new HkidNum("A", "123456", "3").toString(HkidNum.Format.Complete));
     }
 
     @Test
@@ -42,6 +44,15 @@ class HkidNumTest {
     void constructorRejectsInvalidCheckDigits() {
         assertThrows(HkidNum.InvalidCheckDigitException.class, () -> new HkidNum("A123456(7)"));
         assertThrows(HkidNum.InvalidCheckDigitException.class, () -> new HkidNum("AB123456(0)"));
+        assertThrows(HkidNum.InvalidCheckDigitException.class, () -> new HkidNum("A", "123456", "7"));
+    }
+
+    @Test
+    void splitConstructorValidatesEachParameterIndependently() {
+        assertThrows(HkidNum.InvalidHkidNumFormatException.class, () -> new HkidNum(null, "A123456"));
+        assertThrows(HkidNum.InvalidHkidNumFormatException.class, () -> new HkidNum("A1", "23456"));
+        assertThrows(HkidNum.InvalidHkidNumFormatException.class, () -> new HkidNum("A", "1234563"));
+        assertThrows(HkidNum.InvalidHkidNumFormatException.class, () -> new HkidNum("A", "123456", "33"));
     }
 
     @Test

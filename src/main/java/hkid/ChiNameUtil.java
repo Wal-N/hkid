@@ -11,7 +11,7 @@ public final class ChiNameUtil {
      * HKID cards reserve up to six printed Chinese characters for the Chinese name.
      */
     public static final int MAX_NAME_LENGTH = 6;
-    private static final Pattern CHINESE_TEXT_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]+");
+    private static final Pattern TEXT_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]+");
     private static final Pattern COMMERCIAL_CODE_PATTERN = Pattern.compile("\\d{4}");
 
     private ChiNameUtil() {
@@ -19,7 +19,7 @@ public final class ChiNameUtil {
     }
 
     public static boolean isChinese(String value) {
-        return value != null && CHINESE_TEXT_PATTERN.matcher(value).matches();
+        return value != null && TEXT_PATTERN.matcher(value).matches();
     }
 
     public static boolean isValidCommercialCode(String code) {

@@ -25,7 +25,7 @@ public class EngName {
         if (personalName == null) {
             return surname;
         }
-        return surname + ", " + personalName;
+        return String.format(EngNameUtil.FORMAT, surname, personalName);
     }
 
     public String getSurname() {

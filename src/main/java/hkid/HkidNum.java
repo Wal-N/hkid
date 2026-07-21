@@ -81,19 +81,33 @@ public class HkidNum {
 
     /**
      * Constructs a new {@code HkidNum} instance using the specified prefix, numerals, and check digit.
-     * This constructor allows for the explicit specification of the check digit, bypassing automatic calculation.
+     * This constructor allows for the explicit specification of the check digit and verifies it against the calculated value.
      * It is useful for creating {@code HkidNum} instances that need to match existing HKID numbers exactly, including their check digits.
      *
      * @param prefix The prefix part of the HKID number. It should consist of one or two alphabetical characters.
      * @param numerals The numerals part of the HKID number. It should consist of six digits.
-     * @param checkDigit The check digit of the HKID number. It is a single alphabetical character or digit. This parameter is optional;
+     * @param checkDigit The check digit of the HKID number. It is a single digit or the letter 'A'. This parameter is optional;
      *                   if null or empty, the check digit will be automatically calculated.
      * @throws InvalidHkidNumFormatException If either the prefix or numerals are null, empty, do not match expected patterns,
      *                                       or contain characters that are not allowed.
      * @throws InvalidCheckDigitException If the provided check digit is incorrect or if the calculation of the check digit fails due to invalid input parameters.
      */
     public HkidNum(String prefix, String numerals, String checkDigit) {
-        this((prefix != null ? prefix : "") + (numerals != null ? numerals : "") + (checkDigit != null ? checkDigit : ""));
+        setPrefix(prefix);
+        setNumerals(numerals);
+
+        if (checkDigit == null || checkDigit.isEmpty()) {
+            return;
+        }
+
+        String normalizedCheckDigit = checkDigit.toUpperCase(Locale.ROOT);
+        if (!normalizedCheckDigit.matches("^[\\dA]$")) {
+            throw new InvalidHkidNumFormatException("Invalid check digit format: " + checkDigit);
+        }
+        if (!normalizedCheckDigit.equals(this.checkDigit.toString())) {
+            throw new InvalidCheckDigitException(
+                    "Invalid check digit for HKID number: " + this.prefix + this.numerals + checkDigit);
+        }
     }
 
     public static boolean validateCheckDigit(String hkidNumWithoutCheckDigit, String checkDigit) {
