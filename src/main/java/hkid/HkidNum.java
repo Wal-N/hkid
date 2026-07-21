@@ -1,6 +1,7 @@
 package hkid;
 
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -198,10 +199,33 @@ public class HkidNum {
     /**
      * Provides a descriptive text for the prefix of the HKID number based on predefined categories.
      *
-     * @return A description of the prefix, indicating the category of the HKID holder.
+     * @return A description of the prefix, or a fallback message when the prefix has no predefined category.
      */
     public String getPrefixDescription() {
-        return DefinedPrefix.valueOf(prefix.toUpperCase()).description;
+        return getDefinedPrefix()
+                .map(DefinedPrefix::getDescription)
+                .orElse(String.format("No predefined description is available for prefix %s.", prefix));
+    }
+
+    /**
+     * Provides a Traditional Chinese description for the prefix of the HKID number.
+     *
+     * @return A Traditional Chinese description of the prefix, or a fallback message when the prefix has no
+     *         predefined category.
+     */
+    public String getPrefixTraditionalChineseDescription() {
+        return getDefinedPrefix()
+                .map(DefinedPrefix::getTraditionalChineseDescription)
+                .orElse(String.format("字頭 %s 沒有預定義說明。", prefix));
+    }
+
+    /**
+     * Returns the predefined metadata for this prefix, if any.
+     *
+     * @return The matching predefined prefix, or an empty optional for a valid but undefined prefix.
+     */
+    public Optional<DefinedPrefix> getDefinedPrefix() {
+        return DefinedPrefix.fromPrefix(prefix);
     }
 
     // Getters and Setters
@@ -229,7 +253,7 @@ public class HkidNum {
         }
         prefix = prefix.toUpperCase(Locale.ROOT);
         if (!prefix.matches("^[A-Z]{1,2}$")) {
-            throw new InvalidHkidNumFormatException("Invalid prefix format: " + prefix);
+            throw new InvalidHkidNumFormatException(String.format("Invalid prefix format: %s", prefix));
         }
         this.prefix = prefix;
 
@@ -366,6 +390,34 @@ public class HkidNum {
         DefinedPrefix(String description, String tcDescription) {
             this.description = description;
             this.tcDescription = tcDescription;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getTraditionalChineseDescription() {
+            return tcDescription;
+        }
+
+        /**
+         * Looks up predefined metadata for a prefix.
+         *
+         * @param prefix A one- or two-letter HKID prefix.
+         * @return The matching predefined prefix, or an empty optional when no metadata is defined.
+         */
+        public static Optional<DefinedPrefix> fromPrefix(String prefix) {
+            if (prefix == null) {
+                return Optional.empty();
+            }
+
+            String normalizedPrefix = prefix.trim().toUpperCase(Locale.ROOT);
+            for (DefinedPrefix definedPrefix : values()) {
+                if (definedPrefix.name().equals(normalizedPrefix)) {
+                    return Optional.of(definedPrefix);
+                }
+            }
+            return Optional.empty();
         }
     }
 

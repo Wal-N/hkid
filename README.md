@@ -141,6 +141,25 @@ public class Example {
 By default, random numbers use one of the predefined prefixes in
 `HkidNum.DefinedPrefix`. Pass `false` to allow any one- or two-letter prefix.
 
+## Prefix Descriptions
+
+`getPrefixDescription()` and `getPrefixTraditionalChineseDescription()` are safe
+for every valid one- or two-letter prefix. They return a fallback message when a
+prefix has no predefined metadata. Use `getDefinedPrefix()` when callers need to
+distinguish that case explicitly:
+
+```java
+HkidNum hkidNum = new HkidNum("Q123456");
+
+String english = hkidNum.getPrefixDescription();
+String traditionalChinese = hkidNum.getPrefixTraditionalChineseDescription();
+Optional<HkidNum.DefinedPrefix> metadata = hkidNum.getDefinedPrefix();
+```
+
+The enum also exposes `getDescription()`,
+`getTraditionalChineseDescription()`, and the case-insensitive
+`DefinedPrefix.fromPrefix(String)` lookup.
+
 ## Random Names
 
 `HkidNameUtil` generates a Chinese name, matching Chinese Commercial Codes, and

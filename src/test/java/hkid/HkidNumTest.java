@@ -99,6 +99,41 @@ class HkidNumTest {
     }
 
     @Test
+    void exposesDefinedPrefixDescriptionsInBothLanguages() {
+        HkidNum hkidNum = new HkidNum("A123456");
+
+        assertEquals(HkidNum.DefinedPrefix.A, hkidNum.getDefinedPrefix().orElse(null));
+        assertEquals(HkidNum.DefinedPrefix.A.getDescription(), hkidNum.getPrefixDescription());
+        assertEquals(HkidNum.DefinedPrefix.A.getTraditionalChineseDescription(),
+                hkidNum.getPrefixTraditionalChineseDescription());
+    }
+
+    @Test
+    void usesDescriptionFallbacksForValidUndefinedPrefixes() {
+        HkidNum hkidNum = new HkidNum("Q123456");
+
+        assertFalse(hkidNum.getDefinedPrefix().isPresent());
+        assertEquals("No predefined description is available for prefix Q.", hkidNum.getPrefixDescription());
+        assertEquals("字頭 Q 沒有預定義說明。", hkidNum.getPrefixTraditionalChineseDescription());
+    }
+
+    @Test
+    void everyValidPrefixSupportsDescriptionAccess() {
+        for (char first = 'A'; first <= 'Z'; first++) {
+            assertDescriptionAccessDoesNotThrow(String.valueOf(first));
+            for (char second = 'A'; second <= 'Z'; second++) {
+                assertDescriptionAccessDoesNotThrow(new String(new char[]{first, second}));
+            }
+        }
+    }
+
+    private void assertDescriptionAccessDoesNotThrow(String prefix) {
+        HkidNum hkidNum = new HkidNum(prefix, "123456");
+        assertDoesNotThrow(hkidNum::getPrefixDescription);
+        assertDoesNotThrow(hkidNum::getPrefixTraditionalChineseDescription);
+    }
+
+    @Test
     void generatesRandomNumber() {
         HkidNum hkidNum = HkidNumUtil.genRandomHkidNum();
 
