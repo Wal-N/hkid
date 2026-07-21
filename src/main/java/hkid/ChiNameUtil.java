@@ -11,15 +11,21 @@ public final class ChiNameUtil {
      * HKID cards reserve up to six printed Chinese characters for the Chinese name.
      */
     public static final int MAX_NAME_LENGTH = 6;
-    private static final Pattern TEXT_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]+");
     private static final Pattern COMMERCIAL_CODE_PATTERN = Pattern.compile("\\d{4}");
 
     private ChiNameUtil() {
         throw new AssertionError("ChiNameUtil cannot be instantiated");
     }
 
+    /**
+     * Returns whether the value consists only of Unicode Han-script code points.
+     * This deliberately supports the wider Unicode Han repertoire, including HKSCS
+     * and supplementary-plane ideographs, instead of a fixed basic-CJK range.
+     */
     public static boolean isChinese(String value) {
-        return value != null && TEXT_PATTERN.matcher(value).matches();
+        return value != null
+                && !value.isEmpty()
+                && value.codePoints().allMatch(ChiNameUtil::isHanCharacter);
     }
 
     public static boolean isValidCommercialCode(String code) {
@@ -64,7 +70,11 @@ public final class ChiNameUtil {
         }
     }
 
-    private static int lengthOf(String value) {
-        return value != null ? value.length() : 0;
+    static int lengthOf(String value) {
+        return value != null ? value.codePointCount(0, value.length()) : 0;
+    }
+
+    private static boolean isHanCharacter(int codePoint) {
+        return Character.UnicodeScript.of(codePoint) == Character.UnicodeScript.HAN;
     }
 }

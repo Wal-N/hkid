@@ -2,6 +2,8 @@ package hkid;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Locale;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -106,5 +108,19 @@ class HkidNumTest {
         System.out.println("HKID Number: " + hkidNum);
         System.out.println("HKID Number (Without Parentheses): " + hkidNum.toString(HkidNum.Format.WithoutParentheses));
         System.out.println("HKID Number (Complete): " + hkidNum.toString(HkidNum.Format.Complete));
+    }
+
+    @Test
+    void generatesAsciiNumeralsRegardlessOfDefaultLocale() {
+        Locale originalFormatLocale = Locale.getDefault(Locale.Category.FORMAT);
+        try {
+            Locale.setDefault(Locale.Category.FORMAT, Locale.forLanguageTag("hi-IN-u-nu-deva"));
+
+            HkidNum hkidNum = HkidNumUtil.genRandomHkidNum();
+
+            assertTrue(hkidNum.getNumerals().matches("[0-9]{6}"));
+        } finally {
+            Locale.setDefault(Locale.Category.FORMAT, originalFormatLocale);
+        }
     }
 }

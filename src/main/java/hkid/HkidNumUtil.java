@@ -1,5 +1,6 @@
 package hkid;
 
+import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -36,7 +37,7 @@ public final class HkidNumUtil {
             prefix = builder.toString();
         }
 
-        String numerals = String.format("%06d", random.nextInt(1_000_000));
+        String numerals = String.format(Locale.ROOT, "%06d", random.nextInt(1_000_000));
         return new HkidNum(prefix, numerals);
     }
 }

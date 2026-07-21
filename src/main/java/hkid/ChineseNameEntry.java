@@ -18,7 +18,7 @@ public final class ChineseNameEntry {
         if (!ChiNameUtil.isValidCommercialCode(commercialCode)) {
             throw new IllegalArgumentException("Commercial code must be four digits");
         }
-        if (character == null || character.length() != 1 || !ChiNameUtil.isChinese(character)) {
+        if (character == null || ChiNameUtil.lengthOf(character) != 1 || !ChiNameUtil.isChinese(character)) {
             throw new IllegalArgumentException("Name seed character must be one Chinese character");
         }
         if (romanisation == null || !romanisation.trim().matches("[A-Za-z]+")) {
