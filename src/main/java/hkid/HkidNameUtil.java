@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
@@ -24,11 +25,23 @@ public final class HkidNameUtil {
     }
 
     public static GeneratedName genRandomName() {
-        int roll = ThreadLocalRandom.current().nextInt(100);
-        return genRandomName(personalNameLengthForRoll(roll));
+        return genRandomName(ThreadLocalRandom.current());
     }
 
     public static GeneratedName genRandomName(int personalNameLength) {
+        return genRandomName(personalNameLength, ThreadLocalRandom.current());
+    }
+
+    static GeneratedName genRandomName(Random random) {
+        if (random == null) {
+            throw new IllegalArgumentException("Random generator cannot be null");
+        }
+
+        int roll = random.nextInt(100);
+        return genRandomName(personalNameLengthForRoll(roll), random);
+    }
+
+    private static GeneratedName genRandomName(int personalNameLength, Random random) {
         validatePersonalNameLength(personalNameLength);
 
         List<ChineseNameEntry> surnameEntries = filter(DEFAULT_ENTRIES, ChineseNameEntry::isCommonSurname);
@@ -41,11 +54,11 @@ public final class HkidNameUtil {
             throw new IllegalStateException("Not enough given name seed entries are available");
         }
 
-        ChineseNameEntry surname = weightedRandom(surnameEntries);
+        ChineseNameEntry surname = weightedRandom(surnameEntries, random);
         List<ChineseNameEntry> personalNameEntries = new ArrayList<>();
         List<ChineseNameEntry> remainingGivenNameEntries = new ArrayList<>(givenNameEntries);
         for (int i = 0; i < personalNameLength; i++) {
-            ChineseNameEntry entry = weightedRandom(remainingGivenNameEntries);
+            ChineseNameEntry entry = weightedRandom(remainingGivenNameEntries, random);
             personalNameEntries.add(entry);
             remainingGivenNameEntries.remove(entry);
         }
@@ -126,13 +139,13 @@ public final class HkidNameUtil {
         return new GeneratedName(chiName, engName, romanisation);
     }
 
-    private static ChineseNameEntry weightedRandom(List<ChineseNameEntry> entries) {
+    private static ChineseNameEntry weightedRandom(List<ChineseNameEntry> entries, Random random) {
         int totalWeight = 0;
         for (ChineseNameEntry entry : entries) {
             totalWeight += entry.getWeight();
         }
 
-        int selectedWeight = ThreadLocalRandom.current().nextInt(totalWeight);
+        int selectedWeight = random.nextInt(totalWeight);
         for (ChineseNameEntry entry : entries) {
             selectedWeight -= entry.getWeight();
             if (selectedWeight < 0) {

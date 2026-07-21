@@ -2,6 +2,7 @@ package hkid;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -106,6 +107,27 @@ class HkidNumTest {
         assertEquals(HkidNum.DefinedPrefix.A.getDescription(), hkidNum.getPrefixDescription());
         assertEquals(HkidNum.DefinedPrefix.A.getTraditionalChineseDescription(),
                 hkidNum.getPrefixTraditionalChineseDescription());
+    }
+
+    @Test
+    void findsHongKongBirthPrefixAtExactDateBoundaries() {
+        assertFalse(HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(1979, 12, 31)).isPresent());
+        assertEquals(HkidNum.DefinedPrefix.Z,
+                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(1980, 1, 1)).orElse(null));
+        assertEquals(HkidNum.DefinedPrefix.Z,
+                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(1988, 12, 31)).orElse(null));
+        assertEquals(HkidNum.DefinedPrefix.Y,
+                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(1989, 1, 1)).orElse(null));
+        assertEquals(HkidNum.DefinedPrefix.Y,
+                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2005, 3, 31)).orElse(null));
+        assertEquals(HkidNum.DefinedPrefix.S,
+                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2005, 4, 1)).orElse(null));
+        assertEquals(HkidNum.DefinedPrefix.S,
+                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2019, 5, 31)).orElse(null));
+        assertEquals(HkidNum.DefinedPrefix.N,
+                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2019, 6, 1)).orElse(null));
+        assertEquals(HkidNum.DefinedPrefix.N,
+                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2030, 1, 1)).orElse(null));
     }
 
     @Test

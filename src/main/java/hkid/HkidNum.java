@@ -1,5 +1,6 @@
 package hkid;
 
+import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -349,13 +350,15 @@ public class HkidNum {
         M("First issue of ID card between 1 August 2011 and 23 February 2020",
                 "2011年8月1日至2020年2月23日首次獲簽發身份證的人士，如小童申請人多於2000年起在香港以外出生。"),
         N("Birth registered in Hong Kong after 1 June 2019",
-                "2019年6月1日起於香港登記出生的人士。"),
+                "2019年6月1日起於香港登記出生的人士。",
+                LocalDate.of(2019, 6, 1), null),
         P("First issue of an ID card between 1 August 1990 and 27 December 2000, if a child most born between July and December 1979",
                 "1990年8月1日至2000年12月27日首次獲簽發身份證的人士，如小童申請人多於1979年7月至12月在香港出生，或1980年代在香港以外出生。"),
         R("First issue of an ID card between 28 December 2000 and 31 July 2011",
                 "2000年12月28日至2011年7月31日首次獲簽發身份證的人士，以香港以外出生者為主。"),
         S("Birth registered in Hong Kong between 1 April 2005 and 31 May 2019",
-                "2005年4月1日至2019年5月31日於香港登記出生的人士。"),
+                "2005年4月1日至2019年5月31日於香港登記出生的人士。",
+                LocalDate.of(2005, 4, 1), LocalDate.of(2019, 6, 1)),
         T("Issued between 1983 and 1997, used when computer system malfunctioned",
                 "1983-1997年間簽發，電腦系統故障時使用的備用號碼。1997年7月1日起停用。"),
         V("Child under 11 issued with a \"Document of Identity for Visa Purposes\" between 28 March 1983 and 31 August 2003",
@@ -363,9 +366,11 @@ public class HkidNum {
         W("First issue to a foreign labourer or foreign domestic helper between 10 November 1989 and 1 January 2009",
                 "1989年11月10日至2009年1月1日首次獲簽發身份證的外籍勞工及外籍家庭傭工。"),
         Y("Birth registered in Hong Kong between 1 January 1989 and 31 March 2005",
-                "1989年1月1日至2005年3月31日於香港登記出生的人士。"),
+                "1989年1月1日至2005年3月31日於香港登記出生的人士。",
+                LocalDate.of(1989, 1, 1), LocalDate.of(2005, 4, 1)),
         Z("Birth registered in Hong Kong between 1 January 1980 and 31 December 1988",
-                "1980年1月1日至1988年12月31日於香港登記出生的人士。"),
+                "1980年1月1日至1988年12月31日於香港登記出生的人士。",
+                LocalDate.of(1980, 1, 1), LocalDate.of(1989, 1, 1)),
         WX("First issue to a foreign labourer or foreign domestic helper since 2 January 2009",
                 "2009年1月2日起首次獲簽發身份證的外籍勞工及外籍家庭傭工。"),
         XA("ID card issues to person without a Chinese name before 27 March 1983",
@@ -386,10 +391,29 @@ public class HkidNum {
 
         private final String description;       // Description in English
         private final String tcDescription;     // Description in Traditional Chinese
+        private final LocalDate hongKongBirthRegistrationStartDate;
+        private final LocalDate hongKongBirthRegistrationEndDateExclusive;
 
         DefinedPrefix(String description, String tcDescription) {
+            this(description, tcDescription, null, null);
+        }
+
+        DefinedPrefix(String description,
+                      String tcDescription,
+                      LocalDate hongKongBirthRegistrationStartDate,
+                      LocalDate hongKongBirthRegistrationEndDateExclusive) {
+            if (hongKongBirthRegistrationStartDate == null
+                    && hongKongBirthRegistrationEndDateExclusive != null) {
+                throw new IllegalArgumentException("Birth registration end date requires a start date");
+            }
+            if (hongKongBirthRegistrationEndDateExclusive != null
+                    && !hongKongBirthRegistrationEndDateExclusive.isAfter(hongKongBirthRegistrationStartDate)) {
+                throw new IllegalArgumentException("Birth registration end date must be after start date");
+            }
             this.description = description;
             this.tcDescription = tcDescription;
+            this.hongKongBirthRegistrationStartDate = hongKongBirthRegistrationStartDate;
+            this.hongKongBirthRegistrationEndDateExclusive = hongKongBirthRegistrationEndDateExclusive;
         }
 
         public String getDescription() {
@@ -398,6 +422,32 @@ public class HkidNum {
 
         public String getTraditionalChineseDescription() {
             return tcDescription;
+        }
+
+        /**
+         * Returns whether this prefix has an exact Hong Kong birth-registration period
+         * containing the supplied date. Approximate historical birth ranges are not
+         * treated as exact metadata by this method.
+         */
+        public boolean supportsHongKongBirthDate(LocalDate dateOfBirth) {
+            return dateOfBirth != null
+                    && hongKongBirthRegistrationStartDate != null
+                    && !dateOfBirth.isBefore(hongKongBirthRegistrationStartDate)
+                    && (hongKongBirthRegistrationEndDateExclusive == null
+                    || dateOfBirth.isBefore(hongKongBirthRegistrationEndDateExclusive));
+        }
+
+        /**
+         * Finds the prefix whose exact Hong Kong birth-registration period contains
+         * the supplied date.
+         */
+        public static Optional<DefinedPrefix> fromHongKongBirthDate(LocalDate dateOfBirth) {
+            for (DefinedPrefix definedPrefix : values()) {
+                if (definedPrefix.supportsHongKongBirthDate(dateOfBirth)) {
+                    return Optional.of(definedPrefix);
+                }
+            }
+            return Optional.empty();
         }
 
         /**

@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HkidCardTest {
     private static final LocalDate TODAY = LocalDate.now();
@@ -47,6 +48,35 @@ class HkidCardTest {
     void rejectsMissingRandomGenerationDependencies() {
         assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.genRandomCard(null, TODAY));
         assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.genRandomCard(new Random(), null));
+    }
+
+    @Test
+    void sameSeedGeneratesSameCompleteCard() {
+        HkidCard first = HkidCardUtil.genRandomCard(new Random(123456789L), TODAY);
+        HkidCard second = HkidCardUtil.genRandomCard(new Random(123456789L), TODAY);
+
+        assertEquals(first.toString(), second.toString());
+    }
+
+    @Test
+    void generatedPrefixMatchesHongKongBirthRegistrationPeriod() {
+        for (int seed = 0; seed < 500; seed++) {
+            HkidCard card = HkidCardUtil.genRandomCard(new Random(seed), TODAY);
+            LocalDate dateOfBirth = card.getDateOfBirth();
+            HkidNum.DefinedPrefix prefix = card.getHkidNum().getDefinedPrefix().orElse(null);
+
+            assertNotNull(prefix);
+            switch (prefix) {
+                case Z:
+                case Y:
+                case S:
+                case N:
+                    assertTrue(prefix.supportsHongKongBirthDate(dateOfBirth));
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     private void assertGeneratedCard(HkidCard hkidCard) {

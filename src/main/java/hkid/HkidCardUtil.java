@@ -48,10 +48,11 @@ public final class HkidCardUtil {
                 YearMonth.from(dateOfRegistration),
                 random);
 
-        GeneratedName name = HkidNameUtil.genRandomName();
+        GeneratedName name = HkidNameUtil.genRandomName(random);
+        HkidNum.DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(dateOfBirth);
 
         HkidCard card = new HkidCard();
-        card.setHkidNum(HkidNumUtil.genRandomHkidNum());
+        card.setHkidNum(HkidNumUtil.genRandomHkidNum(random, compatiblePrefixes));
         card.setChiName(name.getChiName());
         card.setEngName(name.getEngName());
         card.setSex(generateRandomSex(random));
@@ -96,6 +97,45 @@ public final class HkidCardUtil {
         return Period.between(dateOfBirth, today).getYears() >= 18
                 ? HkidSymbol.ADULT_RE_ENTRY_PERMIT
                 : HkidSymbol.MINOR_RE_ENTRY_PERMIT;
+    }
+
+    private static HkidNum.DefinedPrefix[] compatiblePrefixesFor(LocalDate dateOfBirth) {
+        HkidNum.DefinedPrefix exactBirthRegistrationPrefix = HkidNum.DefinedPrefix
+                .fromHongKongBirthDate(dateOfBirth)
+                .orElse(null);
+        if (exactBirthRegistrationPrefix != null) {
+            return prefixes(exactBirthRegistrationPrefix);
+        }
+        if (!dateOfBirth.isBefore(LocalDate.of(1979, 7, 1))) {
+            return prefixes(HkidNum.DefinedPrefix.P);
+        }
+        if (!dateOfBirth.isBefore(LocalDate.of(1972, 1, 1))) {
+            return prefixes(HkidNum.DefinedPrefix.K);
+        }
+        if (!dateOfBirth.isBefore(LocalDate.of(1968, 1, 1))) {
+            return prefixes(
+                    HkidNum.DefinedPrefix.C,
+                    HkidNum.DefinedPrefix.D,
+                    HkidNum.DefinedPrefix.G,
+                    HkidNum.DefinedPrefix.H);
+        }
+        if (!dateOfBirth.isBefore(LocalDate.of(1956, 1, 1))) {
+            return prefixes(
+                    HkidNum.DefinedPrefix.C,
+                    HkidNum.DefinedPrefix.D,
+                    HkidNum.DefinedPrefix.G);
+        }
+        if (!dateOfBirth.isBefore(LocalDate.of(1950, 1, 1))) {
+            return prefixes(
+                    HkidNum.DefinedPrefix.C,
+                    HkidNum.DefinedPrefix.D,
+                    HkidNum.DefinedPrefix.E);
+        }
+        return prefixes(HkidNum.DefinedPrefix.A);
+    }
+
+    private static HkidNum.DefinedPrefix[] prefixes(HkidNum.DefinedPrefix... prefixes) {
+        return prefixes;
     }
 
     private static LocalDate generateRandomDateOfBirth(Random random, LocalDate today) {
