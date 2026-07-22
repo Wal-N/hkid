@@ -3,13 +3,19 @@ package hkid;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents the Chinese name area of an HKID card.
  */
 public class ChiName {
-    private String surname;
-    private String personalName;
+    /**
+     * HKID cards reserve up to six printed Chinese characters for the Chinese name.
+     */
+    public static final int MAX_LENGTH = 6;
+
+    private String surname = "";
+    private String personalName = "";
     private List<String> commercialCodes = new ArrayList<>();
 
     public ChiName() {
@@ -26,10 +32,7 @@ public class ChiName {
     }
 
     public String getFullName() {
-        if (surname == null && personalName == null) {
-            return null;
-        }
-        return nullToEmpty(surname) + nullToEmpty(personalName);
+        return surname + personalName;
     }
 
     public String getSurname() {
@@ -37,10 +40,11 @@ public class ChiName {
     }
 
     public void setSurname(String surname) {
-        ChiNameUtil.validateChinesePart(surname, "Surname");
-        ChiNameUtil.validateTotalLength(surname, this.personalName);
-        ChiNameUtil.validateCommercialCodeCount(surname, this.personalName, commercialCodes);
-        this.surname = surname;
+        String value = Objects.toString(surname, "");
+        ChiNameUtil.validateChinesePart(value, "Surname");
+        ChiNameUtil.validateTotalLength(value, this.personalName);
+        ChiNameUtil.validateCommercialCodeCount(value, this.personalName, commercialCodes);
+        this.surname = value;
     }
 
     public String getPersonalName() {
@@ -48,10 +52,11 @@ public class ChiName {
     }
 
     public void setPersonalName(String personalName) {
-        ChiNameUtil.validateChinesePart(personalName, "Personal name");
-        ChiNameUtil.validateTotalLength(this.surname, personalName);
-        ChiNameUtil.validateCommercialCodeCount(this.surname, personalName, commercialCodes);
-        this.personalName = personalName;
+        String value = Objects.toString(personalName, "");
+        ChiNameUtil.validateChinesePart(value, "Personal name");
+        ChiNameUtil.validateTotalLength(this.surname, value);
+        ChiNameUtil.validateCommercialCodeCount(this.surname, value, commercialCodes);
+        this.personalName = value;
     }
 
     public List<String> getCommercialCodes() {
@@ -71,11 +76,6 @@ public class ChiName {
 
     @Override
     public String toString() {
-        String fullName = getFullName();
-        return fullName != null ? fullName : "";
-    }
-
-    private String nullToEmpty(String value) {
-        return value != null ? value : "";
+        return getFullName();
     }
 }

@@ -1,11 +1,15 @@
 package hkid;
 
+import java.util.Objects;
+
 /**
  * Represents the English name area of an HKID card.
  */
 public class EngName {
-    private String surname;
-    private String personalName;
+    private static final String FORMAT = "%s, %s";
+
+    private String surname = "";
+    private String personalName = "";
 
     public EngName() {
     }
@@ -16,16 +20,13 @@ public class EngName {
     }
 
     public String getFullName() {
-        if (surname == null && personalName == null) {
-            return null;
-        }
-        if (surname == null) {
+        if (surname.isEmpty()) {
             return personalName;
         }
-        if (personalName == null) {
+        if (personalName.isEmpty()) {
             return surname;
         }
-        return String.format(EngNameUtil.FORMAT, surname, personalName);
+        return String.format(FORMAT, surname, personalName);
     }
 
     public String getSurname() {
@@ -33,8 +34,9 @@ public class EngName {
     }
 
     public void setSurname(String surname) {
-        EngNameUtil.validateNamePart(surname, "Surname");
-        this.surname = surname;
+        String value = Objects.toString(surname, "");
+        EngNameUtil.validateNamePart(value, "Surname");
+        this.surname = value;
     }
 
     public String getPersonalName() {
@@ -42,13 +44,13 @@ public class EngName {
     }
 
     public void setPersonalName(String personalName) {
-        EngNameUtil.validateNamePart(personalName, "Personal name");
-        this.personalName = personalName;
+        String value = Objects.toString(personalName, "");
+        EngNameUtil.validateNamePart(value, "Personal name");
+        this.personalName = value;
     }
 
     @Override
     public String toString() {
-        String fullName = getFullName();
-        return fullName != null ? fullName : "";
+        return getFullName();
     }
 }

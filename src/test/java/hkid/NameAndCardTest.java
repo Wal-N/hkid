@@ -9,7 +9,6 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -49,17 +48,33 @@ class NameAndCardTest {
     }
 
     @Test
-    void hkidAlwaysExposesNameInfo() {
+    void namesDefaultAndNormalizeToEmptyStrings() {
         HkidCard hkid = new HkidCard();
 
         assertNotNull(hkid.getChiNameInfo());
         assertNotNull(hkid.getEngNameInfo());
+        assertEquals("", hkid.getChiSurname());
+        assertEquals("", hkid.getChiPersonalName());
+        assertEquals("", hkid.getChiName());
+        assertEquals("", hkid.getEngSurname());
+        assertEquals("", hkid.getEngPersonalName());
+        assertEquals("", hkid.getEngName());
 
         hkid.setChiName(null);
         hkid.setEngName(null);
+        hkid.setChiSurname(null);
+        hkid.setChiPersonalName(null);
+        hkid.setEngSurname(null);
+        hkid.setEngPersonalName(null);
 
         assertNotNull(hkid.getChiNameInfo());
         assertNotNull(hkid.getEngNameInfo());
+        assertEquals("", hkid.getChiSurname());
+        assertEquals("", hkid.getChiPersonalName());
+        assertEquals("", hkid.getChiName());
+        assertEquals("", hkid.getEngSurname());
+        assertEquals("", hkid.getEngPersonalName());
+        assertEquals("", hkid.getEngName());
     }
 
     @Test
@@ -73,13 +88,13 @@ class NameAndCardTest {
         assertThrows(IllegalArgumentException.class,
                 () -> hkid.setChiCommercialCode(Arrays.asList("123")));
         assertSame(chiName, hkid.getChiNameInfo());
-        assertNull(hkid.getChiName());
+        assertEquals("", hkid.getChiName());
         assertTrue(hkid.getChiCommercialCode().isEmpty());
 
         assertThrows(IllegalArgumentException.class, () -> hkid.setEngSurname("123"));
         assertThrows(IllegalArgumentException.class, () -> hkid.setEngPersonalName("123"));
         assertSame(engName, hkid.getEngNameInfo());
-        assertNull(hkid.getEngName());
+        assertEquals("", hkid.getEngName());
     }
 
     @Test

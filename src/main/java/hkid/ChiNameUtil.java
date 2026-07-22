@@ -7,10 +7,6 @@ import java.util.regex.Pattern;
  * Utility methods for Chinese names printed on HKID cards.
  */
 public final class ChiNameUtil {
-    /**
-     * HKID cards reserve up to six printed Chinese characters for the Chinese name.
-     */
-    public static final int MAX_NAME_LENGTH = 6;
     private static final Pattern COMMERCIAL_CODE_PATTERN = Pattern.compile("\\d{4}");
 
     /**
@@ -65,27 +61,27 @@ public final class ChiNameUtil {
     public static boolean isValidChiCommercialCode(List<String> codes) {
         return codes == null
                 || codes.isEmpty()
-                || (codes.size() <= MAX_NAME_LENGTH
+                || (codes.size() <= ChiName.MAX_LENGTH
                 && codes.stream().allMatch(ChiNameUtil::isValidCommercialCode));
     }
 
     static void validateChinesePart(String value, String fieldName) {
-        if (value != null && !isChinese(value)) {
+        if (value != null && !value.isEmpty() && !isChinese(value)) {
             throw new IllegalArgumentException(fieldName + " is not Chinese");
         }
     }
 
     static void validateTotalLength(String surname, String personalName) {
         int totalLength = lengthOf(surname) + lengthOf(personalName);
-        if (totalLength > MAX_NAME_LENGTH) {
-            throw new IllegalArgumentException("Chinese name longer than " + MAX_NAME_LENGTH + " characters");
+        if (totalLength > ChiName.MAX_LENGTH) {
+            throw new IllegalArgumentException("Chinese name longer than " + ChiName.MAX_LENGTH + " characters");
         }
     }
 
     static void validateCommercialCodes(List<String> codes) {
         if (!isValidChiCommercialCode(codes)) {
             throw new IllegalArgumentException("Chinese commercial codes must be 4 digits each and contain at most "
-                    + MAX_NAME_LENGTH + " entries");
+                    + ChiName.MAX_LENGTH + " entries");
         }
     }
 

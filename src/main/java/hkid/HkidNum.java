@@ -322,15 +322,13 @@ public class HkidNum {
      * Enum defining the format options for string representation of HKID numbers.
      */
     public enum Format {
-        WithoutCheckDigit("%s%s", "^[A-Z]{1,2}\\d{6}$"),            // X123456 or XX123456
-        WithoutParentheses("%s%s%c", "^[A-Z]{1,2}\\d{6}[\\dA]$"),   // X123456A or XX123456A
-        Complete("%s%s(%c)", "^[A-Z]{1,2}\\d{6}\\([\\dA]\\)$");     // X123456(A) or XX123456(A)
+        WithoutCheckDigit("%s%s"),          // X123456 or XX123456
+        WithoutParentheses("%s%s%c"),       // X123456A or XX123456A
+        Complete("%s%s(%c)");               // X123456(A) or XX123456(A)
 
         private final String strFormat;
-        private final String regex;
-        Format(String strFormat, String regex) {
+        Format(String strFormat) {
             this.strFormat = strFormat;
-            this.regex = regex;
         }
     }
 

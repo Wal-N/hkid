@@ -6,7 +6,6 @@ import java.util.regex.Pattern;
  * Utility methods for English names printed on HKID cards.
  */
 public final class EngNameUtil {
-    public static final String FORMAT = "%s, %s";
     private static final Pattern PART_PATTERN = Pattern.compile("[A-Za-z]+(?:[ .'-][A-Za-z]+)*");
 
     private EngNameUtil() {
@@ -18,7 +17,7 @@ public final class EngNameUtil {
     }
 
     static void validateNamePart(String value, String fieldName) {
-        if (value != null && !isValidNamePart(value)) {
+        if (value != null && !value.isEmpty() && !isValidNamePart(value)) {
             throw new IllegalArgumentException(fieldName + " is not a valid English name part");
         }
     }
