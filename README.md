@@ -296,7 +296,8 @@ System.out.println(card.getSymbolCodes()); // ***AZ
 - HKID number parsing rejects inputs that contain both plain and parenthesized
   check digits.
 - Chinese name parts must contain Chinese characters only and have a combined
-  maximum length of six characters.
+  maximum length of six characters. This includes supplementary-plane and HKSCS 
+  ideographs, but not compatibility forms or radical symbols outside that property.
 - Chinese commercial codes must be four digits each. When a Chinese name is set,
   the number of commercial codes must match the number of Chinese characters.
 - Generated names keep the Chinese name, commercial codes, and romanisation
