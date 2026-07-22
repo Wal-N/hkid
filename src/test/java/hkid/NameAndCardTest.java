@@ -7,6 +7,7 @@ import java.time.YearMonth;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,7 +30,12 @@ class NameAndCardTest {
         EngName name = new EngName("Chan", "Tai Man");
 
         assertEquals("Chan, Tai Man", name.getFullName());
+        assertTrue(EngNameUtil.isValidNamePart("Anne-Marie"));
+        assertTrue(EngNameUtil.isValidNamePart("O'Connor"));
+        assertFalse(EngNameUtil.isValidNamePart("A "));
+        assertFalse(EngNameUtil.isValidNamePart("Chan---"));
         assertThrows(IllegalArgumentException.class, () -> name.setSurname("123"));
+        assertThrows(IllegalArgumentException.class, () -> name.setSurname("Chan---"));
     }
 
     @Test

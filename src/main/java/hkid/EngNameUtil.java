@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
  */
 public final class EngNameUtil {
     public static final String FORMAT = "%s, %s";
-    private static final Pattern PART_PATTERN = Pattern.compile("[A-Za-z][A-Za-z .'-]*");
+    private static final Pattern PART_PATTERN = Pattern.compile("[A-Za-z]+(?:[ .'-][A-Za-z]+)*");
 
     private EngNameUtil() {
         throw new AssertionError("EngNameUtil cannot be instantiated");
