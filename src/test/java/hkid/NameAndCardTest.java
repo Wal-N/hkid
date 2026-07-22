@@ -8,6 +8,9 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,6 +46,40 @@ class NameAndCardTest {
         HkidCard hkid = new HkidCard();
 
         assertTrue(hkid.getChiCommercialCode().isEmpty());
+    }
+
+    @Test
+    void hkidAlwaysExposesNameInfo() {
+        HkidCard hkid = new HkidCard();
+
+        assertNotNull(hkid.getChiNameInfo());
+        assertNotNull(hkid.getEngNameInfo());
+
+        hkid.setChiName(null);
+        hkid.setEngName(null);
+
+        assertNotNull(hkid.getChiNameInfo());
+        assertNotNull(hkid.getEngNameInfo());
+    }
+
+    @Test
+    void failedNameSettersLeaveEmptyNameObjectsUnchanged() {
+        HkidCard hkid = new HkidCard();
+        ChiName chiName = hkid.getChiNameInfo();
+        EngName engName = hkid.getEngNameInfo();
+
+        assertThrows(IllegalArgumentException.class, () -> hkid.setChiSurname("ABC"));
+        assertThrows(IllegalArgumentException.class, () -> hkid.setChiPersonalName("ABC"));
+        assertThrows(IllegalArgumentException.class,
+                () -> hkid.setChiCommercialCode(Arrays.asList("123")));
+        assertSame(chiName, hkid.getChiNameInfo());
+        assertNull(hkid.getChiName());
+        assertTrue(hkid.getChiCommercialCode().isEmpty());
+
+        assertThrows(IllegalArgumentException.class, () -> hkid.setEngSurname("123"));
+        assertThrows(IllegalArgumentException.class, () -> hkid.setEngPersonalName("123"));
+        assertSame(engName, hkid.getEngNameInfo());
+        assertNull(hkid.getEngName());
     }
 
     @Test

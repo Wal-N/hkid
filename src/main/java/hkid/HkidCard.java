@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,8 +14,8 @@ public class HkidCard {
     static final LocalDate CURRENT_SMART_HKID_START_DATE = LocalDate.of(2018, 11, 26);
 
     private HkidNum hkidNum;
-    private ChiName chiName;
-    private EngName engName;
+    private ChiName chiName = new ChiName();
+    private EngName engName = new EngName();
     private Sex sex;
     private LocalDate dateOfBirth;
     private HkidSymbols symbols = HkidSymbols.empty();
@@ -73,7 +72,7 @@ public class HkidCard {
      * personal name, or commercial codes are needed separately.
      */
     public String getChiName() {
-        return chiName != null ? chiName.getFullName() : null;
+        return chiName.getFullName();
     }
 
     public ChiName getChiNameInfo() {
@@ -81,31 +80,31 @@ public class HkidCard {
     }
 
     public void setChiName(ChiName chiName) {
-        this.chiName = chiName;
+        this.chiName = chiName != null ? chiName : new ChiName();
     }
 
     public String getChiSurname() {
-        return chiName != null ? chiName.getSurname() : null;
+        return chiName.getSurname();
     }
 
     public void setChiSurname(String chiSurname) {
-        ensureChiName().setSurname(chiSurname);
+        chiName.setSurname(chiSurname);
     }
 
     public String getChiPersonalName() {
-        return chiName != null ? chiName.getPersonalName() : null;
+        return chiName.getPersonalName();
     }
 
     public void setChiPersonalName(String chiPersonalName) {
-        ensureChiName().setPersonalName(chiPersonalName);
+        chiName.setPersonalName(chiPersonalName);
     }
 
     public List<String> getChiCommercialCode() {
-        return chiName != null ? chiName.getCommercialCodes() : Collections.emptyList();
+        return chiName.getCommercialCodes();
     }
 
     public void setChiCommercialCode(List<String> chiCommercialCode) {
-        ensureChiName().setCommercialCodes(chiCommercialCode);
+        chiName.setCommercialCodes(chiCommercialCode);
     }
 
     /**
@@ -113,7 +112,7 @@ public class HkidCard {
      * and personal name are needed separately.
      */
     public String getEngName() {
-        return engName != null ? engName.getFullName() : null;
+        return engName.getFullName();
     }
 
     public EngName getEngNameInfo() {
@@ -121,23 +120,23 @@ public class HkidCard {
     }
 
     public void setEngName(EngName engName) {
-        this.engName = engName;
+        this.engName = engName != null ? engName : new EngName();
     }
 
     public String getEngSurname() {
-        return engName != null ? engName.getSurname() : null;
+        return engName.getSurname();
     }
 
     public void setEngSurname(String engSurname) {
-        ensureEngName().setSurname(engSurname);
+        engName.setSurname(engSurname);
     }
 
     public String getEngPersonalName() {
-        return engName != null ? engName.getPersonalName() : null;
+        return engName.getPersonalName();
     }
 
     public void setEngPersonalName(String engPersonalName) {
-        ensureEngName().setPersonalName(engPersonalName);
+        engName.setPersonalName(engPersonalName);
     }
 
     public Sex getSex() {
@@ -302,17 +301,4 @@ public class HkidCard {
         }
     }
 
-    private ChiName ensureChiName() {
-        if (chiName == null) {
-            chiName = new ChiName();
-        }
-        return chiName;
-    }
-
-    private EngName ensureEngName() {
-        if (engName == null) {
-            engName = new EngName();
-        }
-        return engName;
-    }
 }
