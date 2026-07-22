@@ -33,6 +33,10 @@ public class HkidNum {
     private Character checkDigit;
 
     private static final Pattern HKID_NUM_PATTERN = Pattern.compile("^([A-Z]{1,2})(\\d{6})(?:([\\dA])|\\(([\\dA])\\))?$");
+    private static final String INVALID_HKID_NUM_FORMAT_MESSAGE = "Invalid format for HKID number.";
+    private static final String INVALID_CHECK_DIGIT_MESSAGE = "Invalid check digit for HKID number.";
+    private static final String INVALID_CHECK_DIGIT_FORMAT_MESSAGE = "Invalid check digit format.";
+    private static final String INVALID_PREFIX_FORMAT_MESSAGE = "Invalid prefix format.";
 
 
     /**
@@ -61,10 +65,10 @@ public class HkidNum {
             // Check input Check Digit is correct (if any)
             String inputCheckDigit = matcher.group(3) != null ? matcher.group(3) : (matcher.group(4) != null ? matcher.group(4) : null);
             if (inputCheckDigit != null && !inputCheckDigit.equals(this.checkDigit.toString())) {
-                throw new InvalidCheckDigitException("Invalid check digit for HKID number: " + hkidNum);
+                throw new InvalidCheckDigitException(INVALID_CHECK_DIGIT_MESSAGE);
             }
         } else {
-            throw new InvalidHkidNumFormatException("Invalid format for HKID number: " + hkidNum);
+            throw new InvalidHkidNumFormatException(INVALID_HKID_NUM_FORMAT_MESSAGE);
         }
     }
 
@@ -106,11 +110,10 @@ public class HkidNum {
 
         String normalizedCheckDigit = checkDigit.toUpperCase(Locale.ROOT);
         if (!normalizedCheckDigit.matches("^[\\dA]$")) {
-            throw new InvalidHkidNumFormatException("Invalid check digit format: " + checkDigit);
+            throw new InvalidHkidNumFormatException(INVALID_CHECK_DIGIT_FORMAT_MESSAGE);
         }
         if (!normalizedCheckDigit.equals(this.checkDigit.toString())) {
-            throw new InvalidCheckDigitException(
-                    "Invalid check digit for HKID number: " + this.prefix + this.numerals + checkDigit);
+            throw new InvalidCheckDigitException(INVALID_CHECK_DIGIT_MESSAGE);
         }
     }
 
@@ -265,7 +268,7 @@ public class HkidNum {
         }
         prefix = prefix.toUpperCase(Locale.ROOT);
         if (!prefix.matches("^[A-Z]{1,2}$")) {
-            throw new InvalidHkidNumFormatException(String.format("Invalid prefix format: %s", prefix));
+            throw new InvalidHkidNumFormatException(INVALID_PREFIX_FORMAT_MESSAGE);
         }
         this.prefix = prefix;
 
