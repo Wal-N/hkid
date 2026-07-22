@@ -3,8 +3,10 @@ package hkid;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Locale;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -118,24 +120,45 @@ class HkidNumTest {
     }
 
     @Test
-    void findsHongKongBirthPrefixAtExactDateBoundaries() {
-        assertFalse(HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(1979, 12, 31)).isPresent());
+    void findsHongKongBirthPrefixFromRegistrationDateAtExactBoundaries() {
+        assertFalse(HkidNum.DefinedPrefix
+                .fromHongKongBirthRegistrationDate(LocalDate.of(1979, 12, 31)).isPresent());
         assertEquals(HkidNum.DefinedPrefix.Z,
-                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(1980, 1, 1)).orElse(null));
+                HkidNum.DefinedPrefix
+                        .fromHongKongBirthRegistrationDate(LocalDate.of(1980, 1, 1)).orElse(null));
         assertEquals(HkidNum.DefinedPrefix.Z,
-                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(1988, 12, 31)).orElse(null));
+                HkidNum.DefinedPrefix
+                        .fromHongKongBirthRegistrationDate(LocalDate.of(1988, 12, 31)).orElse(null));
         assertEquals(HkidNum.DefinedPrefix.Y,
-                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(1989, 1, 1)).orElse(null));
+                HkidNum.DefinedPrefix
+                        .fromHongKongBirthRegistrationDate(LocalDate.of(1989, 1, 1)).orElse(null));
         assertEquals(HkidNum.DefinedPrefix.Y,
-                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2005, 3, 31)).orElse(null));
+                HkidNum.DefinedPrefix
+                        .fromHongKongBirthRegistrationDate(LocalDate.of(2005, 3, 31)).orElse(null));
         assertEquals(HkidNum.DefinedPrefix.S,
-                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2005, 4, 1)).orElse(null));
+                HkidNum.DefinedPrefix
+                        .fromHongKongBirthRegistrationDate(LocalDate.of(2005, 4, 1)).orElse(null));
         assertEquals(HkidNum.DefinedPrefix.S,
-                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2019, 5, 31)).orElse(null));
+                HkidNum.DefinedPrefix
+                        .fromHongKongBirthRegistrationDate(LocalDate.of(2019, 5, 31)).orElse(null));
         assertEquals(HkidNum.DefinedPrefix.N,
-                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2019, 6, 1)).orElse(null));
+                HkidNum.DefinedPrefix
+                        .fromHongKongBirthRegistrationDate(LocalDate.of(2019, 6, 1)).orElse(null));
         assertEquals(HkidNum.DefinedPrefix.N,
-                HkidNum.DefinedPrefix.fromHongKongBirthDate(LocalDate.of(2030, 1, 1)).orElse(null));
+                HkidNum.DefinedPrefix
+                        .fromHongKongBirthRegistrationDate(LocalDate.of(2030, 1, 1)).orElse(null));
+    }
+
+    @Test
+    void checksFirstIssueMetadataAgainstWholePrintedMonth() {
+        assertTrue(HkidNum.DefinedPrefix.K.supportsFirstIssueMonth(YearMonth.of(1983, 3)));
+        assertTrue(HkidNum.DefinedPrefix.K.supportsFirstIssueMonth(YearMonth.of(1990, 7)));
+        assertFalse(HkidNum.DefinedPrefix.K.supportsFirstIssueMonth(YearMonth.of(1990, 8)));
+        assertFalse(HkidNum.DefinedPrefix.K.supportsFirstIssueMonth(YearMonth.of(2004, 11)));
+        assertTrue(HkidNum.DefinedPrefix.R.supportsFirstIssueMonth(YearMonth.of(2004, 11)));
+        assertArrayEquals(
+                new HkidNum.DefinedPrefix[]{HkidNum.DefinedPrefix.R},
+                HkidNum.DefinedPrefix.fromFirstIssueMonth(YearMonth.of(2004, 11)));
     }
 
     @Test

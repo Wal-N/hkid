@@ -14,6 +14,8 @@ public final class HkidCardUtil {
     private static final int MIN_AGE = 11;
     private static final int MAX_AGE = 100;
     private static final int RECENT_CARD_YEARS = 10;
+    private static final int HONG_KONG_BIRTH_REGISTRATION_DAYS = 42;
+    private static final YearMonth FIRST_HKID_ISSUE_MONTH = YearMonth.of(1949, 1);
 
     private HkidCardUtil() {
         throw new AssertionError("HkidCardUtil cannot be instantiated");
@@ -43,13 +45,20 @@ public final class HkidCardUtil {
                 earliestRegistrationDate, dateOfBirth.plusYears(minimumRegistrationAge));
         LocalDate dateOfRegistration = generateRandomDateInRangeInclusive(
                 earliestRegistrationDate, today, random);
+        YearMonth earliestFirstRegistrationMonth = laterYearMonth(
+                YearMonth.from(dateOfBirth.plusYears(MIN_AGE)), FIRST_HKID_ISSUE_MONTH);
         YearMonth firstRegistrationYearMonth = generateRandomYearMonthInRangeInclusive(
-                YearMonth.from(dateOfBirth.plusYears(MIN_AGE)),
+                earliestFirstRegistrationMonth,
                 YearMonth.from(dateOfRegistration),
+                random);
+        LocalDate birthRegistrationDate = generateRandomDateInRangeInclusive(
+                dateOfBirth,
+                dateOfBirth.plusDays(HONG_KONG_BIRTH_REGISTRATION_DAYS),
                 random);
 
         GeneratedName name = HkidNameUtil.genRandomName(random);
-        HkidNum.DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(dateOfBirth);
+        HkidNum.DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(
+                birthRegistrationDate, firstRegistrationYearMonth);
 
         HkidCard card = new HkidCard();
         card.setHkidNum(HkidNumUtil.genRandomHkidNum(random, compatiblePrefixes));
@@ -99,39 +108,22 @@ public final class HkidCardUtil {
                 : HkidSymbol.MINOR_RE_ENTRY_PERMIT;
     }
 
-    private static HkidNum.DefinedPrefix[] compatiblePrefixesFor(LocalDate dateOfBirth) {
+    private static HkidNum.DefinedPrefix[] compatiblePrefixesFor(
+            LocalDate birthRegistrationDate, YearMonth firstRegistrationMonth) {
         HkidNum.DefinedPrefix exactBirthRegistrationPrefix = HkidNum.DefinedPrefix
-                .fromHongKongBirthDate(dateOfBirth)
+                .fromHongKongBirthRegistrationDate(birthRegistrationDate)
                 .orElse(null);
         if (exactBirthRegistrationPrefix != null) {
             return prefixes(exactBirthRegistrationPrefix);
         }
-        if (!dateOfBirth.isBefore(LocalDate.of(1979, 7, 1))) {
-            return prefixes(HkidNum.DefinedPrefix.P);
+
+        HkidNum.DefinedPrefix[] compatiblePrefixes = HkidNum.DefinedPrefix
+                .fromFirstIssueMonth(firstRegistrationMonth);
+        if (compatiblePrefixes.length == 0) {
+            throw new IllegalStateException(
+                    "No HKID prefix supports first registration month " + firstRegistrationMonth);
         }
-        if (!dateOfBirth.isBefore(LocalDate.of(1972, 1, 1))) {
-            return prefixes(HkidNum.DefinedPrefix.K);
-        }
-        if (!dateOfBirth.isBefore(LocalDate.of(1968, 1, 1))) {
-            return prefixes(
-                    HkidNum.DefinedPrefix.C,
-                    HkidNum.DefinedPrefix.D,
-                    HkidNum.DefinedPrefix.G,
-                    HkidNum.DefinedPrefix.H);
-        }
-        if (!dateOfBirth.isBefore(LocalDate.of(1956, 1, 1))) {
-            return prefixes(
-                    HkidNum.DefinedPrefix.C,
-                    HkidNum.DefinedPrefix.D,
-                    HkidNum.DefinedPrefix.G);
-        }
-        if (!dateOfBirth.isBefore(LocalDate.of(1950, 1, 1))) {
-            return prefixes(
-                    HkidNum.DefinedPrefix.C,
-                    HkidNum.DefinedPrefix.D,
-                    HkidNum.DefinedPrefix.E);
-        }
-        return prefixes(HkidNum.DefinedPrefix.A);
+        return compatiblePrefixes;
     }
 
     private static HkidNum.DefinedPrefix[] prefixes(HkidNum.DefinedPrefix... prefixes) {
@@ -166,6 +158,10 @@ public final class HkidCardUtil {
     }
 
     private static LocalDate laterDate(LocalDate first, LocalDate second) {
+        return first.isAfter(second) ? first : second;
+    }
+
+    private static YearMonth laterYearMonth(YearMonth first, YearMonth second) {
         return first.isAfter(second) ? first : second;
     }
 }
