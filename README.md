@@ -4,6 +4,17 @@ Java utilities and models for working with Hong Kong Identity Card (HKID) data.
 The project models both an HKID number and the wider data printed on an HKID
 card, including names, sex marker, card symbols, and registration dates.
 
+## Disclaimer
+
+This is an independent, unofficial open-source project. It is not affiliated
+with, endorsed by, or maintained by the Government of the Hong Kong Special
+Administrative Region or its Immigration Department.
+
+The library validates data formats and consistency rules; it does not establish
+that an identity card or person is genuine. Do not use it as an authoritative
+source for identity verification, legal decisions, or other decisions affecting
+a person. Consult current official guidance where accuracy is material.
+
 ## Current API
 
 The Java base package is `io.github.wal_n.hkid`, organised by domain:
@@ -203,6 +214,10 @@ selection within each group. Each seed row stores one canonical romanisation
 because Hong Kong Government Cantonese Romanisation can have multiple accepted
 spellings for the same character.
 
+The initial seed data was collected from the internet. It is unverified starter data, 
+is not an official dataset, and may contain inaccurate character, commercial-code, 
+romanisation, or weighting values.
+
 ## Complete HKID Card Data
 
 Use `HkidCard` when you need to model more than the card number:
@@ -331,3 +346,7 @@ System.out.println(card.getSymbolCodes()); // ***AZ
   month or after the current-card registration date.
 - Current smart HKID registration dates cannot be before 26 November 2018, and
   all card dates reject future or inconsistent values.
+
+## License
+
+This project is available under the [MIT License](LICENSE).
