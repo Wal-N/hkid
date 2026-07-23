@@ -24,11 +24,6 @@ public class HkidNumber {
      */
     private String numerals;
 
-    /**
-     * The check digit of the HKID number, which can be a digit (0-9) or the letter 'A'.
-     */
-    private Character checkDigit;
-
     private static final Pattern HKID_NUM_PATTERN = Pattern.compile("^([A-Z]{1,2})(\\d{6})(?:([\\dA])|\\(([\\dA])\\))?$");
     private static final String INVALID_HKID_NUM_FORMAT_MESSAGE = "Invalid format for HKID number.";
     private static final String INVALID_CHECK_DIGIT_MESSAGE = "Invalid check digit for HKID number.";
@@ -61,7 +56,7 @@ public class HkidNumber {
 
             // Check input Check Digit is correct (if any)
             String inputCheckDigit = matcher.group(3) != null ? matcher.group(3) : (matcher.group(4) != null ? matcher.group(4) : null);
-            if (inputCheckDigit != null && !inputCheckDigit.equals(this.checkDigit.toString())) {
+            if (inputCheckDigit != null && !inputCheckDigit.equals(getCheckDigit())) {
                 throw new InvalidCheckDigitException(INVALID_CHECK_DIGIT_MESSAGE);
             }
         } else {
@@ -109,7 +104,7 @@ public class HkidNumber {
         if (!normalizedCheckDigit.matches("^[\\dA]$")) {
             throw new InvalidHkidNumberFormatException(INVALID_CHECK_DIGIT_FORMAT_MESSAGE);
         }
-        if (!normalizedCheckDigit.equals(this.checkDigit.toString())) {
+        if (!normalizedCheckDigit.equals(getCheckDigit())) {
             throw new InvalidCheckDigitException(INVALID_CHECK_DIGIT_MESSAGE);
         }
     }
@@ -131,15 +126,11 @@ public class HkidNumber {
     }
 
     /**
-     * Generates the check digit for the HKID number based on the current prefix and numerals.
-     * This method is called internally whenever the prefix or numerals are set or modified.
+     * Calculates the check digit for the current prefix and numerals.
+     *
+     * @return The calculated check digit.
      */
-    private void genCheckDigit() {
-        // Calculate Check Digit only if both Prefix and Numerals are set
-        if (this.prefix == null || this.numerals == null) {
-            return;
-        }
-
+    private char calculateCheckDigit() {
         int checkDigitSum = 0;
         int prefixIdx = 0;
         int numericIdx = 0;
@@ -162,17 +153,15 @@ public class HkidNumber {
         }
 
         // Finalize check digit
-        switch (checkDigitSum %= 11) {
+        int remainder = checkDigitSum % 11;
+        switch (remainder) {
             case (0):
-                this.checkDigit = '0';
-                break;
+                return '0';
             case (1):
                 // 11-1=10 (i.e. A)
-                this.checkDigit = 'A';
-                break;
+                return 'A';
             default:
-                this.checkDigit = (char) ((11 - checkDigitSum) + '0');
-                break;
+                return (char) ((11 - remainder) + '0');
         }
     }
 
@@ -196,7 +185,7 @@ public class HkidNumber {
         if (format == null) {
             format = Format.WITHOUT_CHECK_DIGIT;
         }
-        return String.format(format.strFormat, this.prefix, this.numerals, this.checkDigit);
+        return String.format(format.strFormat, this.prefix, this.numerals, calculateCheckDigit());
     }
 
     /**
@@ -254,7 +243,7 @@ public class HkidNumber {
 
     /**
      * Sets the prefix of the HKID number.
-     * The prefix must consist of one or two uppercase letters (A-Z). This method also recalculates the check digit.
+     * The prefix must consist of one or two uppercase letters (A-Z).
      *
      * @param prefix The new prefix to set for the HKID number. Cannot be null.
      * @throws InvalidHkidNumberFormatException If the prefix is null, does not match the required format, or contains characters that are not allowed.
@@ -268,9 +257,6 @@ public class HkidNumber {
             throw new InvalidHkidNumberFormatException(INVALID_PREFIX_FORMAT_MESSAGE);
         }
         this.prefix = prefix;
-
-        // Recalculate Check Digit
-        genCheckDigit();
     }
 
     /**
@@ -285,7 +271,7 @@ public class HkidNumber {
 
     /**
      * Sets the numerals part of the HKID number.
-     * The numerals must consist of exactly six digits. This method also recalculates the check digit.
+     * The numerals must consist of exactly six digits.
      *
      * @param numerals The new numerals to set for the HKID number. Cannot be null.
      * @throws InvalidHkidNumberFormatException If the numerals is null or do not match the required format.
@@ -298,9 +284,6 @@ public class HkidNumber {
             throw new InvalidHkidNumberFormatException("Numerals must be exactly 6 digits long.");
         }
         this.numerals = numerals;
-
-        // Recalculate Check Digit
-        genCheckDigit();
     }
 
     /**
@@ -310,7 +293,7 @@ public class HkidNumber {
      * @return The check digit of the HKID number.
      */
     public String getCheckDigit() {
-        return checkDigit.toString();
+        return String.valueOf(calculateCheckDigit());
     }
 
     // Enums

@@ -62,7 +62,7 @@ class HkidNumberTest {
     }
 
     @Test
-    void settersRecalculateCheckDigit() {
+    void checkDigitReflectsSetterChanges() {
         HkidNumber hkidNumber = new HkidNumber("A123456(3)");
 
         hkidNumber.setPrefix("B");
