@@ -26,7 +26,7 @@ The Java base package is `io.github.wal_n.hkid`, organised by domain:
 - `io.github.wal_n.hkid.card` contains `HkidCard`, sex markers, smart-card
   symbols, and complete sample-card generation.
 
-The Maven coordinates are `io.github.wal-n:hkid-utils:1.0-SNAPSHOT`.
+The Maven coordinates are `io.github.wal-n:hkid-utils:0.1.0-SNAPSHOT`.
 
 ## Requirements
 
