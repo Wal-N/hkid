@@ -1,4 +1,8 @@
-package hkid;
+package io.github.wal_n.hkid.card;
+
+import io.github.wal_n.hkid.name.ChineseName;
+import io.github.wal_n.hkid.name.EnglishName;
+import io.github.wal_n.hkid.name.EnglishNameUtil;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NameAndCardTest {
     @Test
-    void chiNameValidatesUpdatedSurnameAndPersonalNameTogether() {
-        ChiName name = new ChiName();
+    void chineseNameValidatesUpdatedSurnameAndPersonalNameTogether() {
+        ChineseName name = new ChineseName();
         name.setSurname("陳");
         name.setPersonalName("大文");
         name.setCommercialCodes(Arrays.asList("1234", "5678", "9999"));
@@ -28,14 +32,14 @@ class NameAndCardTest {
     }
 
     @Test
-    void engNameValidatesNameParts() {
-        EngName name = new EngName("Chan", "Tai Man");
+    void englishNameValidatesNameParts() {
+        EnglishName name = new EnglishName("Chan", "Tai Man");
 
         assertEquals("Chan, Tai Man", name.getFullName());
-        assertTrue(EngNameUtil.isValidNamePart("Anne-Marie"));
-        assertTrue(EngNameUtil.isValidNamePart("O'Connor"));
-        assertFalse(EngNameUtil.isValidNamePart("A "));
-        assertFalse(EngNameUtil.isValidNamePart("Chan---"));
+        assertTrue(EnglishNameUtil.isValidNamePart("Anne-Marie"));
+        assertTrue(EnglishNameUtil.isValidNamePart("O'Connor"));
+        assertFalse(EnglishNameUtil.isValidNamePart("A "));
+        assertFalse(EnglishNameUtil.isValidNamePart("Chan---"));
         assertThrows(IllegalArgumentException.class, () -> name.setSurname("123"));
         assertThrows(IllegalArgumentException.class, () -> name.setSurname("Chan---"));
     }
@@ -44,57 +48,57 @@ class NameAndCardTest {
     void hkidReturnsEmptyCommercialCodeListWhenChineseNameIsMissing() {
         HkidCard hkid = new HkidCard();
 
-        assertTrue(hkid.getChiCommercialCode().isEmpty());
+        assertTrue(hkid.getChineseCommercialCodes().isEmpty());
     }
 
     @Test
     void namesDefaultAndNormalizeToEmptyStrings() {
         HkidCard hkid = new HkidCard();
 
-        assertNotNull(hkid.getChiNameInfo());
-        assertNotNull(hkid.getEngNameInfo());
-        assertEquals("", hkid.getChiSurname());
-        assertEquals("", hkid.getChiPersonalName());
-        assertEquals("", hkid.getChiName());
-        assertEquals("", hkid.getEngSurname());
-        assertEquals("", hkid.getEngPersonalName());
-        assertEquals("", hkid.getEngName());
+        assertNotNull(hkid.getChineseNameInfo());
+        assertNotNull(hkid.getEnglishNameInfo());
+        assertEquals("", hkid.getChineseSurname());
+        assertEquals("", hkid.getChinesePersonalName());
+        assertEquals("", hkid.getChineseName());
+        assertEquals("", hkid.getEnglishSurname());
+        assertEquals("", hkid.getEnglishPersonalName());
+        assertEquals("", hkid.getEnglishName());
 
-        hkid.setChiName(null);
-        hkid.setEngName(null);
-        hkid.setChiSurname(null);
-        hkid.setChiPersonalName(null);
-        hkid.setEngSurname(null);
-        hkid.setEngPersonalName(null);
+        hkid.setChineseName(null);
+        hkid.setEnglishName(null);
+        hkid.setChineseSurname(null);
+        hkid.setChinesePersonalName(null);
+        hkid.setEnglishSurname(null);
+        hkid.setEnglishPersonalName(null);
 
-        assertNotNull(hkid.getChiNameInfo());
-        assertNotNull(hkid.getEngNameInfo());
-        assertEquals("", hkid.getChiSurname());
-        assertEquals("", hkid.getChiPersonalName());
-        assertEquals("", hkid.getChiName());
-        assertEquals("", hkid.getEngSurname());
-        assertEquals("", hkid.getEngPersonalName());
-        assertEquals("", hkid.getEngName());
+        assertNotNull(hkid.getChineseNameInfo());
+        assertNotNull(hkid.getEnglishNameInfo());
+        assertEquals("", hkid.getChineseSurname());
+        assertEquals("", hkid.getChinesePersonalName());
+        assertEquals("", hkid.getChineseName());
+        assertEquals("", hkid.getEnglishSurname());
+        assertEquals("", hkid.getEnglishPersonalName());
+        assertEquals("", hkid.getEnglishName());
     }
 
     @Test
     void failedNameSettersLeaveEmptyNameObjectsUnchanged() {
         HkidCard hkid = new HkidCard();
-        ChiName chiName = hkid.getChiNameInfo();
-        EngName engName = hkid.getEngNameInfo();
+        ChineseName chineseName = hkid.getChineseNameInfo();
+        EnglishName englishName = hkid.getEnglishNameInfo();
 
-        assertThrows(IllegalArgumentException.class, () -> hkid.setChiSurname("ABC"));
-        assertThrows(IllegalArgumentException.class, () -> hkid.setChiPersonalName("ABC"));
+        assertThrows(IllegalArgumentException.class, () -> hkid.setChineseSurname("ABC"));
+        assertThrows(IllegalArgumentException.class, () -> hkid.setChinesePersonalName("ABC"));
         assertThrows(IllegalArgumentException.class,
-                () -> hkid.setChiCommercialCode(Arrays.asList("123")));
-        assertSame(chiName, hkid.getChiNameInfo());
-        assertEquals("", hkid.getChiName());
-        assertTrue(hkid.getChiCommercialCode().isEmpty());
+                () -> hkid.setChineseCommercialCodes(Arrays.asList("123")));
+        assertSame(chineseName, hkid.getChineseNameInfo());
+        assertEquals("", hkid.getChineseName());
+        assertTrue(hkid.getChineseCommercialCodes().isEmpty());
 
-        assertThrows(IllegalArgumentException.class, () -> hkid.setEngSurname("123"));
-        assertThrows(IllegalArgumentException.class, () -> hkid.setEngPersonalName("123"));
-        assertSame(engName, hkid.getEngNameInfo());
-        assertEquals("", hkid.getEngName());
+        assertThrows(IllegalArgumentException.class, () -> hkid.setEnglishSurname("123"));
+        assertThrows(IllegalArgumentException.class, () -> hkid.setEnglishPersonalName("123"));
+        assertSame(englishName, hkid.getEnglishNameInfo());
+        assertEquals("", hkid.getEnglishName());
     }
 
     @Test

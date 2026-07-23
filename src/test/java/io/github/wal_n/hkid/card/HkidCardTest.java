@@ -1,4 +1,7 @@
-package hkid;
+package io.github.wal_n.hkid.card;
+
+import io.github.wal_n.hkid.number.DefinedPrefix;
+import io.github.wal_n.hkid.number.HkidNumber;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +22,7 @@ class HkidCardTest {
 
     @Test
     void generatesCompleteCardAtLowerRandomBoundaries() {
-        HkidCard hkidCard = HkidCardUtil.genRandomCard(new BoundaryRandom(false), TODAY);
+        HkidCard hkidCard = HkidCardUtil.generateRandomCard(new BoundaryRandom(false), TODAY);
 
         assertGeneratedCard(hkidCard);
         assertEquals(Sex.MALE, hkidCard.getSex());
@@ -29,13 +32,13 @@ class HkidCardTest {
         assertEquals(HkidSymbols.parse("*AZ"), hkidCard.getSymbols());
 
         System.out.println(hkidCard);
-        System.out.println("HKID Number: " + hkidCard.getHkidNum());
+        System.out.println("HKID Number: " + hkidCard.getHkidNumber());
         System.out.println("Age: " + hkidCard.getAge());
     }
 
     @Test
     void generatesCompleteCardAtUpperRandomBoundaries() {
-        HkidCard hkidCard = HkidCardUtil.genRandomCard(new BoundaryRandom(true), TODAY);
+        HkidCard hkidCard = HkidCardUtil.generateRandomCard(new BoundaryRandom(true), TODAY);
 
         assertGeneratedCard(hkidCard);
         assertEquals(Sex.FEMALE, hkidCard.getSex());
@@ -47,14 +50,14 @@ class HkidCardTest {
 
     @Test
     void rejectsMissingRandomGenerationDependencies() {
-        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.genRandomCard(null, TODAY));
-        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.genRandomCard(new Random(), null));
+        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(null, TODAY));
+        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(new Random(), null));
     }
 
     @Test
     void sameSeedGeneratesSameCompleteCard() {
-        HkidCard first = HkidCardUtil.genRandomCard(new Random(123456789L), TODAY);
-        HkidCard second = HkidCardUtil.genRandomCard(new Random(123456789L), TODAY);
+        HkidCard first = HkidCardUtil.generateRandomCard(new Random(123456789L), TODAY);
+        HkidCard second = HkidCardUtil.generateRandomCard(new Random(123456789L), TODAY);
 
         assertEquals(first.toString(), second.toString());
     }
@@ -62,21 +65,21 @@ class HkidCardTest {
     @Test
     void toStringOnlyShowsMaskedHkidNumberAndDateOfRegistration() {
         HkidCard card = new HkidCard();
-        card.setHkidNum(new HkidNum("A123456(3)"));
+        card.setHkidNumber(new HkidNumber("A123456(3)"));
         card.setDateOfRegistration(LocalDate.of(2020, 6, 1));
 
         String value = card.toString();
 
-        assertEquals("HkidCard[hkidNum=****456(*), dateOfRegistration=01-06-20]", value);
-        assertFalse(value.contains(card.getHkidNumStr(HkidNum.Format.Complete)));
+        assertEquals("HkidCard[hkidNumber=****456(*), dateOfRegistration=01-06-20]", value);
+        assertFalse(value.contains(card.getHkidNumberStr(HkidNumber.Format.Complete)));
     }
 
     @Test
     void generatedPrefixMatchesHongKongBirthRegistrationPeriod() {
         for (int seed = 0; seed < 500; seed++) {
-            HkidCard card = HkidCardUtil.genRandomCard(new Random(seed), TODAY);
+            HkidCard card = HkidCardUtil.generateRandomCard(new Random(seed), TODAY);
             LocalDate dateOfBirth = card.getDateOfBirth();
-            HkidNum.DefinedPrefix prefix = card.getHkidNum().getDefinedPrefix().orElse(null);
+            DefinedPrefix prefix = card.getHkidNumber().getDefinedPrefix().orElse(null);
 
             assertNotNull(prefix);
             switch (prefix) {
@@ -95,13 +98,13 @@ class HkidCardTest {
 
     @Test
     void generatedPrefixMatchesFirstRegistrationMonth() {
-        HkidCard card = HkidCardUtil.genRandomCard(
+        HkidCard card = HkidCardUtil.generateRandomCard(
                 new Random(41), LocalDate.of(2026, 7, 21));
 
         assertEquals(LocalDate.of(1978, 4, 25), card.getDateOfBirth());
         assertEquals(YearMonth.of(2004, 11), card.getFirstRegistrationYearMonth());
-        assertEquals(HkidNum.DefinedPrefix.R, card.getHkidNum().getDefinedPrefix().orElse(null));
-        assertTrue(HkidNum.DefinedPrefix.R.supportsFirstIssueMonth(
+        assertEquals(DefinedPrefix.R, card.getHkidNumber().getDefinedPrefix().orElse(null));
+        assertTrue(DefinedPrefix.R.supportsFirstIssueMonth(
                 card.getFirstRegistrationYearMonth()));
     }
 
@@ -114,14 +117,14 @@ class HkidCardTest {
                 ChronoUnit.DAYS.between(earliestDateOfBirthForAge, dateOfBirth));
         Random random = new SequenceRandom(26, dateOfBirthOffset, 0, 0, 1);
 
-        HkidCard card = HkidCardUtil.genRandomCard(random, today);
+        HkidCard card = HkidCardUtil.generateRandomCard(random, today);
 
         assertEquals(dateOfBirth, card.getDateOfBirth());
-        assertEquals(HkidNum.DefinedPrefix.Y, card.getHkidNum().getDefinedPrefix().orElse(null));
+        assertEquals(DefinedPrefix.Y, card.getHkidNumber().getDefinedPrefix().orElse(null));
     }
 
     private static boolean supportsPossibleBirthRegistrationDate(
-            HkidNum.DefinedPrefix prefix, LocalDate dateOfBirth) {
+            DefinedPrefix prefix, LocalDate dateOfBirth) {
         for (int daysAfterBirth = 0; daysAfterBirth <= 42; daysAfterBirth++) {
             if (prefix.supportsHongKongBirthRegistrationDate(
                     dateOfBirth.plusDays(daysAfterBirth))) {
@@ -132,9 +135,9 @@ class HkidCardTest {
     }
 
     private void assertGeneratedCard(HkidCard hkidCard) {
-        assertNotNull(hkidCard.getHkidNum());
-        assertNotNull(hkidCard.getChiName());
-        assertNotNull(hkidCard.getEngName());
+        assertNotNull(hkidCard.getHkidNumber());
+        assertNotNull(hkidCard.getChineseName());
+        assertNotNull(hkidCard.getEnglishName());
         assertNotNull(hkidCard.getDateOfBirth());
         assertNotNull(hkidCard.getDateOfRegistration());
         assertNotNull(hkidCard.getFirstRegistrationYearMonth());
@@ -147,7 +150,7 @@ class HkidCardTest {
                 .isBefore(YearMonth.from(hkidCard.getDateOfBirth().plusYears(11))));
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
                 .isAfter(YearMonth.from(hkidCard.getDateOfRegistration())));
-        assertEquals(hkidCard.getChiName().length(), hkidCard.getChiCommercialCode().size());
+        assertEquals(hkidCard.getChineseName().length(), hkidCard.getChineseCommercialCodes().size());
         hkidCard.validateAsOf(TODAY);
     }
 

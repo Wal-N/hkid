@@ -1,4 +1,4 @@
-package hkid;
+package io.github.wal_n.hkid.number;
 
 import java.util.Locale;
 import java.util.Random;
@@ -7,41 +7,42 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Utility methods for working with HKID numbers.
  */
-public final class HkidNumUtil {
-    private HkidNumUtil() {
-        throw new AssertionError("HkidNumUtil cannot be instantiated");
+public final class HkidNumberUtil {
+    private HkidNumberUtil() {
+        throw new AssertionError("HkidNumberUtil cannot be instantiated");
     }
 
     /**
      * Generates an HKID number using a predefined prefix.
      */
-    public static HkidNum genRandomHkidNum() {
-        return genRandomHkidNum(true);
+    public static HkidNumber generateRandomHkidNumber() {
+        return generateRandomHkidNumber(true);
     }
 
     /**
      * Generates an HKID number, optionally restricted to predefined prefixes.
      */
-    public static HkidNum genRandomHkidNum(boolean onlyDefinedPrefix) {
-        return genRandomHkidNum(onlyDefinedPrefix, ThreadLocalRandom.current());
+    public static HkidNumber generateRandomHkidNumber(boolean onlyDefinedPrefix) {
+        return generateRandomHkidNumber(onlyDefinedPrefix, ThreadLocalRandom.current());
     }
 
     /**
      * Masks an HKID number, leaving only the last three numerals visible.
      * The prefix, first three numerals, and check digit are replaced by asterisks.
      *
-     * @param hkidNum HKID number to mask
-     * @return the masked HKID number, or {@code null} when {@code hkidNum} is null
+     * @param hkidNumber HKID number to mask
+     * @return the masked HKID number, or {@code null} when {@code hkidNumber} is null
      */
-    public static String maskHkidNum(HkidNum hkidNum) {
-        if (hkidNum == null) {
+    public static String maskHkidNumber(HkidNumber hkidNumber) {
+        if (hkidNumber == null) {
             return null;
         }
-        String prefixAndLeadingNumeralsMask = hkidNum.getPrefix().length() == 2 ? "*****" : "****";
-        return prefixAndLeadingNumeralsMask + hkidNum.getNumerals().substring(3) + "(*)";
+        String prefixAndLeadingNumeralsMask = hkidNumber.getPrefix().length() == 2 ? "*****" : "****";
+        return prefixAndLeadingNumeralsMask + hkidNumber.getNumerals().substring(3) + "(*)";
     }
 
-    static HkidNum genRandomHkidNum(Random random, HkidNum.DefinedPrefix... allowedPrefixes) {
+    public static HkidNumber generateRandomHkidNumber(
+            Random random, DefinedPrefix... allowedPrefixes) {
         if (random == null) {
             throw new IllegalArgumentException("Random generator cannot be null");
         }
@@ -49,18 +50,18 @@ public final class HkidNumUtil {
             throw new IllegalArgumentException("At least one allowed prefix is required");
         }
 
-        HkidNum.DefinedPrefix prefix = allowedPrefixes[random.nextInt(allowedPrefixes.length)];
+        DefinedPrefix prefix = allowedPrefixes[random.nextInt(allowedPrefixes.length)];
         if (prefix == null) {
             throw new IllegalArgumentException("Allowed prefixes cannot contain null");
         }
-        return buildRandomHkidNum(prefix.name(), random);
+        return buildRandomHkidNumber(prefix.name(), random);
     }
 
-    private static HkidNum genRandomHkidNum(boolean onlyDefinedPrefix, Random random) {
+    private static HkidNumber generateRandomHkidNumber(boolean onlyDefinedPrefix, Random random) {
         String prefix;
 
         if (onlyDefinedPrefix) {
-            HkidNum.DefinedPrefix[] prefixes = HkidNum.DefinedPrefix.values();
+            DefinedPrefix[] prefixes = DefinedPrefix.values();
             prefix = prefixes[random.nextInt(prefixes.length)].name();
         } else {
             int prefixLength = random.nextInt(2) + 1;
@@ -71,11 +72,11 @@ public final class HkidNumUtil {
             prefix = builder.toString();
         }
 
-        return buildRandomHkidNum(prefix, random);
+        return buildRandomHkidNumber(prefix, random);
     }
 
-    private static HkidNum buildRandomHkidNum(String prefix, Random random) {
+    private static HkidNumber buildRandomHkidNumber(String prefix, Random random) {
         String numerals = String.format(Locale.ROOT, "%06d", random.nextInt(1_000_000));
-        return new HkidNum(prefix, numerals);
+        return new HkidNumber(prefix, numerals);
     }
 }

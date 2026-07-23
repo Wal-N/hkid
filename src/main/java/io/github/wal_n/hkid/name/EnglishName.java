@@ -1,20 +1,20 @@
-package hkid;
+package io.github.wal_n.hkid.name;
 
 import java.util.Objects;
 
 /**
  * Represents the English name area of an HKID card.
  */
-public class EngName {
+public class EnglishName {
     private static final String FORMAT = "%s, %s";
 
     private String surname = "";
     private String personalName = "";
 
-    public EngName() {
+    public EnglishName() {
     }
 
-    public EngName(String surname, String personalName) {
+    public EnglishName(String surname, String personalName) {
         setSurname(surname);
         setPersonalName(personalName);
     }
@@ -35,7 +35,7 @@ public class EngName {
 
     public void setSurname(String surname) {
         String value = Objects.toString(surname, "");
-        EngNameUtil.validateNamePart(value, "Surname");
+        EnglishNameUtil.validateNamePart(value, "Surname");
         this.surname = value;
     }
 
@@ -45,7 +45,7 @@ public class EngName {
 
     public void setPersonalName(String personalName) {
         String value = Objects.toString(personalName, "");
-        EngNameUtil.validateNamePart(value, "Personal name");
+        EnglishNameUtil.validateNamePart(value, "Personal name");
         this.personalName = value;
     }
 

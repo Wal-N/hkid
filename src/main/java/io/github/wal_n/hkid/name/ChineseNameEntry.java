@@ -1,4 +1,4 @@
-package hkid;
+package io.github.wal_n.hkid.name;
 
 /**
  * One seed row used for random Chinese name generation.
@@ -15,10 +15,10 @@ public final class ChineseNameEntry {
                      String romanisation,
                      boolean commonSurname,
                      int weight) {
-        if (!ChiNameUtil.isValidCommercialCode(commercialCode)) {
+        if (!ChineseNameUtil.isValidCommercialCode(commercialCode)) {
             throw new IllegalArgumentException("Commercial code must be four digits");
         }
-        if (character == null || ChiNameUtil.lengthOf(character) != 1 || !ChiNameUtil.isChinese(character)) {
+        if (character == null || ChineseNameUtil.lengthOf(character) != 1 || !ChineseNameUtil.isChinese(character)) {
             throw new IllegalArgumentException("Name seed character must be one Chinese character");
         }
         if (romanisation == null || !romanisation.trim().matches("[A-Za-z]+")) {

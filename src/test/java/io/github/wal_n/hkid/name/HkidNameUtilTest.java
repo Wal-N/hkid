@@ -1,4 +1,4 @@
-package hkid;
+package io.github.wal_n.hkid.name;
 
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +20,7 @@ class HkidNameUtilTest {
     @Test
     void seedUsesRequestedColumnOrder() throws Exception {
         InputStream inputStream = HkidNameUtilTest.class.getClassLoader()
-                .getResourceAsStream("hkid/chinese-name-seed.csv");
+                .getResourceAsStream("io/github/wal_n/hkid/name/chinese-name-seed.csv");
         assertNotNull(inputStream);
 
         try (BufferedReader reader = new BufferedReader(
@@ -42,14 +42,14 @@ class HkidNameUtilTest {
 
     @Test
     void generatesOneCharacterPersonalName() {
-        GeneratedName name = HkidNameUtil.genRandomName(1);
+        GeneratedName name = HkidNameUtil.generateRandomName(1);
 
         assertGeneratedNameMatchesSeed(name, 1);
     }
 
     @Test
     void generatesTwoCharacterPersonalName() {
-        GeneratedName name = HkidNameUtil.genRandomName(2);
+        GeneratedName name = HkidNameUtil.generateRandomName(2);
 
         assertGeneratedNameMatchesSeed(name, 2);
     }
@@ -66,8 +66,8 @@ class HkidNameUtilTest {
 
     @Test
     void rejectsUnsupportedPersonalNameLength() {
-        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.genRandomName(0));
-        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.genRandomName(3));
+        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.generateRandomName(0));
+        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.generateRandomName(3));
     }
 
     @Test
@@ -83,9 +83,9 @@ class HkidNameUtilTest {
     }
 
     private void assertGeneratedNameMatchesSeed(GeneratedName name, int personalNameLength) {
-        assertNotNull(name.getChiName());
-        assertNotNull(name.getEngName());
-        assertEquals(personalNameLength, name.getChiName().getPersonalName().length());
+        assertNotNull(name.getChineseName());
+        assertNotNull(name.getEnglishName());
+        assertEquals(personalNameLength, name.getChineseName().getPersonalName().length());
         assertEquals(personalNameLength + 1, name.getCommercialCodes().size());
         assertEquals(personalNameLength + 1, name.getRomanisationSyllables().size());
 
@@ -94,7 +94,7 @@ class HkidNameUtilTest {
             entriesByCharacter.put(entry.getCharacter(), entry);
         }
 
-        String fullName = name.getChiFullName();
+        String fullName = name.getChineseFullName();
         for (int i = 0; i < fullName.length(); i++) {
             String character = String.valueOf(fullName.charAt(i));
             ChineseNameEntry entry = entriesByCharacter.get(character);
@@ -104,13 +104,13 @@ class HkidNameUtilTest {
             assertEquals(i == 0, entry.isCommonSurname());
         }
 
-        ChineseNameEntry surname = entriesByCharacter.get(name.getChiName().getSurname());
+        ChineseNameEntry surname = entriesByCharacter.get(name.getChineseName().getSurname());
         assertTrue(surname.isCommonSurname());
-        assertEquals(surname.getRomanisation(), name.getEngName().getSurname());
+        assertEquals(surname.getRomanisation(), name.getEnglishName().getSurname());
         assertEquals(String.join(" ", name.getRomanisationSyllables()), name.getRomanisation());
         assertEquals(
                 String.join(" ", name.getRomanisationSyllables().subList(1, name.getRomanisationSyllables().size())),
-                name.getEngName().getPersonalName());
-        assertFalse(name.getEngName().getPersonalName().isEmpty());
+                name.getEnglishName().getPersonalName());
+        assertFalse(name.getEnglishName().getPersonalName().isEmpty());
     }
 }

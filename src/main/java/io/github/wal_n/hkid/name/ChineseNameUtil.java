@@ -1,4 +1,4 @@
-package hkid;
+package io.github.wal_n.hkid.name;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 /**
  * Utility methods for Chinese names printed on HKID cards.
  */
-public final class ChiNameUtil {
+public final class ChineseNameUtil {
     private static final Pattern COMMERCIAL_CODE_PATTERN = Pattern.compile("\\d{4}");
 
     /**
@@ -38,8 +38,8 @@ public final class ChiNameUtil {
             0x31350, 0x323AF  // CJK Unified Ideographs Extension H
     };
 
-    private ChiNameUtil() {
-        throw new AssertionError("ChiNameUtil cannot be instantiated");
+    private ChineseNameUtil() {
+        throw new AssertionError("ChineseNameUtil cannot be instantiated");
     }
 
     /**
@@ -51,18 +51,18 @@ public final class ChiNameUtil {
     public static boolean isChinese(String value) {
         return value != null
                 && !value.isEmpty()
-                && value.codePoints().allMatch(ChiNameUtil::isUnifiedIdeograph);
+                && value.codePoints().allMatch(ChineseNameUtil::isUnifiedIdeograph);
     }
 
     public static boolean isValidCommercialCode(String code) {
         return code != null && COMMERCIAL_CODE_PATTERN.matcher(code).matches();
     }
 
-    public static boolean isValidChiCommercialCode(List<String> codes) {
+    public static boolean isValidChineseCommercialCodes(List<String> codes) {
         return codes == null
                 || codes.isEmpty()
-                || (codes.size() <= ChiName.MAX_LENGTH
-                && codes.stream().allMatch(ChiNameUtil::isValidCommercialCode));
+                || (codes.size() <= ChineseName.MAX_LENGTH
+                && codes.stream().allMatch(ChineseNameUtil::isValidCommercialCode));
     }
 
     static void validateChinesePart(String value, String fieldName) {
@@ -73,15 +73,15 @@ public final class ChiNameUtil {
 
     static void validateTotalLength(String surname, String personalName) {
         int totalLength = lengthOf(surname) + lengthOf(personalName);
-        if (totalLength > ChiName.MAX_LENGTH) {
-            throw new IllegalArgumentException("Chinese name longer than " + ChiName.MAX_LENGTH + " characters");
+        if (totalLength > ChineseName.MAX_LENGTH) {
+            throw new IllegalArgumentException("Chinese name longer than " + ChineseName.MAX_LENGTH + " characters");
         }
     }
 
     static void validateCommercialCodes(List<String> codes) {
-        if (!isValidChiCommercialCode(codes)) {
+        if (!isValidChineseCommercialCodes(codes)) {
             throw new IllegalArgumentException("Chinese commercial codes must be 4 digits each and contain at most "
-                    + ChiName.MAX_LENGTH + " entries");
+                    + ChineseName.MAX_LENGTH + " entries");
         }
     }
 

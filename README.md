@@ -6,23 +6,16 @@ card, including names, sex marker, card symbols, and registration dates.
 
 ## Current API
 
-- `hkid.HkidNum` represents an HKID number with a one- or two-letter prefix,
-  six numerals, and a calculated check digit.
-- `hkid.HkidNumUtil` generates random HKID numbers.
-- `hkid.HkidCard` represents the data printed on an HKID card.
-- `hkid.HkidCardUtil` generates sample `HkidCard` objects and random dates.
-- `hkid.HkidNameUtil` generates Chinese names with matching commercial codes
-  and Hong Kong Government Cantonese romanised English names.
-- `hkid.GeneratedName` contains the generated `ChiName`, `EngName`,
-  commercial codes, and romanisation syllables.
-- `hkid.ChiName` and `hkid.ChiNameUtil` validate Chinese names and four-digit
-  commercial codes.
-- `hkid.EngName` and `hkid.EngNameUtil` validate English names.
-- `hkid.Sex` represents the Chinese and English sex markers printed on the
-  smart HKID, forming the complete value `男 M` or `女 F`.
-- `hkid.HkidSymbol` defines the symbols supported by the current smart HKID.
-- `hkid.HkidSymbols` parses, orders, and validates complete symbol strings such
-  as `***AZ`.
+The Java base package is `io.github.wal_n.hkid`, organised by domain:
+
+- `io.github.wal_n.hkid.number` contains `HkidNumber`, `DefinedPrefix`, and
+  random-number generation.
+- `io.github.wal_n.hkid.name` contains the Chinese and English name models,
+  validation, seed metadata, and matching name generation.
+- `io.github.wal_n.hkid.card` contains `HkidCard`, sex markers, smart-card
+  symbols, and complete sample-card generation.
+
+The Maven coordinates are `io.github.wal-n:hkid-utils:1.0-SNAPSHOT`.
 
 ## Requirements
 
@@ -60,15 +53,16 @@ in the published jar.
 ## HKID Number Usage
 
 ```java
-package hkid;
+import io.github.wal_n.hkid.number.HkidNumber;
 
 public class Example {
     public static void main(String[] args) {
-        HkidNum hkidNum = new HkidNum("A123456(3)");
+        HkidNumber hkidNumber = new HkidNumber("A123456(3)");
 
-        System.out.println(hkidNum.getPrefix());       // A
-        System.out.println(hkidNum.getNumerals());     // 123456
-        System.out.println(hkidNum.getCheckDigit());   // 3
+        System.out.println(hkidNumber.getPrefix());       // A
+        System.out.println(hkidNumber.getNumerals());     // 123456
+        System.out.println(hkidNumber.getCheckDigit());   // 3
+        System.out.println(hkidNumber.toMaskedString());  // ****456(*)
     }
 }
 ```
@@ -85,13 +79,13 @@ Accepted input formats include:
 If an input check digit is present, it is validated during construction:
 
 ```java
-package hkid;
+import io.github.wal_n.hkid.number.HkidNumber;
 
 public class Example {
     public static void main(String[] args) {
         try {
-            new HkidNum("A123456(7)");
-        } catch (HkidNum.InvalidCheckDigitException e) {
+            new HkidNumber("A123456(7)");
+        } catch (HkidNumber.InvalidCheckDigitException e) {
             System.out.println(e.getMessage());
         }
     }
@@ -102,22 +96,22 @@ You can also validate a check digit explicitly when the HKID number is supplied
 without the check digit:
 
 ```java
-boolean valid = HkidNum.validateCheckDigit("A123456", "3");
+boolean valid = HkidNumber.validateCheckDigit("A123456", "3");
 ```
 
 ## Formatting
 
 ```java
-package hkid;
+import io.github.wal_n.hkid.number.HkidNumber;
 
 public class Example {
     public static void main(String[] args) {
-        HkidNum hkidNum = new HkidNum("A123456");
+        HkidNumber hkidNumber = new HkidNumber("A123456");
 
-        System.out.println(hkidNum.toString());                                   // A123456
-        System.out.println(hkidNum.toString(HkidNum.Format.WithoutCheckDigit));   // A123456
-        System.out.println(hkidNum.toString(HkidNum.Format.WithoutParentheses));  // A1234563
-        System.out.println(hkidNum.toString(HkidNum.Format.Complete));            // A123456(3)
+        System.out.println(hkidNumber.toString());                                   // A123456
+        System.out.println(hkidNumber.toString(HkidNumber.Format.WITHOUT_CHECK_DIGIT));   // A123456
+        System.out.println(hkidNumber.toString(HkidNumber.Format.WithoutParentheses));  // A1234563
+        System.out.println(hkidNumber.toString(HkidNumber.Format.Complete));            // A123456(3)
     }
 }
 ```
@@ -125,21 +119,22 @@ public class Example {
 ## Random HKID Numbers
 
 ```java
-package hkid;
+import io.github.wal_n.hkid.number.HkidNumber;
+import io.github.wal_n.hkid.number.HkidNumberUtil;
 
 public class Example {
     public static void main(String[] args) {
-        HkidNum definedPrefix = HkidNumUtil.genRandomHkidNum();
-        HkidNum anyPrefix = HkidNumUtil.genRandomHkidNum(false);
+        HkidNumber definedPrefix = HkidNumberUtil.generateRandomHkidNumber();
+        HkidNumber anyPrefix = HkidNumberUtil.generateRandomHkidNumber(false);
 
-        System.out.println(definedPrefix.toString(HkidNum.Format.Complete));
-        System.out.println(anyPrefix.toString(HkidNum.Format.Complete));
+        System.out.println(definedPrefix.toString(HkidNumber.Format.Complete));
+        System.out.println(anyPrefix.toString(HkidNumber.Format.Complete));
     }
 }
 ```
 
 By default, random numbers use one of the predefined prefixes in
-`HkidNum.DefinedPrefix`. Pass `false` to allow any one- or two-letter prefix.
+`DefinedPrefix`. Pass `false` to allow any one- or two-letter prefix.
 
 ## Prefix Descriptions
 
@@ -149,11 +144,16 @@ prefix has no predefined metadata. Use `getDefinedPrefix()` when callers need to
 distinguish that case explicitly:
 
 ```java
-HkidNum hkidNum = new HkidNum("Q123456");
+import io.github.wal_n.hkid.number.DefinedPrefix;
+import io.github.wal_n.hkid.number.HkidNumber;
 
-String english = hkidNum.getPrefixDescription();
-String traditionalChinese = hkidNum.getPrefixTraditionalChineseDescription();
-Optional<HkidNum.DefinedPrefix> metadata = hkidNum.getDefinedPrefix();
+import java.util.Optional;
+
+HkidNumber hkidNumber = new HkidNumber("Q123456");
+
+String english = hkidNumber.getPrefixDescription();
+String traditionalChinese = hkidNumber.getPrefixTraditionalChineseDescription();
+Optional<DefinedPrefix> metadata = hkidNumber.getDefinedPrefix();
 ```
 
 The enum also exposes `getDescription()`,
@@ -164,31 +164,33 @@ The enum also exposes `getDescription()`,
 
 `HkidNameUtil` generates a Chinese name, matching Chinese Commercial Codes, and
 an English name using Hong Kong Government Cantonese Romanisation.
-The no-argument `genRandomName()` has a 10% chance of generating a one-character
+The no-argument `generateRandomName()` has a 10% chance of generating a one-character
 personal name and a 90% chance of generating a two-character personal name.
 
 ```java
-package hkid;
+import io.github.wal_n.hkid.name.GeneratedName;
+import io.github.wal_n.hkid.name.HkidNameUtil;
 
 public class Example {
     public static void main(String[] args) {
-        GeneratedName oneCharName = HkidNameUtil.genRandomName(1);
-        GeneratedName twoCharName = HkidNameUtil.genRandomName(2);
+        GeneratedName oneCharName = HkidNameUtil.generateRandomName(1);
+        GeneratedName twoCharName = HkidNameUtil.generateRandomName(2);
 
-        System.out.println(oneCharName.getChiFullName());
+        System.out.println(oneCharName.getChineseFullName());
         System.out.println(oneCharName.getCommercialCodes());
         System.out.println(oneCharName.getRomanisation());
-        System.out.println(oneCharName.getEngFullName());
+        System.out.println(oneCharName.getEnglishFullName());
 
-        System.out.println(twoCharName.getChiFullName());
+        System.out.println(twoCharName.getChineseFullName());
         System.out.println(twoCharName.getCommercialCodes());
         System.out.println(twoCharName.getRomanisation());
-        System.out.println(twoCharName.getEngFullName());
+        System.out.println(twoCharName.getEnglishFullName());
     }
 }
 ```
 
-Seed data lives in `src/main/resources/hkid/chinese-name-seed.csv`. It is a
+Seed data lives in
+`src/main/resources/io/github/wal_n/hkid/name/chinese-name-seed.csv`. It is a
 small starter database, not a complete Chinese name database. The columns are:
 
 ```text
@@ -206,7 +208,13 @@ spellings for the same character.
 Use `HkidCard` when you need to model more than the card number:
 
 ```java
-package hkid;
+import io.github.wal_n.hkid.card.HkidCard;
+import io.github.wal_n.hkid.card.HkidSymbol;
+import io.github.wal_n.hkid.card.HkidSymbols;
+import io.github.wal_n.hkid.card.Sex;
+import io.github.wal_n.hkid.name.ChineseName;
+import io.github.wal_n.hkid.name.EnglishName;
+import io.github.wal_n.hkid.number.HkidNumber;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -215,10 +223,10 @@ import java.util.Arrays;
 public class Example {
     public static void main(String[] args) {
         HkidCard card = new HkidCard();
-        card.setHkidNum(new HkidNum("A123456(3)"));
-        card.setChiName(new ChiName("陳", "大文",
+        card.setHkidNumber(new HkidNumber("A123456(3)"));
+        card.setChineseName(new ChineseName("陳", "大文",
                 Arrays.asList("7115", "1129", "2429")));
-        card.setEngName(new EngName("Chan", "Tai Man"));
+        card.setEnglishName(new EnglishName("Chan", "Tai Man"));
         card.setSex(Sex.MALE);
         card.setDateOfBirth(LocalDate.of(1990, 1, 15));
         card.setSymbols(HkidSymbols.of(
@@ -236,11 +244,12 @@ public class Example {
 You can also generate a sample card:
 
 ```java
-package hkid;
+import io.github.wal_n.hkid.card.HkidCard;
+import io.github.wal_n.hkid.card.HkidCardUtil;
 
 public class Example {
     public static void main(String[] args) {
-        HkidCard card = HkidCardUtil.genRandomCard();
+        HkidCard card = HkidCardUtil.generateRandomCard();
 
         System.out.println(card);
     }
@@ -251,7 +260,7 @@ public class Example {
 registration, for example:
 
 ```text
-HkidCard[hkidNum=****456(*), dateOfRegistration=01-06-20]
+HkidCard[hkidNumber=****456(*), dateOfRegistration=01-06-20]
 ```
 
 Generated cards use a random `M` or `F` sex marker and an age from 11 to 100.
@@ -267,6 +276,8 @@ symbol string directly from card or OCR input. Definitions follow the
 [Immigration Department ROP133](https://www.immd.gov.hk/pdforms/rop133.pdf).
 
 ```java
+import io.github.wal_n.hkid.card.HkidSymbols;
+
 HkidSymbols symbols = HkidSymbols.parse("***AZBN");
 
 System.out.println(symbols); // ***AZBN
@@ -281,6 +292,10 @@ birth categories allow at most one symbol each. `B` and `N` may appear together.
 An `HkidCard` can also read or set the complete printed value:
 
 ```java
+import io.github.wal_n.hkid.card.HkidCard;
+
+import java.time.LocalDate;
+
 HkidCard card = new HkidCard();
 card.setDateOfBirth(LocalDate.of(1990, 1, 15));
 card.setSymbolCodes("***AZ");

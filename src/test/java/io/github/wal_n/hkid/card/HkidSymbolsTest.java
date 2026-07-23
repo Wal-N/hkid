@@ -1,4 +1,4 @@
-package hkid;
+package io.github.wal_n.hkid.card;
 
 import org.junit.jupiter.api.Test;
 

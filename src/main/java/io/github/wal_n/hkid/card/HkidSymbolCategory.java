@@ -1,4 +1,4 @@
-package hkid;
+package io.github.wal_n.hkid.card;
 
 /**
  * Official categories used to group symbols printed on a current smart HKID card.

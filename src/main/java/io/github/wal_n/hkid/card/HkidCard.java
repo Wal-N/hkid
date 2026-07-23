@@ -1,4 +1,8 @@
-package hkid;
+package io.github.wal_n.hkid.card;
+
+import io.github.wal_n.hkid.name.ChineseName;
+import io.github.wal_n.hkid.name.EnglishName;
+import io.github.wal_n.hkid.number.HkidNumber;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -13,9 +17,9 @@ import java.util.Optional;
 public class HkidCard {
     static final LocalDate CURRENT_SMART_HKID_START_DATE = LocalDate.of(2018, 11, 26);
 
-    private HkidNum hkidNum;
-    private ChiName chiName = new ChiName();
-    private EngName engName = new EngName();
+    private HkidNumber hkidNumber;
+    private ChineseName chineseName = new ChineseName();
+    private EnglishName englishName = new EnglishName();
     private Sex sex;
     private LocalDate dateOfBirth;
     private HkidSymbols symbols = HkidSymbols.empty();
@@ -35,9 +39,9 @@ public class HkidCard {
 
     @Override
     public String toString() {
-        return String.format("%s[hkidNum=%s, dateOfRegistration=%s]",
+        return String.format("%s[hkidNumber=%s, dateOfRegistration=%s]",
                 getClass().getSimpleName(),
-                getHkidNumMaskedStr(),
+                getHkidNumberMaskedStr(),
                 getDateOfRegistrationStr());
     }
 
@@ -47,96 +51,96 @@ public class HkidCard {
 
     // Getters and setters
 
-    public HkidNum getHkidNum() {
-        return hkidNum;
+    public HkidNumber getHkidNumber() {
+        return hkidNumber;
     }
 
-    public String getHkidNumStr() {
-        return getHkidNumStr(HkidNum.Format.WithoutCheckDigit);
+    public String getHkidNumberStr() {
+        return getHkidNumberStr(HkidNumber.Format.WITHOUT_CHECK_DIGIT);
     }
 
-    public String getHkidNumStr(HkidNum.Format format) {
-        return hkidNum != null ? hkidNum.toString(format) : null;
+    public String getHkidNumberStr(HkidNumber.Format format) {
+        return hkidNumber != null ? hkidNumber.toString(format) : null;
     }
 
-    public String getHkidNumMaskedStr() {
-        return hkidNum != null ? hkidNum.getHMaskedStr() : null;
+    public String getHkidNumberMaskedStr() {
+        return hkidNumber != null ? hkidNumber.toMaskedString() : null;
     }
 
-    public void setHkidNum(HkidNum hkidNum) {
-        this.hkidNum = hkidNum;
+    public void setHkidNumber(HkidNumber hkidNumber) {
+        this.hkidNumber = hkidNumber;
     }
 
     /**
-     * Returns the printed Chinese name. Use {@link #getChiNameInfo()} when surname,
+     * Returns the printed Chinese name. Use {@link #getChineseNameInfo()} when surname,
      * personal name, or commercial codes are needed separately.
      */
-    public String getChiName() {
-        return chiName.getFullName();
+    public String getChineseName() {
+        return chineseName.getFullName();
     }
 
-    public ChiName getChiNameInfo() {
-        return chiName;
+    public ChineseName getChineseNameInfo() {
+        return chineseName;
     }
 
-    public void setChiName(ChiName chiName) {
-        this.chiName = chiName != null ? chiName : new ChiName();
+    public void setChineseName(ChineseName chineseName) {
+        this.chineseName = chineseName != null ? chineseName : new ChineseName();
     }
 
-    public String getChiSurname() {
-        return chiName.getSurname();
+    public String getChineseSurname() {
+        return chineseName.getSurname();
     }
 
-    public void setChiSurname(String chiSurname) {
-        chiName.setSurname(chiSurname);
+    public void setChineseSurname(String chineseSurname) {
+        chineseName.setSurname(chineseSurname);
     }
 
-    public String getChiPersonalName() {
-        return chiName.getPersonalName();
+    public String getChinesePersonalName() {
+        return chineseName.getPersonalName();
     }
 
-    public void setChiPersonalName(String chiPersonalName) {
-        chiName.setPersonalName(chiPersonalName);
+    public void setChinesePersonalName(String chinesePersonalName) {
+        chineseName.setPersonalName(chinesePersonalName);
     }
 
-    public List<String> getChiCommercialCode() {
-        return chiName.getCommercialCodes();
+    public List<String> getChineseCommercialCodes() {
+        return chineseName.getCommercialCodes();
     }
 
-    public void setChiCommercialCode(List<String> chiCommercialCode) {
-        chiName.setCommercialCodes(chiCommercialCode);
+    public void setChineseCommercialCodes(List<String> chineseCommercialCodes) {
+        chineseName.setCommercialCodes(chineseCommercialCodes);
     }
 
     /**
-     * Returns the printed English name. Use {@link #getEngNameInfo()} when surname
+     * Returns the printed English name. Use {@link #getEnglishNameInfo()} when surname
      * and personal name are needed separately.
      */
-    public String getEngName() {
-        return engName.getFullName();
+    public String getEnglishName() {
+        return englishName.getFullName();
     }
 
-    public EngName getEngNameInfo() {
-        return engName;
+    public EnglishName getEnglishNameInfo() {
+        return englishName;
     }
 
-    public void setEngName(EngName engName) {
-        this.engName = engName != null ? engName : new EngName();
+    public void setEnglishName(EnglishName englishName) {
+        this.englishName = englishName != null ? englishName : new EnglishName();
     }
 
-    public String getEngSurname() {
-        return engName.getSurname();
+    public String getEnglishSurname() {
+        return englishName.getSurname();
     }
 
-    public void setEngSurname(String engSurname) {
-        engName.setSurname(engSurname);
+    public void setEnglishSurname(String englishSurname) {
+        englishName.setSurname(englishSurname);
     }
 
-    public String getEngPersonalName() {
-        return engName.getPersonalName();
+    public String getEnglishPersonalName() {
+        return englishName.getPersonalName();
     }
 
-    public void setEngPersonalName(String engPersonalName) {
-        engName.setPersonalName(engPersonalName);
+    public void setEnglishPersonalName(String englishPersonalName) {
+        englishName.setPersonalName(englishPersonalName);
     }
 
     public Sex getSex() {

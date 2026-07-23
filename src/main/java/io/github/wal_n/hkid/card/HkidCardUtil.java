@@ -1,4 +1,9 @@
-package hkid;
+package io.github.wal_n.hkid.card;
+
+import io.github.wal_n.hkid.name.GeneratedName;
+import io.github.wal_n.hkid.name.HkidNameUtil;
+import io.github.wal_n.hkid.number.DefinedPrefix;
+import io.github.wal_n.hkid.number.HkidNumberUtil;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -24,11 +29,11 @@ public final class HkidCardUtil {
     /**
      * Generates a complete HkidCard object with sample personal information.
      */
-    public static HkidCard genRandomCard() {
-        return genRandomCard(ThreadLocalRandom.current(), LocalDate.now());
+    public static HkidCard generateRandomCard() {
+        return generateRandomCard(ThreadLocalRandom.current(), LocalDate.now());
     }
 
-    static HkidCard genRandomCard(Random random, LocalDate today) {
+    public static HkidCard generateRandomCard(Random random, LocalDate today) {
         if (random == null) {
             throw new IllegalArgumentException("Random generator cannot be null");
         }
@@ -56,14 +61,14 @@ public final class HkidCardUtil {
                 dateOfBirth.plusDays(HONG_KONG_BIRTH_REGISTRATION_DAYS),
                 random);
 
-        GeneratedName name = HkidNameUtil.genRandomName(random);
-        HkidNum.DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(
+        GeneratedName name = HkidNameUtil.generateRandomName(random);
+        DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(
                 birthRegistrationDate, firstRegistrationYearMonth);
 
         HkidCard card = new HkidCard();
-        card.setHkidNum(HkidNumUtil.genRandomHkidNum(random, compatiblePrefixes));
-        card.setChiName(name.getChiName());
-        card.setEngName(name.getEngName());
+        card.setHkidNumber(HkidNumberUtil.generateRandomHkidNumber(random, compatiblePrefixes));
+        card.setChineseName(name.getChineseName());
+        card.setEnglishName(name.getEnglishName());
         card.setSex(generateRandomSex(random));
         card.setDateOfBirth(dateOfBirth);
         card.setSymbols(HkidSymbols.of(
@@ -108,16 +113,16 @@ public final class HkidCardUtil {
                 : HkidSymbol.MINOR_RE_ENTRY_PERMIT;
     }
 
-    private static HkidNum.DefinedPrefix[] compatiblePrefixesFor(
+    private static DefinedPrefix[] compatiblePrefixesFor(
             LocalDate birthRegistrationDate, YearMonth firstRegistrationMonth) {
-        HkidNum.DefinedPrefix exactBirthRegistrationPrefix = HkidNum.DefinedPrefix
+        DefinedPrefix exactBirthRegistrationPrefix = DefinedPrefix
                 .fromHongKongBirthRegistrationDate(birthRegistrationDate)
                 .orElse(null);
         if (exactBirthRegistrationPrefix != null) {
             return prefixes(exactBirthRegistrationPrefix);
         }
 
-        HkidNum.DefinedPrefix[] compatiblePrefixes = HkidNum.DefinedPrefix
+        DefinedPrefix[] compatiblePrefixes = DefinedPrefix
                 .fromFirstIssueMonth(firstRegistrationMonth);
         if (compatiblePrefixes.length == 0) {
             throw new IllegalStateException(
@@ -126,7 +131,7 @@ public final class HkidCardUtil {
         return compatiblePrefixes;
     }
 
-    private static HkidNum.DefinedPrefix[] prefixes(HkidNum.DefinedPrefix... prefixes) {
+    private static DefinedPrefix[] prefixes(DefinedPrefix... prefixes) {
         return prefixes;
     }
 

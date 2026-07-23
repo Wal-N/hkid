@@ -1,4 +1,4 @@
-package hkid;
+package io.github.wal_n.hkid.name;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * Represents the Chinese name area of an HKID card.
  */
-public class ChiName {
+public class ChineseName {
     /**
      * HKID cards reserve up to six printed Chinese characters for the Chinese name.
      */
@@ -18,14 +18,14 @@ public class ChiName {
     private String personalName = "";
     private List<String> commercialCodes = new ArrayList<>();
 
-    public ChiName() {
+    public ChineseName() {
     }
 
-    public ChiName(String surname, String personalName) {
+    public ChineseName(String surname, String personalName) {
         this(surname, personalName, null);
     }
 
-    public ChiName(String surname, String personalName, List<String> commercialCodes) {
+    public ChineseName(String surname, String personalName, List<String> commercialCodes) {
         setSurname(surname);
         setPersonalName(personalName);
         setCommercialCodes(commercialCodes);
@@ -41,9 +41,9 @@ public class ChiName {
 
     public void setSurname(String surname) {
         String value = Objects.toString(surname, "");
-        ChiNameUtil.validateChinesePart(value, "Surname");
-        ChiNameUtil.validateTotalLength(value, this.personalName);
-        ChiNameUtil.validateCommercialCodeCount(value, this.personalName, commercialCodes);
+        ChineseNameUtil.validateChinesePart(value, "Surname");
+        ChineseNameUtil.validateTotalLength(value, this.personalName);
+        ChineseNameUtil.validateCommercialCodeCount(value, this.personalName, commercialCodes);
         this.surname = value;
     }
 
@@ -53,9 +53,9 @@ public class ChiName {
 
     public void setPersonalName(String personalName) {
         String value = Objects.toString(personalName, "");
-        ChiNameUtil.validateChinesePart(value, "Personal name");
-        ChiNameUtil.validateTotalLength(this.surname, value);
-        ChiNameUtil.validateCommercialCodeCount(this.surname, value, commercialCodes);
+        ChineseNameUtil.validateChinesePart(value, "Personal name");
+        ChineseNameUtil.validateTotalLength(this.surname, value);
+        ChineseNameUtil.validateCommercialCodeCount(this.surname, value, commercialCodes);
         this.personalName = value;
     }
 
@@ -67,8 +67,8 @@ public class ChiName {
      * Each Chinese character on the card has a four-digit commercial code.
      */
     public void setCommercialCodes(List<String> commercialCodes) {
-        ChiNameUtil.validateCommercialCodes(commercialCodes);
-        ChiNameUtil.validateCommercialCodeCount(surname, personalName, commercialCodes);
+        ChineseNameUtil.validateCommercialCodes(commercialCodes);
+        ChineseNameUtil.validateCommercialCodeCount(surname, personalName, commercialCodes);
         this.commercialCodes = commercialCodes == null
                 ? new ArrayList<>()
                 : new ArrayList<>(commercialCodes);

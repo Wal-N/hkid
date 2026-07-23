@@ -1,4 +1,4 @@
-package hkid;
+package io.github.wal_n.hkid.name;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,7 +16,8 @@ import java.util.function.Predicate;
  * Utility methods for generating Chinese names, commercial codes, and romanised English names.
  */
 public final class HkidNameUtil {
-    private static final String DEFAULT_SEED_RESOURCE = "hkid/chinese-name-seed.csv";
+    private static final String DEFAULT_SEED_RESOURCE =
+            "io/github/wal_n/hkid/name/chinese-name-seed.csv";
     private static final int ONE_CHARACTER_PERSONAL_NAME_PERCENTAGE = 10;
     private static final List<ChineseNameEntry> DEFAULT_ENTRIES = loadEntries(DEFAULT_SEED_RESOURCE);
 
@@ -24,24 +25,24 @@ public final class HkidNameUtil {
         throw new AssertionError("HkidNameUtil cannot be instantiated");
     }
 
-    public static GeneratedName genRandomName() {
-        return genRandomName(ThreadLocalRandom.current());
+    public static GeneratedName generateRandomName() {
+        return generateRandomName(ThreadLocalRandom.current());
     }
 
-    public static GeneratedName genRandomName(int personalNameLength) {
-        return genRandomName(personalNameLength, ThreadLocalRandom.current());
+    public static GeneratedName generateRandomName(int personalNameLength) {
+        return generateRandomName(personalNameLength, ThreadLocalRandom.current());
     }
 
-    static GeneratedName genRandomName(Random random) {
+    public static GeneratedName generateRandomName(Random random) {
         if (random == null) {
             throw new IllegalArgumentException("Random generator cannot be null");
         }
 
         int roll = random.nextInt(100);
-        return genRandomName(personalNameLengthForRoll(roll), random);
+        return generateRandomName(personalNameLengthForRoll(roll), random);
     }
 
-    private static GeneratedName genRandomName(int personalNameLength, Random random) {
+    private static GeneratedName generateRandomName(int personalNameLength, Random random) {
         validatePersonalNameLength(personalNameLength);
 
         List<ChineseNameEntry> surnameEntries = filter(DEFAULT_ENTRIES, ChineseNameEntry::isCommonSurname);
@@ -134,9 +135,11 @@ public final class HkidNameUtil {
             englishGivenName.add(entry.getRomanisation());
         }
 
-        ChiName chiName = new ChiName(surname.getCharacter(), personalName.toString(), commercialCodes);
-        EngName engName = new EngName(surname.getRomanisation(), String.join(" ", englishGivenName));
-        return new GeneratedName(chiName, engName, romanisation);
+        ChineseName chineseName = new ChineseName(
+                surname.getCharacter(), personalName.toString(), commercialCodes);
+        EnglishName englishName = new EnglishName(
+                surname.getRomanisation(), String.join(" ", englishGivenName));
+        return new GeneratedName(chineseName, englishName, romanisation);
     }
 
     private static ChineseNameEntry weightedRandom(List<ChineseNameEntry> entries, Random random) {
