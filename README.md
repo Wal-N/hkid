@@ -145,9 +145,8 @@ System.out.println(name.getCommercialCodes());
 System.out.println(name.getEnglishFullName());
 ```
 
-Seed data lives in
-`src/main/resources/io/github/wal_n/hkid/name/chinese-name-seed.csv`. It is a
-small starter database, not a complete Chinese name database. The columns are:
+Seed data lives in `data/chinese-name-seed.csv`. It is a small starter
+database, not a complete Chinese name database. The columns are:
 
 ```text
 commercialCode,character,romanisation,commonSurname,weight
@@ -162,6 +161,20 @@ spellings for the same character.
 The initial seed data was collected from the internet. It is unverified starter data, 
 is not an official dataset, and may contain inaccurate character, commercial-code, 
 romanisation, or weighting values.
+
+## Shared Reference Data
+
+Reference tables that may be reused by another language implementation live in
+the top-level `data` directory. `defined-prefixes.json` and `hkid-symbols.json`
+hold descriptive metadata, codes, categories, and exact date ranges; the Java
+enums remain the type-safe public API and validate that every enum value has
+exactly one data entry. Each JSON document has a schema version and is parsed
+strictly; unknown fields and invalid field types are rejected.
+
+Domain behaviour stays in code. For example, symbol-category exclusivity, sex
+markers, and HKID formatting are deliberately not configuration. A future Rust
+crate can embed the same JSON documents while implementing and testing those
+rules with Rust types. CSV remains in use for the flat Chinese-name seed table.
 
 ## Complete HKID Card Data
 

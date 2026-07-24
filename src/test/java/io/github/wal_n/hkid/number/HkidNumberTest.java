@@ -110,6 +110,16 @@ class HkidNumberTest {
         HkidNumber hkidNumber = new HkidNumber("A123456");
 
         assertEquals(DefinedPrefix.A, hkidNumber.getDefinedPrefix().orElse(null));
+        assertEquals(
+                "Original ID cards, issued between 1949 and 1962, most holders were born before 1950",
+                DefinedPrefix.A.getDescription());
+        assertEquals(
+                "首批身份證，1949-1962年間在簽發，大部份人在1950年代之前出生。",
+                DefinedPrefix.A.getTraditionalChineseDescription());
+        assertEquals(
+                "Child under 11 issued with a \"Document of Identity for Visa Purposes\" "
+                        + "between 28 March 1983 and 31 August 2003",
+                DefinedPrefix.V.getDescription());
         assertEquals(DefinedPrefix.A.getDescription(), hkidNumber.getPrefixDescription());
         assertEquals(DefinedPrefix.A.getTraditionalChineseDescription(),
                 hkidNumber.getPrefixTraditionalChineseDescription());

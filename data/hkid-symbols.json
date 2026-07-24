@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "symbols": [
+    {
+      "id": "ADULT_RE_ENTRY_PERMIT",
+      "code": "***",
+      "category": "RE_ENTRY_PERMIT_ELIGIBILITY",
+      "descriptions": {
+        "en": "The holder is aged 18 or over and is eligible for a HKSAR Re-entry Permit.",
+        "zh-Hant": "持證人年齡為18歲或以上及有資格申領香港特別行政區回港證"
+      }
+    },
+    {
+      "id": "MINOR_RE_ENTRY_PERMIT",
+      "code": "*",
+      "category": "RE_ENTRY_PERMIT_ELIGIBILITY",
+      "descriptions": {
+        "en": "The holder is aged between 11 and 17 and is eligible for a HKSAR Re-entry Permit.",
+        "zh-Hant": "持證人年齡為11歲至17歲及有資格申領香港特別行政區回港證"
+      }
+    },
+    {
+      "id": "RIGHT_OF_ABODE",
+      "code": "A",
+      "category": "RESIDENTIAL_STATUS",
+      "descriptions": {
+        "en": "The holder has the right of abode in the HKSAR.",
+        "zh-Hant": "持證人擁有香港居留權"
+      }
+    },
+    {
+      "id": "STAY_LIMITED",
+      "code": "C",
+      "category": "RESIDENTIAL_STATUS",
+      "descriptions": {
+        "en": "The holder's stay in the HKSAR was limited by the Director of Immigration at the time of registration of the card.",
+        "zh-Hant": "持證人登記領證時在香港的居留受到入境事務處處長的限制"
+      }
+    },
+    {
+      "id": "RIGHT_TO_LAND",
+      "code": "R",
+      "category": "RESIDENTIAL_STATUS",
+      "descriptions": {
+        "en": "The holder has the right to land in the HKSAR.",
+        "zh-Hant": "持證人擁有香港入境權"
+      }
+    },
+    {
+      "id": "STAY_NOT_LIMITED",
+      "code": "U",
+      "category": "RESIDENTIAL_STATUS",
+      "descriptions": {
+        "en": "The holder's stay in the HKSAR was not limited by the Director of Immigration at the time of registration of the card.",
+        "zh-Hant": "持證人登記領證時在香港的居留不受入境事務處處長的限制"
+      }
+    },
+    {
+      "id": "BORN_IN_HONG_KONG",
+      "code": "Z",
+      "category": "REPORTED_PLACE_OF_BIRTH",
+      "descriptions": {
+        "en": "Hong Kong",
+        "zh-Hant": "香港"
+      }
+    },
+    {
+      "id": "BORN_IN_MAINLAND",
+      "code": "X",
+      "category": "REPORTED_PLACE_OF_BIRTH",
+      "descriptions": {
+        "en": "Mainland",
+        "zh-Hant": "內地"
+      }
+    },
+    {
+      "id": "BORN_IN_MACAO",
+      "code": "W",
+      "category": "REPORTED_PLACE_OF_BIRTH",
+      "descriptions": {
+        "en": "Macao",
+        "zh-Hant": "澳門"
+      }
+    },
+    {
+      "id": "BORN_ELSEWHERE",
+      "code": "O",
+      "category": "REPORTED_PLACE_OF_BIRTH",
+      "descriptions": {
+        "en": "Elsewhere",
+        "zh-Hant": "其他地區"
+      }
+    },
+    {
+      "id": "BIRTH_DETAILS_CHANGED",
+      "code": "B",
+      "category": "OTHER_INFORMATION",
+      "descriptions": {
+        "en": "The holder's reported date of birth or place of birth has been changed since first registration.",
+        "zh-Hant": "持證人所報稱的出生日期或地點自首次登記以後，曾作出更改"
+      }
+    },
+    {
+      "id": "NAME_CHANGED",
+      "code": "N",
+      "category": "OTHER_INFORMATION",
+      "descriptions": {
+        "en": "The holder's reported name has been changed since first registration.",
+        "zh-Hant": "持證人所報稱的姓名自首次登記以後，曾作出更改"
+      }
+    }
+  ]
+}

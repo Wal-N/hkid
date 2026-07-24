@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 1,
+  "prefixes": [
+    {
+      "id": "A",
+      "descriptions": {
+        "en": "Original ID cards, issued between 1949 and 1962, most holders were born before 1950",
+        "zh-Hant": "首批身份證，1949-1962年間在簽發，大部份人在1950年代之前出生。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1949-01-01",
+        "endExclusive": "1963-01-01"
+      }
+    },
+    {
+      "id": "B",
+      "descriptions": {
+        "en": "Issued between 1955 and 1960 in city offices",
+        "zh-Hant": "1955-1960年間在市區辦事處簽發。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1955-01-01",
+        "endExclusive": "1961-01-01"
+      }
+    },
+    {
+      "id": "C",
+      "descriptions": {
+        "en": "Issued between 1960 and 1983 in NT offices, if a child most born between 1946 and 1971, principally HK born",
+        "zh-Hant": "1960-1983年間在新界辦事處簽發，如小童申請人多於1946-1971年間出生，以香港出生者為主。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1960-01-01",
+        "endExclusive": "1984-01-01"
+      }
+    },
+    {
+      "id": "D",
+      "descriptions": {
+        "en": "Issued between 1960 and 1983 at HK Island office, if a child most born between, principally HK born",
+        "zh-Hant": "1960-1983年間在港島辦事處簽發，如小童申請人多於1946-1971年間出生，以香港出生者為主。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1960-01-01",
+        "endExclusive": "1984-01-01"
+      }
+    },
+    {
+      "id": "E",
+      "descriptions": {
+        "en": "Issued between 1955 and 1969 in Kowloon offices, if a child most born between 1946 and 1962, principally HK born",
+        "zh-Hant": "1955-1969年間在九龍辦事處簽發，如小童申請人多於1946-1962年間出生，以香港出生者為主。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1955-01-01",
+        "endExclusive": "1970-01-01"
+      }
+    },
+    {
+      "id": "F",
+      "descriptions": {
+        "en": "First issue of a card commencing from 24 February 2020",
+        "zh-Hant": "2020年2月24日起首次獲簽發身份證的人士。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "2020-02-24",
+        "endExclusive": null
+      }
+    },
+    {
+      "id": "G",
+      "descriptions": {
+        "en": "Issued between 1967 and 1983 in Kowloon offices, if a child most born between 1956 and 1971",
+        "zh-Hant": "1967-1983年間在九龍辦事處簽發，如小童申請人多於1956-1971年間出生。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1967-01-01",
+        "endExclusive": "1984-01-01"
+      }
+    },
+    {
+      "id": "H",
+      "descriptions": {
+        "en": "Issued between 1979 and 1983 in HK Island offices, if a child most born between 1968 and 1971, principally HK born",
+        "zh-Hant": "1979-1983年間在港島辦事處簽發，如小童申請人多於1968-1971年間出生，以香港以外出生者為主。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1979-01-01",
+        "endExclusive": "1984-01-01"
+      }
+    },
+    {
+      "id": "J",
+      "descriptions": {
+        "en": "Consular officers after 23 October 1991",
+        "zh-Hant": "1991年10月23日開始簽發予領事館僱員。"
+      },
+      "period": null
+    },
+    {
+      "id": "K",
+      "descriptions": {
+        "en": "First issue of an ID card between 28 March 1983 and 31 July 1990, if a child most born between 1972 and 1979",
+        "zh-Hant": "1983年3月28日至1990年7月31日首次獲簽發身份證的人士，如小童申請人多於1972年至1979年6月在香港出生。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1983-03-28",
+        "endExclusive": "1990-08-01"
+      }
+    },
+    {
+      "id": "L",
+      "descriptions": {
+        "en": "Issued between 1983 and 2003, used when computer system malfunctioned",
+        "zh-Hant": "1983-2003年間簽發，電腦系統故障時使用的備用號碼。2003年6月23日起停用。"
+      },
+      "period": null
+    },
+    {
+      "id": "M",
+      "descriptions": {
+        "en": "First issue of ID card between 1 August 2011 and 23 February 2020",
+        "zh-Hant": "2011年8月1日至2020年2月23日首次獲簽發身份證的人士，如小童申請人多於2000年起在香港以外出生。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "2011-08-01",
+        "endExclusive": "2020-02-24"
+      }
+    },
+    {
+      "id": "N",
+      "descriptions": {
+        "en": "Birth registered in Hong Kong after 1 June 2019",
+        "zh-Hant": "2019年6月1日起於香港登記出生的人士。"
+      },
+      "period": {
+        "basis": "BIRTH_REGISTRATION",
+        "start": "2019-06-01",
+        "endExclusive": null
+      }
+    },
+    {
+      "id": "P",
+      "descriptions": {
+        "en": "First issue of an ID card between 1 August 1990 and 27 December 2000, if a child most born between July and December 1979",
+        "zh-Hant": "1990年8月1日至2000年12月27日首次獲簽發身份證的人士，如小童申請人多於1979年7月至12月在香港出生，或1980年代在香港以外出生。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1990-08-01",
+        "endExclusive": "2000-12-28"
+      }
+    },
+    {
+      "id": "R",
+      "descriptions": {
+        "en": "First issue of an ID card between 28 December 2000 and 31 July 2011",
+        "zh-Hant": "2000年12月28日至2011年7月31日首次獲簽發身份證的人士，以香港以外出生者為主。"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "2000-12-28",
+        "endExclusive": "2011-08-01"
+      }
+    },
+    {
+      "id": "S",
+      "descriptions": {
+        "en": "Birth registered in Hong Kong between 1 April 2005 and 31 May 2019",
+        "zh-Hant": "2005年4月1日至2019年5月31日於香港登記出生的人士。"
+      },
+      "period": {
+        "basis": "BIRTH_REGISTRATION",
+        "start": "2005-04-01",
+        "endExclusive": "2019-06-01"
+      }
+    },
+    {
+      "id": "T",
+      "descriptions": {
+        "en": "Issued between 1983 and 1997, used when computer system malfunctioned",
+        "zh-Hant": "1983-1997年間簽發，電腦系統故障時使用的備用號碼。1997年7月1日起停用。"
+      },
+      "period": null
+    },
+    {
+      "id": "V",
+      "descriptions": {
+        "en": "Child under 11 issued with a \"Document of Identity for Visa Purposes\" between 28 March 1983 and 31 August 2003",
+        "zh-Hant": "1983年3月28日至2003年8月31日獲簽發簽證身份書的11歲以下兒童。"
+      },
+      "period": null
+    },
+    {
+      "id": "W",
+      "descriptions": {
+        "en": "First issue to a foreign labourer or foreign domestic helper between 10 November 1989 and 1 January 2009",
+        "zh-Hant": "1989年11月10日至2009年1月1日首次獲簽發身份證的外籍勞工及外籍家庭傭工。"
+      },
+      "period": null
+    },
+    {
+      "id": "Y",
+      "descriptions": {
+        "en": "Birth registered in Hong Kong between 1 January 1989 and 31 March 2005",
+        "zh-Hant": "1989年1月1日至2005年3月31日於香港登記出生的人士。"
+      },
+      "period": {
+        "basis": "BIRTH_REGISTRATION",
+        "start": "1989-01-01",
+        "endExclusive": "2005-04-01"
+      }
+    },
+    {
+      "id": "Z",
+      "descriptions": {
+        "en": "Birth registered in Hong Kong between 1 January 1980 and 31 December 1988",
+        "zh-Hant": "1980年1月1日至1988年12月31日於香港登記出生的人士。"
+      },
+      "period": {
+        "basis": "BIRTH_REGISTRATION",
+        "start": "1980-01-01",
+        "endExclusive": "1989-01-01"
+      }
+    },
+    {
+      "id": "WX",
+      "descriptions": {
+        "en": "First issue to a foreign labourer or foreign domestic helper since 2 January 2009",
+        "zh-Hant": "2009年1月2日起首次獲簽發身份證的外籍勞工及外籍家庭傭工。"
+      },
+      "period": null
+    },
+    {
+      "id": "XA",
+      "descriptions": {
+        "en": "ID card issues to person without a Chinese name before 27 March 1983",
+        "zh-Hant": "1983年3月27日前沒有中文姓名的新登記身份證人士。"
+      },
+      "period": null
+    },
+    {
+      "id": "XB",
+      "descriptions": {
+        "en": "ID card issues to person without a Chinese name before 27 March 1983",
+        "zh-Hant": "1983年3月27日前沒有中文姓名的新登記身份證人士。"
+      },
+      "period": null
+    },
+    {
+      "id": "XC",
+      "descriptions": {
+        "en": "ID card issues to person without a Chinese name before 27 March 1983",
+        "zh-Hant": "1983年3月27日前沒有中文姓名的新登記身份證人士。"
+      },
+      "period": null
+    },
+    {
+      "id": "XD",
+      "descriptions": {
+        "en": "ID card issues to person without a Chinese name before 27 March 1983",
+        "zh-Hant": "1983年3月27日前沒有中文姓名的新登記身份證人士。"
+      },
+      "period": null
+    },
+    {
+      "id": "XE",
+      "descriptions": {
+        "en": "ID card issues to person without a Chinese name before 27 March 1983",
+        "zh-Hant": "1983年3月27日前沒有中文姓名的新登記身份證人士。"
+      },
+      "period": null
+    },
+    {
+      "id": "XG",
+      "descriptions": {
+        "en": "ID card issues to person without a Chinese name before 27 March 1983",
+        "zh-Hant": "1983年3月27日前沒有中文姓名的新登記身份證人士。"
+      },
+      "period": null
+    },
+    {
+      "id": "XH",
+      "descriptions": {
+        "en": "ID card issues to person without a Chinese name before 27 March 1983",
+        "zh-Hant": "1983年3月27日前沒有中文姓名的新登記身份證人士。"
+      },
+      "period": null
+    }
+  ]
+}

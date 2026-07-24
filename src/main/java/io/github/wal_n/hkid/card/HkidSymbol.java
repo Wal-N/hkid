@@ -1,6 +1,16 @@
 package io.github.wal_n.hkid.card;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import io.github.wal_n.hkid.internal.ResourceJson;
+
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A symbol printed on the front of a current Hong Kong smart identity card.
@@ -8,71 +18,40 @@ import java.util.Locale;
  * @see <a href="https://www.immd.gov.hk/pdforms/rop133.pdf">Immigration Department ROP133</a>
  */
 public enum HkidSymbol {
-    ADULT_RE_ENTRY_PERMIT("***", HkidSymbolCategory.RE_ENTRY_PERMIT_ELIGIBILITY,
-            "The holder is aged 18 or over and is eligible for a HKSAR Re-entry Permit.",
-            "持證人年齡為18歲或以上及有資格申領香港特別行政區回港證"),
-    MINOR_RE_ENTRY_PERMIT("*", HkidSymbolCategory.RE_ENTRY_PERMIT_ELIGIBILITY,
-            "The holder is aged between 11 and 17 and is eligible for a HKSAR Re-entry Permit.",
-            "持證人年齡為11歲至17歲及有資格申領香港特別行政區回港證"),
+    ADULT_RE_ENTRY_PERMIT,
+    MINOR_RE_ENTRY_PERMIT,
 
-    RIGHT_OF_ABODE("A", HkidSymbolCategory.RESIDENTIAL_STATUS,
-            "The holder has the right of abode in the HKSAR.",
-            "持證人擁有香港居留權"),
-    STAY_LIMITED("C", HkidSymbolCategory.RESIDENTIAL_STATUS,
-            "The holder's stay in the HKSAR was limited by the Director of Immigration at the time of registration of the card.",
-            "持證人登記領證時在香港的居留受到入境事務處處長的限制"),
-    RIGHT_TO_LAND("R", HkidSymbolCategory.RESIDENTIAL_STATUS,
-            "The holder has the right to land in the HKSAR.",
-            "持證人擁有香港入境權"),
-    STAY_NOT_LIMITED("U", HkidSymbolCategory.RESIDENTIAL_STATUS,
-            "The holder's stay in the HKSAR was not limited by the Director of Immigration at the time of registration of the card.",
-            "持證人登記領證時在香港的居留不受入境事務處處長的限制"),
+    RIGHT_OF_ABODE,
+    STAY_LIMITED,
+    RIGHT_TO_LAND,
+    STAY_NOT_LIMITED,
 
-    BORN_IN_HONG_KONG("Z", HkidSymbolCategory.REPORTED_PLACE_OF_BIRTH,
-            "Hong Kong", "香港"),
-    BORN_IN_MAINLAND("X", HkidSymbolCategory.REPORTED_PLACE_OF_BIRTH,
-            "Mainland", "內地"),
-    BORN_IN_MACAO("W", HkidSymbolCategory.REPORTED_PLACE_OF_BIRTH,
-            "Macao", "澳門"),
-    BORN_ELSEWHERE("O", HkidSymbolCategory.REPORTED_PLACE_OF_BIRTH,
-            "Elsewhere", "其他地區"),
+    BORN_IN_HONG_KONG,
+    BORN_IN_MAINLAND,
+    BORN_IN_MACAO,
+    BORN_ELSEWHERE,
 
-    BIRTH_DETAILS_CHANGED("B", HkidSymbolCategory.OTHER_INFORMATION,
-            "The holder's reported date of birth or place of birth has been changed since first registration.",
-            "持證人所報稱的出生日期或地點自首次登記以後，曾作出更改"),
-    NAME_CHANGED("N", HkidSymbolCategory.OTHER_INFORMATION,
-            "The holder's reported name has been changed since first registration.",
-            "持證人所報稱的姓名自首次登記以後，曾作出更改");
+    BIRTH_DETAILS_CHANGED,
+    NAME_CHANGED;
 
-    private final String code;
-    private final HkidSymbolCategory category;
-    private final String description;
-    private final String traditionalChineseDescription;
-
-    HkidSymbol(String code,
-               HkidSymbolCategory category,
-               String description,
-               String traditionalChineseDescription) {
-        this.code = code;
-        this.category = category;
-        this.description = description;
-        this.traditionalChineseDescription = traditionalChineseDescription;
-    }
+    private static final String METADATA_RESOURCE =
+            "io/github/wal_n/hkid/data/hkid-symbols.json";
+    private static final int SUPPORTED_SCHEMA_VERSION = 1;
 
     public String getCode() {
-        return code;
+        return metadata().code;
     }
 
     public HkidSymbolCategory getCategory() {
-        return category;
+        return metadata().category;
     }
 
     public String getDescription() {
-        return description;
+        return metadata().description;
     }
 
     public String getTraditionalChineseDescription() {
-        return traditionalChineseDescription;
+        return metadata().traditionalChineseDescription;
     }
 
     public static HkidSymbol fromCode(String code) {
@@ -82,7 +61,7 @@ public enum HkidSymbol {
 
         String normalizedCode = code.trim().toUpperCase(Locale.ROOT);
         for (HkidSymbol symbol : values()) {
-            if (symbol.code.equals(normalizedCode)) {
+            if (symbol.getCode().equals(normalizedCode)) {
                 return symbol;
             }
         }
@@ -91,6 +70,110 @@ public enum HkidSymbol {
 
     @Override
     public String toString() {
-        return code;
+        return getCode();
+    }
+
+    private SymbolMetadata metadata() {
+        return MetadataHolder.BY_SYMBOL.get(this);
+    }
+
+    private static Map<HkidSymbol, SymbolMetadata> loadMetadata() {
+        Map<HkidSymbol, SymbolMetadata> metadataBySymbol = new EnumMap<>(HkidSymbol.class);
+        Set<String> codes = new HashSet<>();
+        JsonObject root = ResourceJson.readObject(METADATA_RESOURCE);
+        String rootContext = "root of " + METADATA_RESOURCE;
+        ResourceJson.requireExactKeys(root, rootContext, "schemaVersion", "symbols");
+        int schemaVersion = ResourceJson.requireInteger(root, "schemaVersion", rootContext);
+        if (schemaVersion != SUPPORTED_SCHEMA_VERSION) {
+            throw new IllegalStateException(
+                    "Unsupported schemaVersion " + schemaVersion + " in " + METADATA_RESOURCE);
+        }
+
+        JsonArray entries = ResourceJson.requireArray(root, "symbols", rootContext);
+        for (int i = 0; i < entries.size(); i++) {
+            JsonElement element = entries.get(i);
+            String context = "symbols[" + i + "] in " + METADATA_RESOURCE;
+            if (!element.isJsonObject()) {
+                throw new IllegalStateException(context + " must be an object");
+            }
+            JsonObject entry = element.getAsJsonObject();
+            ResourceJson.requireExactKeys(
+                    entry, context, "id", "code", "category", "descriptions");
+
+            String id = ResourceJson.requireString(entry, "id", context);
+            HkidSymbol symbol;
+            try {
+                symbol = HkidSymbol.valueOf(id);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException(
+                        "Unknown HKID symbol key in " + METADATA_RESOURCE + ": " + id, e);
+            }
+
+            SymbolMetadata metadata = SymbolMetadata.from(entry, context);
+            if (metadataBySymbol.put(symbol, metadata) != null) {
+                throw new IllegalStateException(
+                        "Duplicate HKID symbol key in " + METADATA_RESOURCE + ": " + symbol.name());
+            }
+            if (!codes.add(metadata.code)) {
+                throw new IllegalStateException(
+                        "Duplicate HKID symbol code in " + METADATA_RESOURCE + ": " + metadata.code);
+            }
+        }
+
+        for (HkidSymbol symbol : values()) {
+            if (!metadataBySymbol.containsKey(symbol)) {
+                throw new IllegalStateException(
+                        "Missing metadata for HKID symbol " + symbol.name() + " in " + METADATA_RESOURCE);
+            }
+        }
+        return Collections.unmodifiableMap(metadataBySymbol);
+    }
+
+    private static final class MetadataHolder {
+        private static final Map<HkidSymbol, SymbolMetadata> BY_SYMBOL = loadMetadata();
+    }
+
+    private static final class SymbolMetadata {
+        private final String code;
+        private final HkidSymbolCategory category;
+        private final String description;
+        private final String traditionalChineseDescription;
+
+        private SymbolMetadata(String code,
+                               HkidSymbolCategory category,
+                               String description,
+                               String traditionalChineseDescription) {
+            if (code.isEmpty() || description.isEmpty() || traditionalChineseDescription.isEmpty()) {
+                throw new IllegalStateException("HKID symbol metadata fields cannot be empty");
+            }
+            this.code = code;
+            this.category = category;
+            this.description = description;
+            this.traditionalChineseDescription = traditionalChineseDescription;
+        }
+
+        private static SymbolMetadata from(JsonObject entry, String context) {
+            JsonObject descriptions =
+                    ResourceJson.requireObject(entry, "descriptions", context);
+            String descriptionsContext = "descriptions in " + context;
+            ResourceJson.requireExactKeys(
+                    descriptions, descriptionsContext, "en", "zh-Hant");
+
+            String categoryValue =
+                    ResourceJson.requireString(entry, "category", context);
+            HkidSymbolCategory category;
+            try {
+                category = HkidSymbolCategory.valueOf(categoryValue);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException(
+                        "Unknown HKID symbol category in " + context + ": " + categoryValue, e);
+            }
+            return new SymbolMetadata(
+                    ResourceJson.requireString(entry, "code", context),
+                    category,
+                    ResourceJson.requireString(descriptions, "en", descriptionsContext),
+                    ResourceJson.requireString(
+                            descriptions, "zh-Hant", descriptionsContext));
+        }
     }
 }

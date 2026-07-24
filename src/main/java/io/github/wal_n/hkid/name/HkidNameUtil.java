@@ -1,10 +1,7 @@
 package io.github.wal_n.hkid.name;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import io.github.wal_n.hkid.internal.ResourceCsv;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +14,7 @@ import java.util.function.Predicate;
  */
 public final class HkidNameUtil {
     private static final String DEFAULT_SEED_RESOURCE =
-            "io/github/wal_n/hkid/name/chinese-name-seed.csv";
+            "io/github/wal_n/hkid/data/chinese-name-seed.csv";
     private static final int ONE_CHARACTER_PERSONAL_NAME_PERCENTAGE = 10;
     private static final int MAX_GENERATED_PERSONAL_NAME_LENGTH = ChineseName.MAX_LENGTH - 1;
     private static final List<ChineseNameEntry> DEFAULT_ENTRIES = loadEntries(DEFAULT_SEED_RESOURCE);
@@ -107,39 +104,24 @@ public final class HkidNameUtil {
     }
 
     static List<ChineseNameEntry> loadEntries(String resourceName) {
-        InputStream inputStream = HkidNameUtil.class.getClassLoader().getResourceAsStream(resourceName);
-        if (inputStream == null) {
-            throw new IllegalStateException("Name seed resource not found: " + resourceName);
-        }
-
         List<ChineseNameEntry> entries = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            String line;
-            int lineNumber = 0;
-            while ((line = reader.readLine()) != null) {
-                lineNumber++;
-                String trimmed = line.trim();
-                if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-                    continue;
-                }
-                if (trimmed.equals("commercialCode,character,romanisation,commonSurname,weight")) {
-                    continue;
-                }
-
-                List<String> fields = parseCsvLine(line);
-                if (fields.size() != 5) {
-                    throw new IllegalStateException("Invalid name seed row at line " + lineNumber + ": " + line);
-                }
-
+        List<ResourceCsv.Row> rows = ResourceCsv.readRows(
+                resourceName,
+                "commercialCode",
+                "character",
+                "romanisation",
+                "commonSurname",
+                "weight");
+        try {
+            for (ResourceCsv.Row row : rows) {
+                List<String> fields = row.getFields();
                 entries.add(new ChineseNameEntry(
                         fields.get(0),
                         fields.get(1),
                         fields.get(2),
-                        parseBoolean(fields.get(3), lineNumber),
+                        parseBoolean(fields.get(3), row.getLineNumber()),
                         Integer.parseInt(fields.get(4))));
             }
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load name seed resource: " + resourceName, e);
         } catch (RuntimeException e) {
             throw new IllegalStateException("Failed to parse name seed resource: " + resourceName, e);
         }
@@ -191,31 +173,6 @@ public final class HkidNameUtil {
             }
         }
         return filtered;
-    }
-
-    private static List<String> parseCsvLine(String line) {
-        List<String> fields = new ArrayList<>();
-        StringBuilder field = new StringBuilder();
-        boolean quoted = false;
-
-        for (int i = 0; i < line.length(); i++) {
-            char current = line.charAt(i);
-            if (current == '"') {
-                if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
-                    field.append('"');
-                    i++;
-                } else {
-                    quoted = !quoted;
-                }
-            } else if (current == ',' && !quoted) {
-                fields.add(field.toString().trim());
-                field.setLength(0);
-            } else {
-                field.append(current);
-            }
-        }
-        fields.add(field.toString().trim());
-        return fields;
     }
 
     private static boolean parseBoolean(String value, int lineNumber) {

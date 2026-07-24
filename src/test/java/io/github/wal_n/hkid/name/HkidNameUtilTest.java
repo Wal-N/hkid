@@ -20,7 +20,7 @@ class HkidNameUtilTest {
     @Test
     void seedUsesRequestedColumnOrder() throws Exception {
         InputStream inputStream = HkidNameUtilTest.class.getClassLoader()
-                .getResourceAsStream("io/github/wal_n/hkid/name/chinese-name-seed.csv");
+                .getResourceAsStream("io/github/wal_n/hkid/data/chinese-name-seed.csv");
         assertNotNull(inputStream);
 
         try (BufferedReader reader = new BufferedReader(
@@ -38,6 +38,19 @@ class HkidNameUtilTest {
         assertTrue(entries.stream().anyMatch(entry -> !entry.isCommonSurname()));
         assertTrue(entries.stream().allMatch(
                 entry -> entry.getRomanisation().matches("[A-Z][a-z]*")));
+    }
+
+    @Test
+    void invalidSeedBooleanReportsPhysicalLineNumber() {
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> HkidNameUtil.loadEntries(
+                        "io/github/wal_n/hkid/name/invalid-boolean-name-seed.csv"));
+
+        assertNotNull(exception.getCause());
+        assertEquals(
+                "Invalid boolean at line 7: not-a-boolean",
+                exception.getCause().getMessage());
     }
 
     @Test

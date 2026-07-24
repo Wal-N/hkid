@@ -16,8 +16,12 @@ class HkidSymbolsTest {
         assertEquals("***", HkidSymbol.ADULT_RE_ENTRY_PERMIT.toString());
         assertEquals(HkidSymbolCategory.RESIDENTIAL_STATUS,
                 HkidSymbol.RIGHT_OF_ABODE.getCategory());
-        assertFalse(HkidSymbol.RIGHT_OF_ABODE.getDescription().isEmpty());
-        assertFalse(HkidSymbol.RIGHT_OF_ABODE.getTraditionalChineseDescription().isEmpty());
+        assertEquals(
+                "The holder has the right of abode in the HKSAR.",
+                HkidSymbol.RIGHT_OF_ABODE.getDescription());
+        assertEquals(
+                "持證人擁有香港居留權",
+                HkidSymbol.RIGHT_OF_ABODE.getTraditionalChineseDescription());
     }
 
     @Test
