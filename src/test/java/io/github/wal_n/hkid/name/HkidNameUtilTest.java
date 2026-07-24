@@ -55,19 +55,26 @@ class HkidNameUtilTest {
     }
 
     @Test
+    void generatesFiveCharacterPersonalName() {
+        GeneratedName name = HkidNameUtil.generateRandomName(5);
+
+        assertGeneratedNameMatchesSeed(name, 5);
+    }
+
+    @Test
     void randomPersonalNameLengthUsesTenPercentBoundary() {
         for (int roll = 0; roll < 100; roll++) {
-            assertEquals(roll < 10 ? 1 : 2, HkidNameUtil.personalNameLengthForRoll(roll));
+            assertEquals(roll < 10 ? 1 : 2, HkidNameUtil.defaultPersonalNameLengthForRoll(roll));
         }
 
-        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.personalNameLengthForRoll(-1));
-        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.personalNameLengthForRoll(100));
+        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.defaultPersonalNameLengthForRoll(-1));
+        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.defaultPersonalNameLengthForRoll(100));
     }
 
     @Test
     void rejectsUnsupportedPersonalNameLength() {
         assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.generateRandomName(0));
-        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.generateRandomName(3));
+        assertThrows(IllegalArgumentException.class, () -> HkidNameUtil.generateRandomName(6));
     }
 
     @Test
@@ -87,7 +94,6 @@ class HkidNameUtilTest {
         assertNotNull(name.getEnglishName());
         assertEquals(personalNameLength, name.getChineseName().getPersonalName().length());
         assertEquals(personalNameLength + 1, name.getCommercialCodes().size());
-        assertEquals(personalNameLength + 1, name.getRomanisationSyllables().size());
 
         Map<String, ChineseNameEntry> entriesByCharacter = new HashMap<>();
         for (ChineseNameEntry entry : HkidNameUtil.getDefaultEntries()) {
@@ -100,17 +106,12 @@ class HkidNameUtilTest {
             ChineseNameEntry entry = entriesByCharacter.get(character);
             assertNotNull(entry);
             assertEquals(entry.getCommercialCode(), name.getCommercialCodes().get(i));
-            assertEquals(entry.getRomanisation(), name.getRomanisationSyllables().get(i));
             assertEquals(i == 0, entry.isCommonSurname());
         }
 
         ChineseNameEntry surname = entriesByCharacter.get(name.getChineseName().getSurname());
         assertTrue(surname.isCommonSurname());
         assertEquals(surname.getRomanisation(), name.getEnglishName().getSurname());
-        assertEquals(String.join(" ", name.getRomanisationSyllables()), name.getRomanisation());
-        assertEquals(
-                String.join(" ", name.getRomanisationSyllables().subList(1, name.getRomanisationSyllables().size())),
-                name.getEnglishName().getPersonalName());
         assertFalse(name.getEnglishName().getPersonalName().isEmpty());
     }
 }

@@ -1,28 +1,29 @@
 package io.github.wal_n.hkid.number;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Represents a Hong Kong Identity Card (HKID) number.
- * This class allows for generating, validating, and formatting HKID numbers according to the official specifications.
- * It supports creating HKID numbers with specific or random values and offers methods to retrieve or modify components of an HKID number.
+ * This immutable value object validates and formats HKID numbers according to the official specifications.
+ * Create a new instance when a different prefix or numeral value is required.
  * <p>
  * Methods of this class can throw custom exceptions {@link InvalidHkidNumberFormatException} and {@link InvalidCheckDigitException}
  * to indicate problems with the provided HKID number format or check digit, respectively.
  */
-public class HkidNumber {
+public final class HkidNumber {
     /**
      * The prefix of the HKID number, which can be one or two letters (A-Z).
      */
-    private String prefix;
+    private final String prefix;
 
     /**
      * The six-digit numeral part of the HKID number.
      */
-    private String numerals;
+    private final String numerals;
 
     private static final Pattern HKID_NUM_PATTERN = Pattern.compile("^([A-Z]{1,2})(\\d{6})(?:([\\dA])|\\(([\\dA])\\))?$");
     private static final String INVALID_HKID_NUM_FORMAT_MESSAGE = "Invalid format for HKID number.";
@@ -50,9 +51,8 @@ public class HkidNumber {
         // Extract parts
         Matcher matcher = HKID_NUM_PATTERN.matcher(hkidNumber);
         if (matcher.matches()) {
-            // Set Prefix, Numerals and generate Check Digit
-            setPrefix(matcher.group(1));
-            setNumerals(matcher.group(2));
+            this.prefix = normalizePrefix(matcher.group(1));
+            this.numerals = validateNumerals(matcher.group(2));
 
             // Check input Check Digit is correct (if any)
             String inputCheckDigit = matcher.group(3) != null ? matcher.group(3) : (matcher.group(4) != null ? matcher.group(4) : null);
@@ -93,8 +93,8 @@ public class HkidNumber {
      * @throws InvalidCheckDigitException If the provided check digit is incorrect or if the calculation of the check digit fails due to invalid input parameters.
      */
     public HkidNumber(String prefix, String numerals, String checkDigit) {
-        setPrefix(prefix);
-        setNumerals(numerals);
+        this.prefix = normalizePrefix(prefix);
+        this.numerals = validateNumerals(numerals);
 
         if (checkDigit == null || checkDigit.isEmpty()) {
             return;
@@ -241,22 +241,15 @@ public class HkidNumber {
         return prefix;
     }
 
-    /**
-     * Sets the prefix of the HKID number.
-     * The prefix must consist of one or two uppercase letters (A-Z).
-     *
-     * @param prefix The new prefix to set for the HKID number. Cannot be null.
-     * @throws InvalidHkidNumberFormatException If the prefix is null, does not match the required format, or contains characters that are not allowed.
-     */
-    public void setPrefix(String prefix) {
+    private static String normalizePrefix(String prefix) {
         if (prefix == null || prefix.isEmpty()) {
             throw new InvalidHkidNumberFormatException("Prefix of HKID Number cannot be null or empty.");
         }
-        prefix = prefix.toUpperCase(Locale.ROOT);
-        if (!prefix.matches("^[A-Z]{1,2}$")) {
+        String normalizedPrefix = prefix.toUpperCase(Locale.ROOT);
+        if (!normalizedPrefix.matches("^[A-Z]{1,2}$")) {
             throw new InvalidHkidNumberFormatException(INVALID_PREFIX_FORMAT_MESSAGE);
         }
-        this.prefix = prefix;
+        return normalizedPrefix;
     }
 
     /**
@@ -269,21 +262,14 @@ public class HkidNumber {
         return numerals;
     }
 
-    /**
-     * Sets the numerals part of the HKID number.
-     * The numerals must consist of exactly six digits.
-     *
-     * @param numerals The new numerals to set for the HKID number. Cannot be null.
-     * @throws InvalidHkidNumberFormatException If the numerals is null or do not match the required format.
-     */
-    public void setNumerals(String numerals) {
+    private static String validateNumerals(String numerals) {
         if (numerals == null || numerals.isEmpty()) {
             throw new InvalidHkidNumberFormatException("Numerals of HKID Number cannot be null or empty.");
         }
         if (!numerals.matches("^\\d{6}$")) {
             throw new InvalidHkidNumberFormatException("Numerals must be exactly 6 digits long.");
         }
-        this.numerals = numerals;
+        return numerals;
     }
 
     /**
@@ -294,6 +280,23 @@ public class HkidNumber {
      */
     public String getCheckDigit() {
         return String.valueOf(calculateCheckDigit());
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof HkidNumber)) {
+            return false;
+        }
+        HkidNumber other = (HkidNumber) object;
+        return prefix.equals(other.prefix) && numerals.equals(other.numerals);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(prefix, numerals);
     }
 
     // Enums

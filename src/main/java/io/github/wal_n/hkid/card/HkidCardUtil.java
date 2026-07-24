@@ -27,29 +27,67 @@ public final class HkidCardUtil {
     }
 
     /**
-     * Generates a complete HkidCard object with sample personal information.
+     * Generates a sample HKID card using the current system date and a
+     * thread-local random generator.
+     *
+     * @return a randomly generated card valid as of the current system date
      */
     public static HkidCard generateRandomCard() {
-        return generateRandomCard(ThreadLocalRandom.current(), LocalDate.now());
+        return generateRandomCard(LocalDate.now());
     }
 
-    public static HkidCard generateRandomCard(Random random, LocalDate today) {
+    /**
+     * Generates a sample HKID card for a caller-controlled reference date using
+     * a thread-local random generator.
+     *
+     * <p>Use this overload when the generated card should be valid at a specific
+     * point in time but its random values do not need to be reproducible.</p>
+     *
+     * @param referenceDate date used to calculate age and registration ranges
+     * @return a randomly generated card valid as of {@code referenceDate}
+     * @throws IllegalArgumentException if {@code referenceDate} is null or precedes
+     *         the first issuance of the current smart HKID
+     */
+    public static HkidCard generateRandomCard(LocalDate referenceDate) {
+        return generateRandomCard(ThreadLocalRandom.current(), referenceDate);
+    }
+
+    /**
+     * Generates a reproducible sample HKID card using caller-controlled random
+     * state and reference date.
+     *
+     * <p>Supplying equivalent {@link Random} state and the same reference date
+     * produces the same card within this Java implementation. This overload is
+     * useful for deterministic tests, fixtures, and reproducing generated data.</p>
+     *
+     * @param random random generator used for every generated card value
+     * @param referenceDate date used to calculate age and registration ranges
+     * @return a generated card valid as of {@code referenceDate}
+     * @throws IllegalArgumentException if {@code random} or {@code referenceDate} is null,
+     *         or if {@code referenceDate} precedes the first issuance of the current smart HKID
+     */
+    public static HkidCard generateRandomCard(Random random, LocalDate referenceDate) {
         if (random == null) {
             throw new IllegalArgumentException("Random generator cannot be null");
         }
-        if (today == null) {
-            throw new IllegalArgumentException("Current date cannot be null");
+        if (referenceDate == null) {
+            throw new IllegalArgumentException("Reference date cannot be null");
+        }
+        if (referenceDate.isBefore(HkidCard.CURRENT_SMART_HKID_START_DATE)) {
+            throw new IllegalArgumentException(
+                    "Reference date cannot be before "
+                            + HkidCard.CURRENT_SMART_HKID_START_DATE);
         }
 
-        LocalDate dateOfBirth = generateRandomDateOfBirth(random, today);
-        HkidSymbol ageSymbol = generateAgeSymbol(dateOfBirth, today);
+        LocalDate dateOfBirth = generateRandomDateOfBirth(random, referenceDate);
+        HkidSymbol ageSymbol = generateAgeSymbol(dateOfBirth, referenceDate);
         int minimumRegistrationAge = ageSymbol == HkidSymbol.ADULT_RE_ENTRY_PERMIT ? 18 : MIN_AGE;
         LocalDate earliestRegistrationDate = laterDate(
-                today.minusYears(RECENT_CARD_YEARS), HkidCard.CURRENT_SMART_HKID_START_DATE);
+                referenceDate.minusYears(RECENT_CARD_YEARS), HkidCard.CURRENT_SMART_HKID_START_DATE);
         earliestRegistrationDate = laterDate(
                 earliestRegistrationDate, dateOfBirth.plusYears(minimumRegistrationAge));
         LocalDate dateOfRegistration = generateRandomDateInRangeInclusive(
-                earliestRegistrationDate, today, random);
+                earliestRegistrationDate, referenceDate, random);
         YearMonth earliestFirstRegistrationMonth = laterYearMonth(
                 YearMonth.from(dateOfBirth.plusYears(MIN_AGE)), FIRST_HKID_ISSUE_MONTH);
         YearMonth firstRegistrationYearMonth = generateRandomYearMonthInRangeInclusive(
@@ -65,19 +103,19 @@ public final class HkidCardUtil {
         DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(
                 birthRegistrationDate, firstRegistrationYearMonth);
 
-        HkidCard card = new HkidCard();
-        card.setHkidNumber(HkidNumberUtil.generateRandomHkidNumber(random, compatiblePrefixes));
-        card.setChineseName(name.getChineseName());
-        card.setEnglishName(name.getEnglishName());
-        card.setSex(generateRandomSex(random));
-        card.setDateOfBirth(dateOfBirth);
-        card.setSymbols(HkidSymbols.of(
-                ageSymbol,
-                HkidSymbol.RIGHT_OF_ABODE,
-                HkidSymbol.BORN_IN_HONG_KONG));
-        card.setDateOfRegistration(dateOfRegistration);
-        card.setFirstRegistrationYearMonth(firstRegistrationYearMonth);
-        return card;
+        return HkidCard.builder()
+                .hkidNumber(HkidNumberUtil.generateRandomHkidNumber(random, compatiblePrefixes))
+                .chineseName(name.getChineseName())
+                .englishName(name.getEnglishName())
+                .sex(generateRandomSex(random))
+                .dateOfBirth(dateOfBirth)
+                .symbols(HkidSymbols.of(
+                        ageSymbol,
+                        HkidSymbol.RIGHT_OF_ABODE,
+                        HkidSymbol.BORN_IN_HONG_KONG))
+                .dateOfRegistration(dateOfRegistration)
+                .firstRegistrationYearMonth(firstRegistrationYearMonth)
+                .build();
     }
 
     public static LocalDate generateRandomDateInRange(LocalDate startDate) {
@@ -107,8 +145,8 @@ public final class HkidCardUtil {
         return values[random.nextInt(values.length)];
     }
 
-    private static HkidSymbol generateAgeSymbol(LocalDate dateOfBirth, LocalDate today) {
-        return Period.between(dateOfBirth, today).getYears() >= 18
+    private static HkidSymbol generateAgeSymbol(LocalDate dateOfBirth, LocalDate referenceDate) {
+        return Period.between(dateOfBirth, referenceDate).getYears() >= 18
                 ? HkidSymbol.ADULT_RE_ENTRY_PERMIT
                 : HkidSymbol.MINOR_RE_ENTRY_PERMIT;
     }
@@ -135,10 +173,10 @@ public final class HkidCardUtil {
         return prefixes;
     }
 
-    private static LocalDate generateRandomDateOfBirth(Random random, LocalDate today) {
+    private static LocalDate generateRandomDateOfBirth(Random random, LocalDate referenceDate) {
         int age = MIN_AGE + random.nextInt(MAX_AGE - MIN_AGE + 1);
-        LocalDate earliestDateOfBirth = today.minusYears(age + 1L).plusDays(1);
-        LocalDate latestDateOfBirth = today.minusYears(age);
+        LocalDate earliestDateOfBirth = referenceDate.minusYears(age + 1L).plusDays(1);
+        LocalDate latestDateOfBirth = referenceDate.minusYears(age);
         return generateRandomDateInRangeInclusive(earliestDateOfBirth, latestDateOfBirth, random);
     }
 

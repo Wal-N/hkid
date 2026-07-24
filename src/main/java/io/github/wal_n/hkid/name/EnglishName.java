@@ -3,20 +3,25 @@ package io.github.wal_n.hkid.name;
 import java.util.Objects;
 
 /**
- * Represents the English name area of an HKID card.
+ * Immutable value object representing the English name area of an HKID card.
  */
-public class EnglishName {
+public final class EnglishName {
     private static final String FORMAT = "%s, %s";
 
-    private String surname = "";
-    private String personalName = "";
+    private final String surname;
+    private final String personalName;
 
     public EnglishName() {
+        this("", "");
     }
 
     public EnglishName(String surname, String personalName) {
-        setSurname(surname);
-        setPersonalName(personalName);
+        String normalizedSurname = Objects.toString(surname, "");
+        String normalizedPersonalName = Objects.toString(personalName, "");
+        EnglishNameUtil.validateNamePart(normalizedSurname, "Surname");
+        EnglishNameUtil.validateNamePart(normalizedPersonalName, "Personal name");
+        this.surname = normalizedSurname;
+        this.personalName = normalizedPersonalName;
     }
 
     public String getFullName() {
@@ -33,24 +38,29 @@ public class EnglishName {
         return surname;
     }
 
-    public void setSurname(String surname) {
-        String value = Objects.toString(surname, "");
-        EnglishNameUtil.validateNamePart(value, "Surname");
-        this.surname = value;
-    }
-
     public String getPersonalName() {
         return personalName;
-    }
-
-    public void setPersonalName(String personalName) {
-        String value = Objects.toString(personalName, "");
-        EnglishNameUtil.validateNamePart(value, "Personal name");
-        this.personalName = value;
     }
 
     @Override
     public String toString() {
         return getFullName();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof EnglishName)) {
+            return false;
+        }
+        EnglishName other = (EnglishName) object;
+        return surname.equals(other.surname) && personalName.equals(other.personalName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(surname, personalName);
     }
 }

@@ -19,31 +19,59 @@ public final class HkidNameUtil {
     private static final String DEFAULT_SEED_RESOURCE =
             "io/github/wal_n/hkid/name/chinese-name-seed.csv";
     private static final int ONE_CHARACTER_PERSONAL_NAME_PERCENTAGE = 10;
+    private static final int MAX_GENERATED_PERSONAL_NAME_LENGTH = ChineseName.MAX_LENGTH - 1;
     private static final List<ChineseNameEntry> DEFAULT_ENTRIES = loadEntries(DEFAULT_SEED_RESOURCE);
 
     private HkidNameUtil() {
         throw new AssertionError("HkidNameUtil cannot be instantiated");
     }
 
+    /**
+     * Generates a name using the default personal-name length distribution and
+     * a thread-local random generator.
+     *
+     * @return a generated Chinese name with matching commercial codes and English name
+     */
     public static GeneratedName generateRandomName() {
         return generateRandomName(ThreadLocalRandom.current());
     }
 
-    public static GeneratedName generateRandomName(int personalNameLength) {
-        return generateRandomName(personalNameLength, ThreadLocalRandom.current());
+    /**
+     * Generates a name with the requested number of Chinese characters in the
+     * personal-name portion.
+     *
+     * <p>The generator uses a one-character surname, so the supported personal
+     * name length is one to five characters under {@link ChineseName#MAX_LENGTH}.
+     * This generator limit does not define the structure of all Hong Kong
+     * Chinese names.</p>
+     *
+     * @param requestedPersonalNameLength number of generated personal-name characters
+     * @return a generated Chinese name with matching commercial codes and English name
+     * @throws IllegalArgumentException if the requested length is outside the supported range
+     */
+    public static GeneratedName generateRandomName(int requestedPersonalNameLength) {
+        return generateRandomName(requestedPersonalNameLength, ThreadLocalRandom.current());
     }
 
+    /**
+     * Generates a name using caller-controlled random state and the default
+     * personal-name length distribution.
+     *
+     * @param random random generator used for every generated name value
+     * @return a generated Chinese name with matching commercial codes and English name
+     * @throws IllegalArgumentException if {@code random} is null
+     */
     public static GeneratedName generateRandomName(Random random) {
         if (random == null) {
             throw new IllegalArgumentException("Random generator cannot be null");
         }
 
         int roll = random.nextInt(100);
-        return generateRandomName(personalNameLengthForRoll(roll), random);
+        return generateRandomName(defaultPersonalNameLengthForRoll(roll), random);
     }
 
-    private static GeneratedName generateRandomName(int personalNameLength, Random random) {
-        validatePersonalNameLength(personalNameLength);
+    private static GeneratedName generateRandomName(int requestedPersonalNameLength, Random random) {
+        validateGeneratedPersonalNameLength(requestedPersonalNameLength);
 
         List<ChineseNameEntry> surnameEntries = filter(DEFAULT_ENTRIES, ChineseNameEntry::isCommonSurname);
         List<ChineseNameEntry> givenNameEntries = filter(DEFAULT_ENTRIES, entry -> !entry.isCommonSurname());
@@ -51,14 +79,14 @@ public final class HkidNameUtil {
         if (surnameEntries.isEmpty()) {
             throw new IllegalStateException("No surname seed entries are available");
         }
-        if (givenNameEntries.size() < personalNameLength) {
+        if (givenNameEntries.size() < requestedPersonalNameLength) {
             throw new IllegalStateException("Not enough given name seed entries are available");
         }
 
         ChineseNameEntry surname = weightedRandom(surnameEntries, random);
         List<ChineseNameEntry> personalNameEntries = new ArrayList<>();
         List<ChineseNameEntry> remainingGivenNameEntries = new ArrayList<>(givenNameEntries);
-        for (int i = 0; i < personalNameLength; i++) {
+        for (int i = 0; i < requestedPersonalNameLength; i++) {
             ChineseNameEntry entry = weightedRandom(remainingGivenNameEntries, random);
             personalNameEntries.add(entry);
             remainingGivenNameEntries.remove(entry);
@@ -71,7 +99,7 @@ public final class HkidNameUtil {
         return DEFAULT_ENTRIES;
     }
 
-    static int personalNameLengthForRoll(int roll) {
+    static int defaultPersonalNameLengthForRoll(int roll) {
         if (roll < 0 || roll >= 100) {
             throw new IllegalArgumentException("Random roll must be between 0 and 99");
         }
@@ -122,16 +150,13 @@ public final class HkidNameUtil {
     private static GeneratedName buildGeneratedName(ChineseNameEntry surname, List<ChineseNameEntry> personalNameEntries) {
         StringBuilder personalName = new StringBuilder();
         List<String> commercialCodes = new ArrayList<>();
-        List<String> romanisation = new ArrayList<>();
         List<String> englishGivenName = new ArrayList<>();
 
         commercialCodes.add(surname.getCommercialCode());
-        romanisation.add(surname.getRomanisation());
 
         for (ChineseNameEntry entry : personalNameEntries) {
             personalName.append(entry.getCharacter());
             commercialCodes.add(entry.getCommercialCode());
-            romanisation.add(entry.getRomanisation());
             englishGivenName.add(entry.getRomanisation());
         }
 
@@ -139,7 +164,7 @@ public final class HkidNameUtil {
                 surname.getCharacter(), personalName.toString(), commercialCodes);
         EnglishName englishName = new EnglishName(
                 surname.getRomanisation(), String.join(" ", englishGivenName));
-        return new GeneratedName(chineseName, englishName, romanisation);
+        return new GeneratedName(chineseName, englishName);
     }
 
     private static ChineseNameEntry weightedRandom(List<ChineseNameEntry> entries, Random random) {
@@ -203,9 +228,12 @@ public final class HkidNameUtil {
         throw new IllegalArgumentException("Invalid boolean at line " + lineNumber + ": " + value);
     }
 
-    private static void validatePersonalNameLength(int personalNameLength) {
-        if (personalNameLength < 1 || personalNameLength > 2) {
-            throw new IllegalArgumentException("Personal name length must be 1 or 2");
+    private static void validateGeneratedPersonalNameLength(int requestedPersonalNameLength) {
+        if (requestedPersonalNameLength < 1
+                || requestedPersonalNameLength > MAX_GENERATED_PERSONAL_NAME_LENGTH) {
+            throw new IllegalArgumentException(
+                    "Generated personal name length must be between 1 and "
+                            + MAX_GENERATED_PERSONAL_NAME_LENGTH);
         }
     }
 }

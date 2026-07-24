@@ -18,55 +18,91 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HkidCardTest {
-    private static final LocalDate TODAY = LocalDate.now();
+    private static final LocalDate REFERENCE_DATE = LocalDate.of(2026, 7, 21);
 
     @Test
     void generatesCompleteCardAtLowerRandomBoundaries() {
-        HkidCard hkidCard = HkidCardUtil.generateRandomCard(new BoundaryRandom(false), TODAY);
+        HkidCard hkidCard = HkidCardUtil.generateRandomCard(new BoundaryRandom(false), REFERENCE_DATE);
 
         assertGeneratedCard(hkidCard);
         assertEquals(Sex.MALE, hkidCard.getSex());
-        assertEquals(11, Period.between(hkidCard.getDateOfBirth(), TODAY).getYears());
+        assertEquals(11, Period.between(hkidCard.getDateOfBirth(), REFERENCE_DATE).getYears());
         assertEquals(hkidCard.getDateOfBirth().plusYears(11), hkidCard.getDateOfRegistration());
         assertEquals(YearMonth.from(hkidCard.getDateOfRegistration()), hkidCard.getFirstRegistrationYearMonth());
         assertEquals(HkidSymbols.parse("*AZ"), hkidCard.getSymbols());
 
         System.out.println(hkidCard);
         System.out.println("HKID Number: " + hkidCard.getHkidNumber());
-        System.out.println("Age: " + hkidCard.getAge());
+        System.out.println("Age: " + hkidCard.getAge(REFERENCE_DATE));
     }
 
     @Test
     void generatesCompleteCardAtUpperRandomBoundaries() {
-        HkidCard hkidCard = HkidCardUtil.generateRandomCard(new BoundaryRandom(true), TODAY);
+        HkidCard hkidCard = HkidCardUtil.generateRandomCard(new BoundaryRandom(true), REFERENCE_DATE);
 
         assertGeneratedCard(hkidCard);
         assertEquals(Sex.FEMALE, hkidCard.getSex());
-        assertEquals(100, Period.between(hkidCard.getDateOfBirth(), TODAY).getYears());
-        assertEquals(TODAY, hkidCard.getDateOfRegistration());
-        assertEquals(YearMonth.from(TODAY), hkidCard.getFirstRegistrationYearMonth());
+        assertEquals(100, Period.between(hkidCard.getDateOfBirth(), REFERENCE_DATE).getYears());
+        assertEquals(REFERENCE_DATE, hkidCard.getDateOfRegistration());
+        assertEquals(YearMonth.from(REFERENCE_DATE), hkidCard.getFirstRegistrationYearMonth());
         assertEquals(HkidSymbols.parse("***AZ"), hkidCard.getSymbols());
     }
 
     @Test
     void rejectsMissingRandomGenerationDependencies() {
-        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(null, TODAY));
+        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard((LocalDate) null));
+        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(null, REFERENCE_DATE));
         assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(new Random(), null));
     }
 
     @Test
-    void sameSeedGeneratesSameCompleteCard() {
-        HkidCard first = HkidCardUtil.generateRandomCard(new Random(123456789L), TODAY);
-        HkidCard second = HkidCardUtil.generateRandomCard(new Random(123456789L), TODAY);
+    void rejectsReferenceDateBeforeCurrentSmartHkidStartDate() {
+        LocalDate unsupportedDate = HkidCard.CURRENT_SMART_HKID_START_DATE.minusDays(1);
 
-        assertEquals(first.toString(), second.toString());
+        IllegalArgumentException threadLocalException = assertThrows(
+                IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(unsupportedDate));
+        IllegalArgumentException deterministicException = assertThrows(
+                IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(new Random(1L), unsupportedDate));
+
+        assertEquals(
+                "Reference date cannot be before " + HkidCard.CURRENT_SMART_HKID_START_DATE,
+                threadLocalException.getMessage());
+        assertEquals(threadLocalException.getMessage(), deterministicException.getMessage());
+    }
+
+    @Test
+    void acceptsCurrentSmartHkidStartDate() {
+        HkidCard card = HkidCardUtil.generateRandomCard(
+                new BoundaryRandom(false),
+                HkidCard.CURRENT_SMART_HKID_START_DATE);
+
+        assertEquals(HkidCard.CURRENT_SMART_HKID_START_DATE, card.getDateOfRegistration());
+        card.validateAsOf(HkidCard.CURRENT_SMART_HKID_START_DATE);
+    }
+
+    @Test
+    void generatesCompleteCardForCallerControlledReferenceDate() {
+        HkidCard hkidCard = HkidCardUtil.generateRandomCard(REFERENCE_DATE);
+
+        assertGeneratedCard(hkidCard);
+    }
+
+    @Test
+    void sameSeedGeneratesSameCompleteCard() {
+        HkidCard first = HkidCardUtil.generateRandomCard(new Random(123456789L), REFERENCE_DATE);
+        HkidCard second = HkidCardUtil.generateRandomCard(new Random(123456789L), REFERENCE_DATE);
+
+        assertEquals(first, second);
     }
 
     @Test
     void toStringOnlyShowsMaskedHkidNumberAndDateOfRegistration() {
-        HkidCard card = new HkidCard();
-        card.setHkidNumber(new HkidNumber("A123456(3)"));
-        card.setDateOfRegistration(LocalDate.of(2020, 6, 1));
+        HkidCard card = HkidCard.builder()
+                .hkidNumber(new HkidNumber("A123456(3)"))
+                .dateOfRegistration(LocalDate.of(2020, 6, 1))
+                .build();
 
         String value = card.toString();
 
@@ -77,7 +113,7 @@ class HkidCardTest {
     @Test
     void generatedPrefixMatchesHongKongBirthRegistrationPeriod() {
         for (int seed = 0; seed < 500; seed++) {
-            HkidCard card = HkidCardUtil.generateRandomCard(new Random(seed), TODAY);
+            HkidCard card = HkidCardUtil.generateRandomCard(new Random(seed), REFERENCE_DATE);
             LocalDate dateOfBirth = card.getDateOfBirth();
             DefinedPrefix prefix = card.getHkidNumber().getDefinedPrefix().orElse(null);
 
@@ -110,14 +146,14 @@ class HkidCardTest {
 
     @Test
     void generatedBirthPrefixUsesRegistrationDateAfterDateOfBirth() {
-        LocalDate today = LocalDate.of(2026, 7, 21);
+        LocalDate referenceDate = LocalDate.of(2026, 7, 21);
         LocalDate dateOfBirth = LocalDate.of(1988, 12, 31);
-        LocalDate earliestDateOfBirthForAge = today.minusYears(38).plusDays(1);
+        LocalDate earliestDateOfBirthForAge = referenceDate.minusYears(38).plusDays(1);
         int dateOfBirthOffset = Math.toIntExact(
                 ChronoUnit.DAYS.between(earliestDateOfBirthForAge, dateOfBirth));
         Random random = new SequenceRandom(26, dateOfBirthOffset, 0, 0, 1);
 
-        HkidCard card = HkidCardUtil.generateRandomCard(random, today);
+        HkidCard card = HkidCardUtil.generateRandomCard(random, referenceDate);
 
         assertEquals(dateOfBirth, card.getDateOfBirth());
         assertEquals(DefinedPrefix.Y, card.getHkidNumber().getDefinedPrefix().orElse(null));
@@ -141,17 +177,18 @@ class HkidCardTest {
         assertNotNull(hkidCard.getDateOfBirth());
         assertNotNull(hkidCard.getDateOfRegistration());
         assertNotNull(hkidCard.getFirstRegistrationYearMonth());
-        LocalDate earliestCurrentRegistration = TODAY.minusYears(10).isAfter(HkidCard.CURRENT_SMART_HKID_START_DATE)
-                ? TODAY.minusYears(10)
+        LocalDate earliestCurrentRegistration = REFERENCE_DATE.minusYears(10)
+                .isAfter(HkidCard.CURRENT_SMART_HKID_START_DATE)
+                ? REFERENCE_DATE.minusYears(10)
                 : HkidCard.CURRENT_SMART_HKID_START_DATE;
         assertFalse(hkidCard.getDateOfRegistration().isBefore(earliestCurrentRegistration));
-        assertFalse(hkidCard.getDateOfRegistration().isAfter(TODAY));
+        assertFalse(hkidCard.getDateOfRegistration().isAfter(REFERENCE_DATE));
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
                 .isBefore(YearMonth.from(hkidCard.getDateOfBirth().plusYears(11))));
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
                 .isAfter(YearMonth.from(hkidCard.getDateOfRegistration())));
         assertEquals(hkidCard.getChineseName().length(), hkidCard.getChineseCommercialCodes().size());
-        hkidCard.validateAsOf(TODAY);
+        hkidCard.validateAsOf(REFERENCE_DATE);
     }
 
     private static final class BoundaryRandom extends Random {

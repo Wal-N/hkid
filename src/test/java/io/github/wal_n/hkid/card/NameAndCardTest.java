@@ -6,6 +6,8 @@ import io.github.wal_n.hkid.name.EnglishNameUtil;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Arrays;
@@ -13,22 +15,36 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NameAndCardTest {
+    private static final LocalDate REFERENCE_DATE = LocalDate.of(2026, 7, 21);
+
     @Test
-    void chineseNameValidatesUpdatedSurnameAndPersonalNameTogether() {
-        ChineseName name = new ChineseName();
-        name.setSurname("陳");
-        name.setPersonalName("大文");
-        name.setCommercialCodes(Arrays.asList("1234", "5678", "9999"));
+    void cardAndNestedModelsAreImmutable() {
+        assertImmutable(HkidCard.class);
+        assertImmutable(ChineseName.class);
+        assertImmutable(EnglishName.class);
+        assertImmutable(HkidSymbols.class);
+    }
+
+    @Test
+    void chineseNameValidatesAllPartsAtomically() {
+        ChineseName name = new ChineseName(
+                "陳",
+                "大文",
+                Arrays.asList("1234", "5678", "9999"));
 
         assertEquals("陳大文", name.getFullName());
-        assertThrows(IllegalArgumentException.class, () -> name.setPersonalName("大文一二三四"));
-        assertThrows(IllegalArgumentException.class, () -> name.setSurname("Chan"));
-        assertThrows(IllegalArgumentException.class, () -> name.setCommercialCodes(Arrays.asList("1234", "5678")));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ChineseName("陳", "大文一二三四", null));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ChineseName("Chan", "大文", null));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ChineseName("陳", "大文", Arrays.asList("1234", "5678")));
+        assertThrows(UnsupportedOperationException.class,
+                () -> name.getCommercialCodes().add("0000"));
     }
 
     @Test
@@ -40,101 +56,113 @@ class NameAndCardTest {
         assertTrue(EnglishNameUtil.isValidNamePart("O'Connor"));
         assertFalse(EnglishNameUtil.isValidNamePart("A "));
         assertFalse(EnglishNameUtil.isValidNamePart("Chan---"));
-        assertThrows(IllegalArgumentException.class, () -> name.setSurname("123"));
-        assertThrows(IllegalArgumentException.class, () -> name.setSurname("Chan---"));
+        assertThrows(IllegalArgumentException.class, () -> new EnglishName("123", "Tai Man"));
+        assertThrows(IllegalArgumentException.class, () -> new EnglishName("Chan---", "Tai Man"));
     }
 
     @Test
-    void hkidReturnsEmptyCommercialCodeListWhenChineseNameIsMissing() {
-        HkidCard hkid = new HkidCard();
+    void emptyCardUsesNonNullEmptyNames() {
+        HkidCard card = HkidCard.builder().build();
 
-        assertTrue(hkid.getChineseCommercialCodes().isEmpty());
+        assertNotNull(card.getChineseNameInfo());
+        assertNotNull(card.getEnglishNameInfo());
+        assertEquals("", card.getChineseSurname());
+        assertEquals("", card.getChinesePersonalName());
+        assertEquals("", card.getChineseName());
+        assertEquals("", card.getEnglishSurname());
+        assertEquals("", card.getEnglishPersonalName());
+        assertEquals("", card.getEnglishName());
+        assertTrue(card.getChineseCommercialCodes().isEmpty());
     }
 
     @Test
-    void namesDefaultAndNormalizeToEmptyStrings() {
-        HkidCard hkid = new HkidCard();
+    void builderNormalizesNullNamesAndNameParts() {
+        HkidCard card = HkidCard.builder()
+                .chineseName(null)
+                .englishName(null)
+                .chineseSurname(null)
+                .chinesePersonalName(null)
+                .englishSurname(null)
+                .englishPersonalName(null)
+                .build();
 
-        assertNotNull(hkid.getChineseNameInfo());
-        assertNotNull(hkid.getEnglishNameInfo());
-        assertEquals("", hkid.getChineseSurname());
-        assertEquals("", hkid.getChinesePersonalName());
-        assertEquals("", hkid.getChineseName());
-        assertEquals("", hkid.getEnglishSurname());
-        assertEquals("", hkid.getEnglishPersonalName());
-        assertEquals("", hkid.getEnglishName());
-
-        hkid.setChineseName(null);
-        hkid.setEnglishName(null);
-        hkid.setChineseSurname(null);
-        hkid.setChinesePersonalName(null);
-        hkid.setEnglishSurname(null);
-        hkid.setEnglishPersonalName(null);
-
-        assertNotNull(hkid.getChineseNameInfo());
-        assertNotNull(hkid.getEnglishNameInfo());
-        assertEquals("", hkid.getChineseSurname());
-        assertEquals("", hkid.getChinesePersonalName());
-        assertEquals("", hkid.getChineseName());
-        assertEquals("", hkid.getEnglishSurname());
-        assertEquals("", hkid.getEnglishPersonalName());
-        assertEquals("", hkid.getEnglishName());
+        assertEquals("", card.getChineseName());
+        assertEquals("", card.getEnglishName());
     }
 
     @Test
-    void failedNameSettersLeaveEmptyNameObjectsUnchanged() {
-        HkidCard hkid = new HkidCard();
-        ChineseName chineseName = hkid.getChineseNameInfo();
-        EnglishName englishName = hkid.getEnglishNameInfo();
+    void builderValidatesNamesWhenCreatingTheImmutableCard() {
+        HkidCard.Builder builder = HkidCard.builder()
+                .chineseSurname("ABC")
+                .englishSurname("123");
 
-        assertThrows(IllegalArgumentException.class, () -> hkid.setChineseSurname("ABC"));
-        assertThrows(IllegalArgumentException.class, () -> hkid.setChinesePersonalName("ABC"));
-        assertThrows(IllegalArgumentException.class,
-                () -> hkid.setChineseCommercialCodes(Arrays.asList("123")));
-        assertSame(chineseName, hkid.getChineseNameInfo());
-        assertEquals("", hkid.getChineseName());
-        assertTrue(hkid.getChineseCommercialCodes().isEmpty());
-
-        assertThrows(IllegalArgumentException.class, () -> hkid.setEnglishSurname("123"));
-        assertThrows(IllegalArgumentException.class, () -> hkid.setEnglishPersonalName("123"));
-        assertSame(englishName, hkid.getEnglishNameInfo());
-        assertEquals("", hkid.getEnglishName());
+        assertThrows(IllegalArgumentException.class, builder::build);
+        HkidCard validCard = builder
+                .chineseSurname("陳")
+                .englishSurname("Chan")
+                .build();
+        assertEquals("陳", validCard.getChineseName());
+        assertEquals("Chan", validCard.getEnglishName());
     }
 
     @Test
-    void hkidReadsAndSetsSymbolCodes() {
-        HkidCard hkid = new HkidCard();
+    void cardReadsSymbolCodes() {
         HkidSymbols symbols = HkidSymbols.of(
                 HkidSymbol.ADULT_RE_ENTRY_PERMIT,
                 HkidSymbol.RIGHT_OF_ABODE,
                 HkidSymbol.BORN_IN_HONG_KONG);
-        hkid.setSymbols(symbols);
+        HkidCard card = HkidCard.builder().symbols(symbols).build();
 
-        assertEquals(symbols, hkid.getSymbols());
-        assertEquals("***AZ", hkid.getSymbolCodes());
+        assertEquals(symbols, card.getSymbols());
+        assertEquals("***AZ", card.getSymbolCodes());
     }
 
     @Test
-    void hkidValidatesDateOrder() {
-        HkidCard hkid = new HkidCard();
-        hkid.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        hkid.setFirstRegistrationYearMonth(YearMonth.of(2001, 6));
-        hkid.setDateOfRegistration(LocalDate.of(2020, 6, 1));
+    void cardValidatesDateOrderAtBuildTime() {
+        HkidCard card = HkidCard.builder()
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .firstRegistrationYearMonth(YearMonth.of(2001, 6))
+                .dateOfRegistration(LocalDate.of(2020, 6, 1))
+                .build();
 
-        assertEquals("06-01", hkid.getFirstRegistrationYearMonthStr());
-        assertThrows(IllegalArgumentException.class, () -> hkid.setDateOfBirth(LocalDate.now().plusDays(1)));
-        assertThrows(IllegalArgumentException.class,
-                () -> hkid.setDateOfRegistration(HkidCard.CURRENT_SMART_HKID_START_DATE.minusDays(1)));
-        assertThrows(IllegalArgumentException.class,
-                () -> hkid.setFirstRegistrationYearMonth(YearMonth.of(1989, 12)));
-        assertThrows(IllegalArgumentException.class,
-                () -> hkid.setFirstRegistrationYearMonth(YearMonth.of(2020, 7)));
-        assertThrows(IllegalArgumentException.class,
-                () -> hkid.setDateOfBirth(LocalDate.of(2002, 1, 1)));
+        assertEquals("06-01", card.getFirstRegistrationYearMonthStr());
+        assertThrows(IllegalArgumentException.class, () -> HkidCard.builder()
+                .dateOfRegistration(HkidCard.CURRENT_SMART_HKID_START_DATE.minusDays(1))
+                .build());
+        assertThrows(IllegalArgumentException.class, () -> card.toBuilder()
+                .firstRegistrationYearMonth(YearMonth.of(1989, 12))
+                .build());
+        assertThrows(IllegalArgumentException.class, () -> card.toBuilder()
+                .firstRegistrationYearMonth(YearMonth.of(2020, 7))
+                .build());
+        assertThrows(IllegalArgumentException.class, () -> card.toBuilder()
+                .dateOfBirth(LocalDate.of(2002, 1, 1))
+                .build());
+        assertThrows(IllegalArgumentException.class, () -> card.toBuilder()
+                .firstRegistrationYearMonth(YearMonth.of(2020, 6))
+                .dateOfRegistration(LocalDate.of(2020, 5, 31))
+                .build());
+    }
 
-        hkid.setFirstRegistrationYearMonth(YearMonth.of(2020, 6));
+    @Test
+    void timeDependentChecksUseAnExplicitReferenceDate() {
+        HkidCard futureCard = HkidCard.builder()
+                .dateOfBirth(REFERENCE_DATE.plusDays(1))
+                .build();
+
         assertThrows(IllegalArgumentException.class,
-                () -> hkid.setDateOfRegistration(LocalDate.of(2020, 5, 31)));
+                () -> futureCard.getAge(REFERENCE_DATE));
+        assertThrows(IllegalArgumentException.class,
+                () -> futureCard.validateAsOf(REFERENCE_DATE));
+        assertThrows(IllegalArgumentException.class,
+                () -> futureCard.getAge(null));
+
+        HkidCard historicalCard = HkidCard.builder()
+                .dateOfBirth(LocalDate.of(1990, 7, 22))
+                .build();
+        assertEquals(Integer.valueOf(35), historicalCard.getAge(REFERENCE_DATE).orElse(null));
+        assertEquals(Integer.valueOf(36),
+                historicalCard.getAge(REFERENCE_DATE.plusDays(1)).orElse(null));
     }
 
     @Test
@@ -148,51 +176,52 @@ class NameAndCardTest {
     }
 
     @Test
-    void hkidExposesSexMarkersAndPrintedValueSeparately() {
-        HkidCard hkid = new HkidCard();
-        hkid.setSex(Sex.FEMALE);
+    void cardExposesSexMarkersAndPrintedValueSeparately() {
+        HkidCard femaleCard = HkidCard.builder().sex(Sex.FEMALE).build();
 
-        assertEquals("女", hkid.getSexChiMarker());
-        assertEquals("F", hkid.getSexEngMarker());
-        assertEquals("女 F", hkid.getSexPrintedValue());
+        assertEquals("女", femaleCard.getSexChiMarker());
+        assertEquals("F", femaleCard.getSexEngMarker());
+        assertEquals("女 F", femaleCard.getSexPrintedValue());
 
-        hkid.setSexEngMarker("m");
-        assertEquals(Sex.MALE, hkid.getSex());
+        HkidCard maleCard = femaleCard.toBuilder().sexEngMarker("m").build();
+        assertEquals(Sex.MALE, maleCard.getSex());
+        assertEquals(Sex.FEMALE, femaleCard.getSex());
     }
 
     @Test
-    void hkidValidatesEligibilitySymbolAgainstAgeAtRegistration() {
-        HkidCard impossibleAdultCard = new HkidCard();
-        impossibleAdultCard.setDateOfBirth(LocalDate.of(2008, 1, 1));
-        impossibleAdultCard.setSymbolCodes("***AZ");
+    void cardValidatesEligibilitySymbolAgainstAgeAtRegistration() {
+        assertThrows(IllegalArgumentException.class, () -> HkidCard.builder()
+                .dateOfBirth(LocalDate.of(2008, 1, 1))
+                .symbolCodes("***AZ")
+                .dateOfRegistration(LocalDate.of(2020, 6, 1))
+                .build());
 
-        assertThrows(IllegalArgumentException.class,
-                () -> impossibleAdultCard.setDateOfRegistration(LocalDate.of(2020, 6, 1)));
-
-        HkidCard impossibleAdultCardLoadedInAnotherOrder = new HkidCard();
-        impossibleAdultCardLoadedInAnotherOrder.setDateOfRegistration(LocalDate.of(2020, 6, 1));
-        impossibleAdultCardLoadedInAnotherOrder.setSymbolCodes("***AZ");
-
-        assertThrows(IllegalArgumentException.class,
-                () -> impossibleAdultCardLoadedInAnotherOrder.setDateOfBirth(LocalDate.of(2008, 1, 1)));
-
-        HkidCard impossibleMinorCard = new HkidCard();
-        impossibleMinorCard.setDateOfRegistration(LocalDate.of(2020, 6, 1));
-        impossibleMinorCard.setDateOfBirth(LocalDate.of(1990, 1, 1));
-
-        assertThrows(IllegalArgumentException.class, () -> impossibleMinorCard.setSymbolCodes("*AZ"));
+        assertThrows(IllegalArgumentException.class, () -> HkidCard.builder()
+                .dateOfRegistration(LocalDate.of(2020, 6, 1))
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .symbolCodes("*AZ")
+                .build());
     }
 
     @Test
-    void hkidCanLoadHistoricalJuvenileCardAndValidateItAsOfAnotherDate() {
-        HkidCard card = new HkidCard();
-        card.setDateOfBirth(LocalDate.of(2008, 1, 1));
-        card.setSymbolCodes("*AZ");
-        card.setDateOfRegistration(LocalDate.of(2020, 6, 1));
+    void historicalJuvenileCardRemainsValidAfterHolderTurnsEighteen() {
+        HkidCard card = HkidCard.builder()
+                .dateOfBirth(LocalDate.of(2008, 1, 1))
+                .symbolCodes("*AZ")
+                .dateOfRegistration(LocalDate.of(2020, 6, 1))
+                .build();
 
         card.validateAsOf(LocalDate.of(2025, 12, 31));
-        assertThrows(IllegalArgumentException.class,
-                () -> card.validateAsOf(LocalDate.of(2026, 1, 1)));
+        card.validateAsOf(LocalDate.of(2026, 1, 1));
     }
 
+    private static void assertImmutable(Class<?> type) {
+        assertTrue(Modifier.isFinal(type.getModifiers()), type.getSimpleName());
+        for (Field field : type.getDeclaredFields()) {
+            if (!Modifier.isStatic(field.getModifiers())) {
+                assertTrue(Modifier.isFinal(field.getModifiers()),
+                        type.getSimpleName() + "." + field.getName());
+            }
+        }
+    }
 }

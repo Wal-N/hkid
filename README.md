@@ -27,39 +27,13 @@ The Java base package is `io.github.wal_n.hkid`, organised by domain:
   symbols, and complete sample-card generation.
 
 The Maven coordinates are `io.github.wal-n:hkid-utils:0.1.0-SNAPSHOT`.
+Domain models are immutable. Use `HkidCard.builder()` (or `toBuilder()` on an
+existing card) when assembling a card with different values.
 
 ## Requirements
 
 - Java 8 or higher
 - Maven 3.8 or higher for the normal build and test workflow
-
-## Build And Test
-
-Run the full JUnit 5 test suite:
-
-```powershell
-mvn test
-```
-
-In IntelliJ IDEA, import `pom.xml` as a Maven project so that
-`src/main/resources` is included on the runtime classpath. If the project is
-opened as a plain Java module, mark `src/main/resources` as **Resources Root**.
-
-Build the jar without rerunning tests:
-
-```powershell
-mvn -DskipTests package
-```
-
-If Maven is not installed, you can still compile the main classes from
-PowerShell:
-
-```powershell
-javac -encoding UTF-8 -d out (Get-ChildItem src\main\java -Recurse -Filter *.java | ForEach-Object { $_.FullName })
-```
-
-`HkidCardTest` is a JUnit integration test under `src/test/java` and is not included
-in the published jar.
 
 ## HKID Number Usage
 
@@ -68,7 +42,7 @@ import io.github.wal_n.hkid.number.HkidNumber;
 
 public class Example {
     public static void main(String[] args) {
-        HkidNumber hkidNumber = new HkidNumber("A123456(3)");
+        HkidNumber hkidNumber = new HkidNumber("A123456");
 
         System.out.println(hkidNumber.getPrefix());       // A
         System.out.println(hkidNumber.getNumerals());     // 123456
@@ -113,35 +87,22 @@ boolean valid = HkidNumber.validateCheckDigit("A123456", "3");
 ## Formatting
 
 ```java
-import io.github.wal_n.hkid.number.HkidNumber;
+HkidNumber hkidNumber = new HkidNumber("A123456(3)");
 
-public class Example {
-    public static void main(String[] args) {
-        HkidNumber hkidNumber = new HkidNumber("A123456");
-
-        System.out.println(hkidNumber.toString());                                   // A123456
-        System.out.println(hkidNumber.toString(HkidNumber.Format.WITHOUT_CHECK_DIGIT));   // A123456
-        System.out.println(hkidNumber.toString(HkidNumber.Format.WithoutParentheses));  // A1234563
-        System.out.println(hkidNumber.toString(HkidNumber.Format.Complete));            // A123456(3)
-    }
-}
+System.out.println(hkidNumber.toString());                                   // A123456
+System.out.println(hkidNumber.toString(HkidNumber.Format.WITHOUT_CHECK_DIGIT));   // A123456
+System.out.println(hkidNumber.toString(HkidNumber.Format.WithoutParentheses));  // A1234563
+System.out.println(hkidNumber.toString(HkidNumber.Format.Complete));            // A123456(3)
 ```
 
 ## Random HKID Numbers
 
 ```java
-import io.github.wal_n.hkid.number.HkidNumber;
-import io.github.wal_n.hkid.number.HkidNumberUtil;
+HkidNumber definedPrefix = HkidNumberUtil.generateRandomHkidNumber();
+HkidNumber anyPrefix = HkidNumberUtil.generateRandomHkidNumber(false);
 
-public class Example {
-    public static void main(String[] args) {
-        HkidNumber definedPrefix = HkidNumberUtil.generateRandomHkidNumber();
-        HkidNumber anyPrefix = HkidNumberUtil.generateRandomHkidNumber(false);
-
-        System.out.println(definedPrefix.toString(HkidNumber.Format.Complete));
-        System.out.println(anyPrefix.toString(HkidNumber.Format.Complete));
-    }
-}
+System.out.println(definedPrefix.toString(HkidNumber.Format.Complete));
+System.out.println(anyPrefix.toString(HkidNumber.Format.Complete));
 ```
 
 By default, random numbers use one of the predefined prefixes in
@@ -155,11 +116,6 @@ prefix has no predefined metadata. Use `getDefinedPrefix()` when callers need to
 distinguish that case explicitly:
 
 ```java
-import io.github.wal_n.hkid.number.DefinedPrefix;
-import io.github.wal_n.hkid.number.HkidNumber;
-
-import java.util.Optional;
-
 HkidNumber hkidNumber = new HkidNumber("Q123456");
 
 String english = hkidNumber.getPrefixDescription();
@@ -177,27 +133,16 @@ The enum also exposes `getDescription()`,
 an English name using Hong Kong Government Cantonese Romanisation.
 The no-argument `generateRandomName()` has a 10% chance of generating a one-character
 personal name and a 90% chance of generating a two-character personal name.
+Use `generateRandomName(length)` to request a personal name containing one to
+five Chinese characters; the default distribution is a generation policy, not a
+general restriction on Hong Kong Chinese names.
 
 ```java
-import io.github.wal_n.hkid.name.GeneratedName;
-import io.github.wal_n.hkid.name.HkidNameUtil;
+GeneratedName name = HkidNameUtil.generateRandomName();
 
-public class Example {
-    public static void main(String[] args) {
-        GeneratedName oneCharName = HkidNameUtil.generateRandomName(1);
-        GeneratedName twoCharName = HkidNameUtil.generateRandomName(2);
-
-        System.out.println(oneCharName.getChineseFullName());
-        System.out.println(oneCharName.getCommercialCodes());
-        System.out.println(oneCharName.getRomanisation());
-        System.out.println(oneCharName.getEnglishFullName());
-
-        System.out.println(twoCharName.getChineseFullName());
-        System.out.println(twoCharName.getCommercialCodes());
-        System.out.println(twoCharName.getRomanisation());
-        System.out.println(twoCharName.getEnglishFullName());
-    }
-}
+System.out.println(name.getChineseFullName());
+System.out.println(name.getCommercialCodes());
+System.out.println(name.getEnglishFullName());
 ```
 
 Seed data lives in
@@ -223,12 +168,8 @@ romanisation, or weighting values.
 Use `HkidCard` when you need to model more than the card number:
 
 ```java
-import io.github.wal_n.hkid.card.HkidCard;
-import io.github.wal_n.hkid.card.HkidSymbol;
-import io.github.wal_n.hkid.card.HkidSymbols;
-import io.github.wal_n.hkid.card.Sex;
-import io.github.wal_n.hkid.name.ChineseName;
-import io.github.wal_n.hkid.name.EnglishName;
+import io.github.wal_n.hkid.card.*;
+import io.github.wal_n.hkid.name.*;
 import io.github.wal_n.hkid.number.HkidNumber;
 
 import java.time.LocalDate;
@@ -237,21 +178,23 @@ import java.util.Arrays;
 
 public class Example {
     public static void main(String[] args) {
-        HkidCard card = new HkidCard();
-        card.setHkidNumber(new HkidNumber("A123456(3)"));
-        card.setChineseName(new ChineseName("陳", "大文",
-                Arrays.asList("7115", "1129", "2429")));
-        card.setEnglishName(new EnglishName("Chan", "Tai Man"));
-        card.setSex(Sex.MALE);
-        card.setDateOfBirth(LocalDate.of(1990, 1, 15));
-        card.setSymbols(HkidSymbols.of(
-                HkidSymbol.ADULT_RE_ENTRY_PERMIT,
-                HkidSymbol.RIGHT_OF_ABODE,
-                HkidSymbol.BORN_IN_HONG_KONG));
-        card.setFirstRegistrationYearMonth(YearMonth.of(2001, 6));
-        card.setDateOfRegistration(LocalDate.of(2020, 6, 1));
+        HkidCard card = HkidCard.builder()
+                .hkidNumber(new HkidNumber("A123456(3)"))
+                .chineseName(new ChineseName("陳", "大文",
+                        Arrays.asList("7115", "1129", "2429")))
+                .englishName(new EnglishName("Chan", "Tai Man"))
+                .sex(Sex.MALE)
+                .dateOfBirth(LocalDate.of(1990, 1, 15))
+                .symbols(HkidSymbols.of(
+                        HkidSymbol.ADULT_RE_ENTRY_PERMIT,
+                        HkidSymbol.RIGHT_OF_ABODE,
+                        HkidSymbol.BORN_IN_HONG_KONG))
+                .firstRegistrationYearMonth(YearMonth.of(2001, 6))
+                .dateOfRegistration(LocalDate.of(2020, 6, 1))
+                .build();
 
         System.out.println(card);
+        System.out.println(card.getAge(LocalDate.of(2026, 7, 21)));
     }
 }
 ```
@@ -259,16 +202,9 @@ public class Example {
 You can also generate a sample card:
 
 ```java
-import io.github.wal_n.hkid.card.HkidCard;
-import io.github.wal_n.hkid.card.HkidCardUtil;
+HkidCard card = HkidCardUtil.generateRandomCard();
 
-public class Example {
-    public static void main(String[] args) {
-        HkidCard card = HkidCardUtil.generateRandomCard();
-
-        System.out.println(card);
-    }
-}
+System.out.println(card);
 ```
 
 `HkidCard.toString()` only includes the masked HKID number and date of
@@ -291,8 +227,6 @@ symbol string directly from card or OCR input. Definitions follow the
 [Immigration Department ROP133](https://www.immd.gov.hk/pdforms/rop133.pdf).
 
 ```java
-import io.github.wal_n.hkid.card.HkidSymbols;
-
 HkidSymbols symbols = HkidSymbols.parse("***AZBN");
 
 System.out.println(symbols); // ***AZBN
@@ -307,13 +241,10 @@ birth categories allow at most one symbol each. `B` and `N` may appear together.
 An `HkidCard` can also read or set the complete printed value:
 
 ```java
-import io.github.wal_n.hkid.card.HkidCard;
-
-import java.time.LocalDate;
-
-HkidCard card = new HkidCard();
-card.setDateOfBirth(LocalDate.of(1990, 1, 15));
-card.setSymbolCodes("***AZ");
+HkidCard card = HkidCard.builder()
+        .dateOfBirth(LocalDate.of(1990, 1, 15))
+        .symbolCodes("***AZ")
+        .build();
 
 System.out.println(card.getSymbolCodes()); // ***AZ
 ```
@@ -330,8 +261,8 @@ System.out.println(card.getSymbolCodes()); // ***AZ
   ideographs, but not compatibility forms or radical symbols outside that property.
 - Chinese commercial codes must be four digits each. When a Chinese name is set,
   the number of commercial codes must match the number of Chinese characters.
-- Generated names keep the Chinese name, commercial codes, and romanisation
-  syllables aligned character-by-character.
+- Generated names keep the Chinese name and commercial codes aligned
+  character-by-character, and expose the generated English name.
 - English name parts must start with a letter and may contain letters, spaces,
   dots, apostrophes, or hyphens.
 - English sex markers are parsed with `Sex.fromEngMarker("M")` or
@@ -340,12 +271,13 @@ System.out.println(card.getSymbolCodes()); // ***AZ
 - Current smart HKID symbols reject duplicate or conflicting categories. `*` or
   `***` must match the holder's age on the current-card registration date, so a
   historical juvenile card can still be represented after its holder turns 18.
-- Use `validateAsOf(date)` to check the dated fields and age symbol at another
-  point in time.
+- Use `getAge(referenceDate)` and `validateAsOf(referenceDate)` for
+  time-dependent checks. Models never read the system clock themselves.
 - The month and year of first registration cannot be before the holder's birth
   month or after the current-card registration date.
 - Current smart HKID registration dates cannot be before 26 November 2018, and
-  all card dates reject future or inconsistent values.
+  card construction rejects inconsistent values. `validateAsOf(referenceDate)`
+  rejects values that are future-dated relative to the supplied date.
 
 ## License
 

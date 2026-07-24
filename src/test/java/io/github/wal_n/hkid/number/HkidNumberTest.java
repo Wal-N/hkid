@@ -2,6 +2,8 @@ package io.github.wal_n.hkid.number;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Locale;
@@ -62,24 +64,15 @@ class HkidNumberTest {
     }
 
     @Test
-    void checkDigitReflectsSetterChanges() {
-        HkidNumber hkidNumber = new HkidNumber("A123456(3)");
-
-        hkidNumber.setPrefix("B");
-        assertEquals("B", hkidNumber.getPrefix());
-        assertEquals("6", hkidNumber.getCheckDigit());
-
-        hkidNumber.setNumerals("654321");
-        assertEquals("654321", hkidNumber.getNumerals());
-        assertEquals("4", hkidNumber.getCheckDigit());
-    }
-
-    @Test
-    void settersRejectInvalidValues() {
-        HkidNumber hkidNumber = new HkidNumber("A123456(3)");
-
-        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class, () -> hkidNumber.setPrefix("1"));
-        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class, () -> hkidNumber.setNumerals("ABCDE"));
+    void isAnImmutableValueObject() {
+        assertTrue(Modifier.isFinal(HkidNumber.class.getModifiers()));
+        for (Field field : HkidNumber.class.getDeclaredFields()) {
+            assertTrue(Modifier.isFinal(field.getModifiers()), field.getName());
+        }
+        assertEquals(new HkidNumber("A123456"), new HkidNumber("A123456(3)"));
+        assertEquals(
+                new HkidNumber("A123456").hashCode(),
+                new HkidNumber("A123456(3)").hashCode());
     }
 
     @Test
