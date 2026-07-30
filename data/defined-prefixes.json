@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 1,
+  "prefixes": [
+    {
+      "id": "A",
+      "descriptions": {
+        "en": "Early identity-card registration sequence used from 1949 through 1962",
+        "zh-Hant": "1949至1962年使用的早期身份證登記系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1949-01-01",
+        "endExclusive": "1963-01-01"
+      }
+    },
+    {
+      "id": "B",
+      "descriptions": {
+        "en": "City-office issue sequence used from 1955 through 1960",
+        "zh-Hant": "1955至1960年使用的市區辦事處簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1955-01-01",
+        "endExclusive": "1961-01-01"
+      }
+    },
+    {
+      "id": "C",
+      "descriptions": {
+        "en": "New Territories office issue sequence used from 1960 through 1983",
+        "zh-Hant": "1960至1983年使用的新界辦事處簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1960-01-01",
+        "endExclusive": "1984-01-01"
+      }
+    },
+    {
+      "id": "D",
+      "descriptions": {
+        "en": "Hong Kong Island office issue sequence used from 1960 through 1983",
+        "zh-Hant": "1960至1983年使用的港島辦事處簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1960-01-01",
+        "endExclusive": "1984-01-01"
+      }
+    },
+    {
+      "id": "E",
+      "descriptions": {
+        "en": "Kowloon office issue sequence used from 1955 through 1969",
+        "zh-Hant": "1955至1969年使用的九龍辦事處簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1955-01-01",
+        "endExclusive": "1970-01-01"
+      }
+    },
+    {
+      "id": "F",
+      "descriptions": {
+        "en": "First-issue sequence in use from 24 February 2020",
+        "zh-Hant": "2020年2月24日起使用的首次簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "2020-02-24",
+        "endExclusive": null
+      }
+    },
+    {
+      "id": "G",
+      "descriptions": {
+        "en": "Kowloon office issue sequence used from 1967 through 1983",
+        "zh-Hant": "1967至1983年使用的九龍辦事處簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1967-01-01",
+        "endExclusive": "1984-01-01"
+      }
+    },
+    {
+      "id": "H",
+      "descriptions": {
+        "en": "Hong Kong Island office issue sequence used from 1979 through 1983",
+        "zh-Hant": "1979至1983年使用的港島辦事處簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1979-01-01",
+        "endExclusive": "1984-01-01"
+      }
+    },
+    {
+      "id": "J",
+      "descriptions": {
+        "en": "Consular-personnel sequence in use from 23 October 1991",
+        "zh-Hant": "1991年10月23日起使用的領事人員系列"
+      },
+      "period": null
+    },
+    {
+      "id": "K",
+      "descriptions": {
+        "en": "First-issue sequence used from 28 March 1983 through 31 July 1990",
+        "zh-Hant": "1983年3月28日至1990年7月31日使用的首次簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1983-03-28",
+        "endExclusive": "1990-08-01"
+      }
+    },
+    {
+      "id": "L",
+      "descriptions": {
+        "en": "System-outage reserve sequence used from 1983 until its withdrawal on 23 June 2003",
+        "zh-Hant": "1983年起供系統故障時使用、並於2003年6月23日停用的後備系列"
+      },
+      "period": null
+    },
+    {
+      "id": "M",
+      "descriptions": {
+        "en": "First-issue sequence used from 1 August 2011 through 23 February 2020",
+        "zh-Hant": "2011年8月1日至2020年2月23日使用的首次簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "2011-08-01",
+        "endExclusive": "2020-02-24"
+      }
+    },
+    {
+      "id": "N",
+      "descriptions": {
+        "en": "Hong Kong birth-registration sequence in use from 1 June 2019",
+        "zh-Hant": "2019年6月1日起使用的香港出生登記系列"
+      },
+      "period": {
+        "basis": "BIRTH_REGISTRATION",
+        "start": "2019-06-01",
+        "endExclusive": null
+      }
+    },
+    {
+      "id": "P",
+      "descriptions": {
+        "en": "First-issue sequence used from 1 August 1990 through 27 December 2000",
+        "zh-Hant": "1990年8月1日至2000年12月27日使用的首次簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "1990-08-01",
+        "endExclusive": "2000-12-28"
+      }
+    },
+    {
+      "id": "R",
+      "descriptions": {
+        "en": "First-issue sequence used from 28 December 2000 through 31 July 2011",
+        "zh-Hant": "2000年12月28日至2011年7月31日使用的首次簽發系列"
+      },
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "2000-12-28",
+        "endExclusive": "2011-08-01"
+      }
+    },
+    {
+      "id": "S",
+      "descriptions": {
+        "en": "Hong Kong birth-registration sequence used from 1 April 2005 through 31 May 2019",
+        "zh-Hant": "2005年4月1日至2019年5月31日使用的香港出生登記系列"
+      },
+      "period": {
+        "basis": "BIRTH_REGISTRATION",
+        "start": "2005-04-01",
+        "endExclusive": "2019-06-01"
+      }
+    },
+    {
+      "id": "T",
+      "descriptions": {
+        "en": "System-outage reserve sequence used from 1983 until its withdrawal on 1 July 1997",
+        "zh-Hant": "1983年起供系統故障時使用、並於1997年7月1日停用的後備系列"
+      },
+      "period": null
+    },
+    {
+      "id": "V",
+      "descriptions": {
+        "en": "Visa-purpose identity-document sequence for children under 11, used from 28 March 1983 through 31 August 2003",
+        "zh-Hant": "1983年3月28日至2003年8月31日使用的11歲以下兒童簽證身份書系列"
+      },
+      "period": null
+    },
+    {
+      "id": "W",
+      "descriptions": {
+        "en": "Foreign-worker and domestic-helper first-issue sequence used from 10 November 1989 through 1 January 2009",
+        "zh-Hant": "1989年11月10日至2009年1月1日使用的外籍勞工及家庭傭工首次簽發系列"
+      },
+      "period": null
+    },
+    {
+      "id": "Y",
+      "descriptions": {
+        "en": "Hong Kong birth-registration sequence used from 1 January 1989 through 31 March 2005",
+        "zh-Hant": "1989年1月1日至2005年3月31日使用的香港出生登記系列"
+      },
+      "period": {
+        "basis": "BIRTH_REGISTRATION",
+        "start": "1989-01-01",
+        "endExclusive": "2005-04-01"
+      }
+    },
+    {
+      "id": "Z",
+      "descriptions": {
+        "en": "Hong Kong birth-registration sequence used from 1 January 1980 through 31 December 1988",
+        "zh-Hant": "1980年1月1日至1988年12月31日使用的香港出生登記系列"
+      },
+      "period": {
+        "basis": "BIRTH_REGISTRATION",
+        "start": "1980-01-01",
+        "endExclusive": "1989-01-01"
+      }
+    },
+    {
+      "id": "WX",
+      "descriptions": {
+        "en": "Foreign-worker and domestic-helper first-issue sequence in use from 2 January 2009",
+        "zh-Hant": "2009年1月2日起使用的外籍勞工及家庭傭工首次簽發系列"
+      },
+      "period": null
+    },
+    {
+      "id": "XA",
+      "descriptions": {
+        "en": "Legacy no-Chinese-name registration sequence used before 28 March 1983",
+        "zh-Hant": "1983年3月28日前用於未有中文姓名登記人士的舊式系列"
+      },
+      "period": null
+    },
+    {
+      "id": "XB",
+      "descriptions": {
+        "en": "Legacy no-Chinese-name registration sequence used before 28 March 1983",
+        "zh-Hant": "1983年3月28日前用於未有中文姓名登記人士的舊式系列"
+      },
+      "period": null
+    },
+    {
+      "id": "XC",
+      "descriptions": {
+        "en": "Legacy no-Chinese-name registration sequence used before 28 March 1983",
+        "zh-Hant": "1983年3月28日前用於未有中文姓名登記人士的舊式系列"
+      },
+      "period": null
+    },
+    {
+      "id": "XD",
+      "descriptions": {
+        "en": "Legacy no-Chinese-name registration sequence used before 28 March 1983",
+        "zh-Hant": "1983年3月28日前用於未有中文姓名登記人士的舊式系列"
+      },
+      "period": null
+    },
+    {
+      "id": "XE",
+      "descriptions": {
+        "en": "Legacy no-Chinese-name registration sequence used before 28 March 1983",
+        "zh-Hant": "1983年3月28日前用於未有中文姓名登記人士的舊式系列"
+      },
+      "period": null
+    },
+    {
+      "id": "XG",
+      "descriptions": {
+        "en": "Legacy no-Chinese-name registration sequence used before 28 March 1983",
+        "zh-Hant": "1983年3月28日前用於未有中文姓名登記人士的舊式系列"
+      },
+      "period": null
+    },
+    {
+      "id": "XH",
+      "descriptions": {
+        "en": "Legacy no-Chinese-name registration sequence used before 28 March 1983",
+        "zh-Hant": "1983年3月28日前用於未有中文姓名登記人士的舊式系列"
+      },
+      "period": null
+    }
+  ]
+}

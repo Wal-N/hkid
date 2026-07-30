@@ -1,0 +1,7 @@
+commercialCode,character,romanisation,commonSurname,weight
+# Comments and blank lines must not change the reported physical line number.
+
+# More descriptive metadata may appear before the first data row.
+
+# Invalid data begins below.
+0001,測,Test,not-a-boolean,1

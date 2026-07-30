@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "chineseNameCases": [
+    {
+      "id": "empty-chinese-name",
+      "surname": "",
+      "personalName": "",
+      "commercialCodes": [],
+      "expectFullName": ""
+    },
+    {
+      "id": "complete-chinese-name",
+      "surname": "\u9673",
+      "personalName": "\u5927\u6587",
+      "commercialCodes": ["7115", "1129", "2429"],
+      "expectFullName": "\u9673\u5927\u6587"
+    },
+    {
+      "id": "commercial-codes-are-optional",
+      "surname": "\u9673",
+      "personalName": "\u5927\u6587",
+      "commercialCodes": [],
+      "expectFullName": "\u9673\u5927\u6587"
+    }
+  ],
+  "invalidChineseNameCases": [
+    {
+      "id": "latin-surname",
+      "surname": "Chan",
+      "personalName": "\u5927\u6587",
+      "commercialCodes": []
+    },
+    {
+      "id": "name-longer-than-six-code-points",
+      "surname": "\u9673",
+      "personalName": "\u4E00\u4E8C\u4E09\u56DB\u4E94\u516D",
+      "commercialCodes": []
+    },
+    {
+      "id": "commercial-code-count-mismatch",
+      "surname": "\u9673",
+      "personalName": "\u5927\u6587",
+      "commercialCodes": ["7115", "1129"]
+    },
+    {
+      "id": "commercial-code-without-chinese-name",
+      "surname": "",
+      "personalName": "",
+      "commercialCodes": ["7115"]
+    },
+    {
+      "id": "invalid-commercial-code-format",
+      "surname": "\u9673",
+      "personalName": "\u5927\u6587",
+      "commercialCodes": ["7115", "1129", "ABC"]
+    }
+  ],
+  "englishNameCases": [
+    {
+      "id": "complete-english-name",
+      "surname": "Chan",
+      "personalName": "Tai Man",
+      "expectFullName": "Chan, Tai Man"
+    },
+    {
+      "id": "apostrophe-and-hyphen",
+      "surname": "O'Connor",
+      "personalName": "Anne-Marie",
+      "expectFullName": "O'Connor, Anne-Marie"
+    },
+    {
+      "id": "surname-only",
+      "surname": "Chan",
+      "personalName": "",
+      "expectFullName": "Chan"
+    },
+    {
+      "id": "personal-name-only",
+      "surname": "",
+      "personalName": "Tai Man",
+      "expectFullName": "Tai Man"
+    },
+    {
+      "id": "empty-english-name",
+      "surname": "",
+      "personalName": "",
+      "expectFullName": ""
+    }
+  ],
+  "invalidEnglishNameCases": [
+    {
+      "id": "numeric-surname",
+      "surname": "123",
+      "personalName": "Tai Man"
+    },
+    {
+      "id": "repeated-separators",
+      "surname": "Chan---",
+      "personalName": "Tai Man"
+    },
+    {
+      "id": "trailing-space",
+      "surname": "A ",
+      "personalName": "Tai Man"
+    }
+  ]
+}

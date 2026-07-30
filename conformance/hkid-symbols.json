@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "parseCases": [
+    {
+      "id": "empty-symbol-string",
+      "input": "   ",
+      "expectCanonical": ""
+    },
+    {
+      "id": "normalizes-case-and-canonical-order",
+      "input": "nbz***a",
+      "expectCanonical": "***AZBN"
+    },
+    {
+      "id": "minor-symbol-and-statuses",
+      "input": "*az",
+      "expectCanonical": "*AZ"
+    },
+    {
+      "id": "independent-other-information-symbols",
+      "input": "NB",
+      "expectCanonical": "BN"
+    }
+  ],
+  "invalidParseCases": [
+    {
+      "id": "legacy-symbol",
+      "input": "Y"
+    },
+    {
+      "id": "unknown-character",
+      "input": "H1"
+    },
+    {
+      "id": "duplicate-symbol",
+      "input": "AA"
+    },
+    {
+      "id": "conflicting-residential-status",
+      "input": "AC"
+    },
+    {
+      "id": "conflicting-place-of-birth",
+      "input": "ZX"
+    },
+    {
+      "id": "conflicting-age-symbols",
+      "input": "****"
+    }
+  ],
+  "ageValidationCases": [
+    {
+      "id": "adult-symbol-on-eighteenth-birthday",
+      "symbols": "***",
+      "dateOfBirth": "2000-01-01",
+      "referenceDate": "2018-01-01",
+      "expectValid": true
+    },
+    {
+      "id": "adult-symbol-before-eighteenth-birthday",
+      "symbols": "***",
+      "dateOfBirth": "2000-01-02",
+      "referenceDate": "2018-01-01",
+      "expectValid": false
+    },
+    {
+      "id": "minor-symbol-at-eleven",
+      "symbols": "*",
+      "dateOfBirth": "2009-01-01",
+      "referenceDate": "2020-01-01",
+      "expectValid": true
+    },
+    {
+      "id": "minor-symbol-before-eleven",
+      "symbols": "*",
+      "dateOfBirth": "2009-01-02",
+      "referenceDate": "2020-01-01",
+      "expectValid": false
+    },
+    {
+      "id": "minor-symbol-after-seventeen",
+      "symbols": "*",
+      "dateOfBirth": "2000-01-01",
+      "referenceDate": "2020-01-01",
+      "expectValid": false
+    },
+    {
+      "id": "non-age-symbols-do-not-restrict-age",
+      "symbols": "AZ",
+      "dateOfBirth": "2000-01-01",
+      "referenceDate": "2020-01-01",
+      "expectValid": true
+    },
+    {
+      "id": "future-date-of-birth-is-invalid",
+      "symbols": "AZ",
+      "dateOfBirth": "2020-01-02",
+      "referenceDate": "2020-01-01",
+      "expectValid": false
+    }
+  ]
+}

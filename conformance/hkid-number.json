@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "parseCases": [
+    {
+      "id": "single-prefix-without-check-digit",
+      "input": "A100000",
+      "expect": {
+        "prefix": "A",
+        "numerals": "100000",
+        "checkDigit": "7",
+        "withoutCheckDigit": "A100000",
+        "withoutParentheses": "A1000007",
+        "complete": "A100000(7)",
+        "masked": "****000(*)"
+      }
+    },
+    {
+      "id": "double-prefix-without-check-digit",
+      "input": "BC987654",
+      "expect": {
+        "prefix": "BC",
+        "numerals": "987654",
+        "checkDigit": "8",
+        "withoutCheckDigit": "BC987654",
+        "withoutParentheses": "BC9876548",
+        "complete": "BC987654(8)",
+        "masked": "*****654(*)"
+      }
+    },
+    {
+      "id": "check-digit-without-parentheses",
+      "input": "C1234569",
+      "expect": {
+        "prefix": "C",
+        "numerals": "123456",
+        "checkDigit": "9",
+        "withoutCheckDigit": "C123456",
+        "withoutParentheses": "C1234569",
+        "complete": "C123456(9)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "check-digit-with-parentheses",
+      "input": "DE123456(2)",
+      "expect": {
+        "prefix": "DE",
+        "numerals": "123456",
+        "checkDigit": "2",
+        "withoutCheckDigit": "DE123456",
+        "withoutParentheses": "DE1234562",
+        "complete": "DE123456(2)",
+        "masked": "*****456(*)"
+      }
+    },
+    {
+      "id": "letter-a-check-digit",
+      "input": "A000002(A)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "000002",
+        "checkDigit": "A",
+        "withoutCheckDigit": "A000002",
+        "withoutParentheses": "A000002A",
+        "complete": "A000002(A)",
+        "masked": "****002(*)"
+      }
+    },
+    {
+      "id": "normalizes-case-and-outer-whitespace",
+      "input": "  a123456(3)  ",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    }
+  ],
+  "invalidParseCases": [
+    {
+      "id": "empty-input",
+      "input": "",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "whitespace-only-input",
+      "input": "   ",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "missing-prefix",
+      "input": "123456",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "invalid-prefix-characters",
+      "input": "#$123456",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "too-few-numerals",
+      "input": "AB12345(9)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "too-many-numerals",
+      "input": "AB1234567(0)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "non-numeric-numeral",
+      "input": "AB1C345(9)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "conflicting-check-digit-forms",
+      "input": "A1234563(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "unclosed-parenthesis",
+      "input": "AB123456(9",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "parse-wrong-check-digit",
+      "input": "A123456(7)",
+      "expectError": "INVALID_CHECK_DIGIT"
+    }
+  ],
+  "checkDigitValidationCases": [
+    {
+      "id": "valid-single-prefix",
+      "input": "A123456",
+      "checkDigit": "3",
+      "expectValid": true
+    },
+    {
+      "id": "normalizes-lowercase-and-check-digit-whitespace",
+      "input": "a000002",
+      "checkDigit": " a ",
+      "expectValid": true
+    },
+    {
+      "id": "check-digit-validation-wrong-check-digit",
+      "input": "A123456",
+      "checkDigit": "7",
+      "expectValid": false
+    },
+    {
+      "id": "input-already-has-check-digit",
+      "input": "A1234563",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "input-has-parenthesized-check-digit",
+      "input": "A123456(3)",
+      "checkDigit": "3",
+      "expectValid": false
+    }
+  ],
+  "birthRegistrationPrefixCases": [
+    {
+      "id": "before-defined-ranges",
+      "date": "1979-12-31",
+      "expectPrefix": null
+    },
+    {
+      "id": "z-lower-boundary",
+      "date": "1980-01-01",
+      "expectPrefix": "Z"
+    },
+    {
+      "id": "z-upper-boundary",
+      "date": "1988-12-31",
+      "expectPrefix": "Z"
+    },
+    {
+      "id": "y-lower-boundary",
+      "date": "1989-01-01",
+      "expectPrefix": "Y"
+    },
+    {
+      "id": "s-lower-boundary",
+      "date": "2005-04-01",
+      "expectPrefix": "S"
+    },
+    {
+      "id": "n-lower-boundary",
+      "date": "2019-06-01",
+      "expectPrefix": "N"
+    }
+  ],
+  "firstIssuePrefixCases": [
+    {
+      "id": "k-lower-boundary-month",
+      "month": "1983-03",
+      "expectPrefixes": ["C", "D", "G", "H", "K"]
+    },
+    {
+      "id": "overlapping-month-returns-all-matches",
+      "month": "1960-01",
+      "expectPrefixes": ["A", "B", "C", "D", "E"]
+    },
+    {
+      "id": "r-lower-boundary-month",
+      "month": "2004-11",
+      "expectPrefixes": ["R"]
+    }
+  ]
+}

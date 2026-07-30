@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "symbols": [
+    {
+      "id": "ADULT_RE_ENTRY_PERMIT",
+      "code": "***",
+      "category": "RE_ENTRY_PERMIT_ELIGIBILITY",
+      "descriptions": {
+        "en": "Re-entry Permit eligibility; age 18 or older",
+        "zh-Hant": "18歲或以上及有回港證申領資格"
+      }
+    },
+    {
+      "id": "MINOR_RE_ENTRY_PERMIT",
+      "code": "*",
+      "category": "RE_ENTRY_PERMIT_ELIGIBILITY",
+      "descriptions": {
+        "en": "Re-entry Permit eligibility; ages 11 to 17",
+        "zh-Hant": "11至17歲及有回港證申領資格"
+      }
+    },
+    {
+      "id": "RIGHT_OF_ABODE",
+      "code": "A",
+      "category": "RESIDENTIAL_STATUS",
+      "descriptions": {
+        "en": "HKSAR right of abode",
+        "zh-Hant": "香港居留權"
+      }
+    },
+    {
+      "id": "STAY_LIMITED",
+      "code": "C",
+      "category": "RESIDENTIAL_STATUS",
+      "descriptions": {
+        "en": "Stay restriction recorded at card registration",
+        "zh-Hant": "領證登記時記有逗留限制"
+      }
+    },
+    {
+      "id": "RIGHT_TO_LAND",
+      "code": "R",
+      "category": "RESIDENTIAL_STATUS",
+      "descriptions": {
+        "en": "HKSAR right to land",
+        "zh-Hant": "香港入境權"
+      }
+    },
+    {
+      "id": "STAY_NOT_LIMITED",
+      "code": "U",
+      "category": "RESIDENTIAL_STATUS",
+      "descriptions": {
+        "en": "No stay restriction recorded at card registration",
+        "zh-Hant": "領證登記時未記有逗留限制"
+      }
+    },
+    {
+      "id": "BORN_IN_HONG_KONG",
+      "code": "Z",
+      "category": "REPORTED_PLACE_OF_BIRTH",
+      "descriptions": {
+        "en": "Hong Kong",
+        "zh-Hant": "香港"
+      }
+    },
+    {
+      "id": "BORN_IN_MAINLAND",
+      "code": "X",
+      "category": "REPORTED_PLACE_OF_BIRTH",
+      "descriptions": {
+        "en": "Chinese Mainland",
+        "zh-Hant": "內地"
+      }
+    },
+    {
+      "id": "BORN_IN_MACAO",
+      "code": "W",
+      "category": "REPORTED_PLACE_OF_BIRTH",
+      "descriptions": {
+        "en": "Macao",
+        "zh-Hant": "澳門"
+      }
+    },
+    {
+      "id": "BORN_ELSEWHERE",
+      "code": "O",
+      "category": "REPORTED_PLACE_OF_BIRTH",
+      "descriptions": {
+        "en": "Elsewhere",
+        "zh-Hant": "其他地區"
+      }
+    },
+    {
+      "id": "BIRTH_DETAILS_CHANGED",
+      "code": "B",
+      "category": "OTHER_INFORMATION",
+      "descriptions": {
+        "en": "Birth date or birthplace updated",
+        "zh-Hant": "曾更新出生日期或出生地"
+      }
+    },
+    {
+      "id": "NAME_CHANGED",
+      "code": "N",
+      "category": "OTHER_INFORMATION",
+      "descriptions": {
+        "en": "Name updated",
+        "zh-Hant": "曾更新姓名"
+      }
+    }
+  ]
+}

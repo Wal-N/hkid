@@ -1,0 +1,59 @@
+commercialCode,character,romanisation,commonSurname,weight
+# Chinese Commercial Code values are seeded from Unicode Unihan telegraph mappings.
+# Romanisation uses one canonical Hong Kong Government Cantonese spelling per character.
+# commonSurname=true rows are surname seeds; false rows are given-name seeds.
+# Surname and given-name groups are each sorted by commercialCode in ascending order.
+
+# Surname 姓
+0149,何,Ho,true,80
+0491,劉,Lau,true,90
+0702,吳,Ng,true,90
+0719,周,Chow,true,80
+1728,張,Cheung,true,100
+2612,朱,Chu,true,70
+2621,李,Lee,true,100
+2651,林,Lam,true,90
+2733,梁,Leung,true,90
+2799,楊,Yeung,true,90
+3769,王,Wong,true,100
+6200,謝,Tse,true,70
+6774,鄭,Cheng,true,80
+7115,陳,Chan,true,100
+7806,黃,Wong,true,100
+
+# Given name 名
+0193,俊,Chun,false,100
+0251,偉,Wai,false,90
+0267,傑,Kit,false,70
+0857,嘉,Ka,false,70
+0948,國,Kwok,false,80
+1129,大,Tai,false,50
+1131,天,Tin,false,50
+1177,妍,Yin,false,50
+1250,婷,Ting,false,50
+1311,子,Tsz,false,70
+1342,宇,Yu,false,50
+1344,安,On,false,60
+1367,家,Ka,false,100
+1585,希,Hei,false,50
+1696,建,Kin,false,80
+1795,德,Tak,false,80
+1800,心,Sum,false,60
+1807,志,Chi,false,90
+1835,思,Sze,false,70
+1837,怡,Yee,false,80
+1869,恩,Yan,false,70
+1979,慧,Wai,false,70
+2429,文,Man,false,100
+2494,明,Ming,false,100
+2867,樂,Lok,false,60
+2946,欣,Yan,false,80
+2973,正,Ching,false,50
+3189,海,Hoi,false,50
+3790,珊,Shan,false,70
+5019,美,Mei,false,80
+5478,華,Wah,false,90
+6275,豪,Ho,false,70
+7161,雅,Nga,false,70
+7186,雯,Man,false,60
+7787,麗,Lai,false,70

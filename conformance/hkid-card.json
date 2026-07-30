@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "cardCases": [
+    {
+      "id": "complete-adult-card",
+      "input": {
+        "hkidNumber": "R123456(A)",
+        "chineseSurname": "\u9673",
+        "chinesePersonalName": "\u5927\u6587",
+        "chineseCommercialCodes": ["7115", "1129", "2429"],
+        "englishSurname": "Chan",
+        "englishPersonalName": "Tai Man",
+        "sex": "M",
+        "dateOfBirth": "1990-01-15",
+        "symbols": "***AZ",
+        "firstRegistrationYearMonth": "2001-06",
+        "dateOfRegistration": "2020-06-01"
+      },
+      "referenceDate": "2026-07-21",
+      "expect": {
+        "hkidWithoutCheckDigit": "R123456",
+        "hkidComplete": "R123456(A)",
+        "hkidMasked": "****456(*)",
+        "chineseName": "\u9673\u5927\u6587",
+        "englishName": "Chan, Tai Man",
+        "sexPrintedValue": "\u7537 M",
+        "dateOfBirth": "15-01-1990",
+        "symbols": "***AZ",
+        "firstRegistrationYearMonth": "06-01",
+        "dateOfRegistration": "01-06-20",
+        "age": 36
+      }
+    },
+    {
+      "id": "historical-minor-card",
+      "input": {
+        "hkidNumber": "S123456(2)",
+        "chineseSurname": "",
+        "chinesePersonalName": "",
+        "chineseCommercialCodes": [],
+        "englishSurname": "Chan",
+        "englishPersonalName": "Siu Ming",
+        "sex": "F",
+        "dateOfBirth": "2008-01-01",
+        "symbols": "*AZ",
+        "firstRegistrationYearMonth": "2019-01",
+        "dateOfRegistration": "2020-06-01"
+      },
+      "referenceDate": "2025-12-31",
+      "expect": {
+        "hkidWithoutCheckDigit": "S123456",
+        "hkidComplete": "S123456(2)",
+        "hkidMasked": "****456(*)",
+        "chineseName": "",
+        "englishName": "Chan, Siu Ming",
+        "sexPrintedValue": "\u5973 F",
+        "dateOfBirth": "01-01-2008",
+        "symbols": "*AZ",
+        "firstRegistrationYearMonth": "01-19",
+        "dateOfRegistration": "01-06-20",
+        "age": 17
+      }
+    }
+  ],
+  "invalidCardCases": [
+    {
+      "id": "registration-before-current-smart-card-period",
+      "dateOfBirth": "1990-01-01",
+      "symbols": "***AZ",
+      "firstRegistrationYearMonth": "2001-06",
+      "dateOfRegistration": "2018-11-25"
+    },
+    {
+      "id": "registration-before-date-of-birth",
+      "dateOfBirth": "2020-06-02",
+      "symbols": "",
+      "firstRegistrationYearMonth": "2020-06",
+      "dateOfRegistration": "2020-06-01"
+    },
+    {
+      "id": "first-registration-before-date-of-birth",
+      "dateOfBirth": "1990-01-01",
+      "symbols": "",
+      "firstRegistrationYearMonth": "1989-12",
+      "dateOfRegistration": "2020-06-01"
+    },
+    {
+      "id": "first-registration-after-current-registration",
+      "dateOfBirth": "1990-01-01",
+      "symbols": "",
+      "firstRegistrationYearMonth": "2020-07",
+      "dateOfRegistration": "2020-06-01"
+    },
+    {
+      "id": "adult-symbol-on-minor-card",
+      "dateOfBirth": "2008-01-01",
+      "symbols": "***AZ",
+      "firstRegistrationYearMonth": "2019-01",
+      "dateOfRegistration": "2020-06-01"
+    },
+    {
+      "id": "minor-symbol-on-adult-card",
+      "dateOfBirth": "1990-01-01",
+      "symbols": "*AZ",
+      "firstRegistrationYearMonth": "2001-06",
+      "dateOfRegistration": "2020-06-01"
+    }
+  ],
+  "asOfValidationCases": [
+    {
+      "id": "historical-card-remains-valid",
+      "dateOfBirth": "2008-01-01",
+      "symbols": "*AZ",
+      "firstRegistrationYearMonth": "2019-01",
+      "dateOfRegistration": "2020-06-01",
+      "referenceDate": "2026-01-01",
+      "expectValid": true
+    },
+    {
+      "id": "registration-is-in-future",
+      "dateOfBirth": "1990-01-01",
+      "symbols": "***AZ",
+      "firstRegistrationYearMonth": "2020-06",
+      "dateOfRegistration": "2026-07-22",
+      "referenceDate": "2026-07-21",
+      "expectValid": false
+    }
+  ]
+}
