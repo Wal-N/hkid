@@ -14,24 +14,24 @@ The library includes:
 
 - Java 8+
 
-Maven coordinates: `io.github.wal-n:hkid-utils:0.1.0`
+## How to use
 
-The Maven Wrapper is included, so a separate Maven installation is not
-required. Build and run the tests on Windows with:
+### Maven dependency
 
-```powershell
-.\mvnw.cmd test
+Add the following dependency inside the `<dependencies>` section of your
+`pom.xml`:
+
+```xml
+<dependency>
+    <groupId>io.github.wal-n</groupId>
+    <artifactId>hkid-utils</artifactId>
+    <version>0.1.0</version>
+</dependency>
 ```
 
-On macOS or Linux:
+### Quick start
 
-```shell
-./mvnw test
-```
-
-## Quick start
-
-### HKID numbers
+#### HKID numbers
 
 ```java
 import io.github.wal_n.hkid.number.HkidNumber;
@@ -58,7 +58,7 @@ supplied data does not suit your use case, edit
 <code>data/defined-prefixes.json</code> and rebuild the library with your own
 values.</sub>
 
-### Validation
+#### Validation
 
 Validate HKID numbers, names, and current smart-HKID symbols without building
 a complete card:
@@ -79,7 +79,7 @@ boolean symbolsOk = HkidSymbolsUtil.isValid("***AZ");
 Card construction additionally validates date order and age-specific symbols.
 Use `validateAsOf(referenceDate)` to reject future-dated fields.
 
-### Generated data
+#### Generated data
 
 ```java
 import io.github.wal_n.hkid.card.HkidCard;
