@@ -1,11 +1,15 @@
 package io.github.wal_n.hkid.name;
 
+import io.github.wal_n.hkid.card.Sex;
 import io.github.wal_n.hkid.internal.ResourceCsv;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
@@ -51,6 +55,35 @@ public final class HkidNameUtil {
     }
 
     /**
+     * Generates a name associated with the requested sex using the default
+     * personal-name length distribution.
+     *
+     * <p>Unisex seed entries remain eligible for male and female names.</p>
+     *
+     * @param sex requested generated-name sex
+     * @return a generated Chinese name with matching commercial codes and English name
+     * @throws IllegalArgumentException if {@code sex} is null
+     */
+    public static GeneratedName generateRandomName(Sex sex) {
+        return generateRandomName(sex, ThreadLocalRandom.current());
+    }
+
+    /**
+     * Generates a name associated with the requested sex and with the
+     * requested number of Chinese personal-name characters.
+     *
+     * @param requestedPersonalNameLength number of generated personal-name characters
+     * @param sex requested generated-name sex
+     * @return a generated Chinese name with matching commercial codes and English name
+     * @throws IllegalArgumentException if the length is unsupported or {@code sex} is null
+     */
+    public static GeneratedName generateRandomName(
+            int requestedPersonalNameLength, Sex sex) {
+        return generateRandomName(
+                requestedPersonalNameLength, sex, ThreadLocalRandom.current());
+    }
+
+    /**
      * Generates a name using caller-controlled random state and the default
      * personal-name length distribution.
      *
@@ -59,19 +92,64 @@ public final class HkidNameUtil {
      * @throws IllegalArgumentException if {@code random} is null
      */
     public static GeneratedName generateRandomName(Random random) {
-        if (random == null) {
-            throw new IllegalArgumentException("Random generator cannot be null");
-        }
+        validateRandom(random);
 
         int roll = random.nextInt(100);
         return generateRandomName(defaultPersonalNameLengthForRoll(roll), random);
     }
 
+    /**
+     * Generates a sex-associated name using caller-controlled random state
+     * and the default personal-name length distribution.
+     *
+     * @param sex requested generated-name sex
+     * @param random random generator used for every generated name value
+     * @return a generated Chinese name with matching commercial codes and English name
+     * @throws IllegalArgumentException if either argument is null
+     */
+    public static GeneratedName generateRandomName(Sex sex, Random random) {
+        validateSex(sex);
+        validateRandom(random);
+
+        int roll = random.nextInt(100);
+        return generateRandomName(defaultPersonalNameLengthForRoll(roll), sex, random);
+    }
+
+    /**
+     * Generates a sex-associated name with a requested personal-name length
+     * using caller-controlled random state.
+     *
+     * @param requestedPersonalNameLength number of generated personal-name characters
+     * @param sex requested generated-name sex
+     * @param random random generator used for every generated name value
+     * @return a generated Chinese name with matching commercial codes and English name
+     * @throws IllegalArgumentException if the length is unsupported or either object is null
+     */
+    public static GeneratedName generateRandomName(
+            int requestedPersonalNameLength, Sex sex, Random random) {
+        validateSex(sex);
+        validateRandom(random);
+        return generateRandomName(
+                requestedPersonalNameLength,
+                random,
+                entry -> entry.isCompatibleWith(sex));
+    }
+
     private static GeneratedName generateRandomName(int requestedPersonalNameLength, Random random) {
+        return generateRandomName(requestedPersonalNameLength, random, entry -> true);
+    }
+
+    private static GeneratedName generateRandomName(
+            int requestedPersonalNameLength,
+            Random random,
+            Predicate<ChineseNameEntry> givenNamePredicate) {
         validateGeneratedPersonalNameLength(requestedPersonalNameLength);
 
         List<ChineseNameEntry> surnameEntries = filter(DEFAULT_ENTRIES, ChineseNameEntry::isCommonSurname);
-        List<ChineseNameEntry> givenNameEntries = filter(DEFAULT_ENTRIES, entry -> !entry.isCommonSurname());
+        List<ChineseNameEntry> givenNameEntries = filter(
+                DEFAULT_ENTRIES,
+                entry -> !entry.isCommonSurname()
+                        && givenNamePredicate.test(entry));
 
         if (surnameEntries.isEmpty()) {
             throw new IllegalStateException("No surname seed entries are available");
@@ -116,6 +194,7 @@ public final class HkidNameUtil {
                 "character",
                 "romanisation",
                 "commonSurname",
+                "sexAssociation",
                 "weight");
         try {
             for (ResourceCsv.Row row : rows) {
@@ -125,7 +204,8 @@ public final class HkidNameUtil {
                         fields.get(1),
                         fields.get(2),
                         parseBoolean(fields.get(3), row.getLineNumber()),
-                        Integer.parseInt(fields.get(4))));
+                        parseSupportedSexes(fields.get(4), row.getLineNumber()),
+                        Integer.parseInt(fields.get(5))));
             }
         } catch (RuntimeException e) {
             throw new IllegalStateException("Failed to parse name seed resource: " + resourceName, e);
@@ -188,6 +268,31 @@ public final class HkidNameUtil {
             return false;
         }
         throw new IllegalArgumentException("Invalid boolean at line " + lineNumber + ": " + value);
+    }
+
+    private static Set<Sex> parseSupportedSexes(String value, int lineNumber) {
+        String normalizedValue = value.trim().toUpperCase(Locale.ROOT);
+        if ("UNISEX".equalsIgnoreCase(normalizedValue)) {
+            return EnumSet.allOf(Sex.class);
+        }
+        try {
+            return EnumSet.of(Sex.valueOf(normalizedValue));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "Invalid sex association at line " + lineNumber + ": " + value, e);
+        }
+    }
+
+    private static void validateSex(Sex sex) {
+        if (sex == null) {
+            throw new IllegalArgumentException("Sex cannot be null");
+        }
+    }
+
+    private static void validateRandom(Random random) {
+        if (random == null) {
+            throw new IllegalArgumentException("Random generator cannot be null");
+        }
     }
 
     private static void validateGeneratedPersonalNameLength(int requestedPersonalNameLength) {

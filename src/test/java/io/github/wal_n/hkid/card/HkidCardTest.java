@@ -1,5 +1,7 @@
 package io.github.wal_n.hkid.card;
 
+import io.github.wal_n.hkid.name.ChineseNameEntry;
+import io.github.wal_n.hkid.name.HkidNameUtil;
 import io.github.wal_n.hkid.number.DefinedPrefix;
 import io.github.wal_n.hkid.number.HkidNumber;
 
@@ -9,7 +11,9 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
+import java.util.EnumSet;
 import java.util.Random;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -50,7 +54,7 @@ class HkidCardTest {
 
     @Test
     void rejectsMissingRandomGenerationDependencies() {
-        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard((LocalDate) null));
+        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(null));
         assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(null, REFERENCE_DATE));
         assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(new Random(), null));
     }
@@ -95,6 +99,19 @@ class HkidCardTest {
         HkidCard second = HkidCardUtil.generateRandomCard(new Random(123456789L), REFERENCE_DATE);
 
         assertEquals(first, second);
+    }
+
+    @Test
+    void generatedCardNameMatchesGeneratedSex() {
+        Set<Sex> generatedSexes = EnumSet.noneOf(Sex.class);
+        for (int seed = 0; seed < 200; seed++) {
+            HkidCard card = HkidCardUtil.generateRandomCard(new Random(seed), REFERENCE_DATE);
+
+            generatedSexes.add(card.getSex());
+            assertNameMatchesSex(card);
+        }
+
+        assertEquals(EnumSet.allOf(Sex.class), generatedSexes);
     }
 
     @Test
@@ -174,6 +191,7 @@ class HkidCardTest {
         assertNotNull(hkidCard.getHkidNumber());
         assertNotNull(hkidCard.getChineseName());
         assertNotNull(hkidCard.getEnglishName());
+        assertNotNull(hkidCard.getSex());
         assertNotNull(hkidCard.getDateOfBirth());
         assertNotNull(hkidCard.getDateOfRegistration());
         assertNotNull(hkidCard.getFirstRegistrationYearMonth());
@@ -188,7 +206,21 @@ class HkidCardTest {
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
                 .isAfter(YearMonth.from(hkidCard.getDateOfRegistration())));
         assertEquals(hkidCard.getChineseName().length(), hkidCard.getChineseCommercialCodes().size());
+        assertNameMatchesSex(hkidCard);
         hkidCard.validateAsOf(REFERENCE_DATE);
+    }
+
+    private void assertNameMatchesSex(HkidCard hkidCard) {
+        String personalName = hkidCard.getChineseNameInfo().getPersonalName();
+
+        for (int i = 0; i < personalName.length(); i++) {
+            String character = String.valueOf(personalName.charAt(i));
+            ChineseNameEntry entry = HkidNameUtil.getDefaultEntries().stream()
+                    .filter(candidate -> character.equals(candidate.getCharacter()))
+                    .findFirst()
+                    .orElseThrow(AssertionError::new);
+            assertTrue(entry.isCompatibleWith(hkidCard.getSex()));
+        }
     }
 
     private static final class BoundaryRandom extends Random {

@@ -84,14 +84,20 @@ Use `validateAsOf(referenceDate)` to reject future-dated fields.
 ```java
 import io.github.wal_n.hkid.card.HkidCard;
 import io.github.wal_n.hkid.card.HkidCardUtil;
+import io.github.wal_n.hkid.card.Sex;
+import io.github.wal_n.hkid.name.GeneratedName;
+import io.github.wal_n.hkid.name.HkidNameUtil;
 
 HkidCard card = HkidCardUtil.generateRandomCard();
+GeneratedName femaleName = HkidNameUtil.generateRandomName(Sex.FEMALE);
 
 System.out.println(card.getChineseName());            // e.g. 陳大文
 System.out.println(card.getChineseCommercialCodes()); // e.g. [7115, 1129, 2429]
 System.out.println(card.getEnglishName());            // e.g. Chan, Tai Man
+System.out.println(card.getSex());                    // e.g. 男 M
 System.out.println(card.getHkidNumber());             // e.g. A123456
 System.out.println(card.getSymbols());                // e.g. ***AZBN
+System.out.println(femaleName.getChineseFullName());  // e.g. 李雅雯
 ```
 
 > [!CAUTION]
@@ -102,8 +108,12 @@ System.out.println(card.getSymbols());                // e.g. ***AZBN
 > identity data with production or customer data.
 
 The name generator keeps Chinese characters, Chinese Commercial Codes, and
-Cantonese romanisation aligned. Its seed file is a small, unverified starter
-dataset rather than an official or complete name database.
+Cantonese romanisation aligned. Given-name seed entries have a male, female, or
+unisex association. Sex-specific generation includes unisex entries, and a
+generated card selects its name from the pool matching its sex marker. These
+associations are generation hints rather than strict properties of real names.
+The seed file is a small, unverified starter dataset rather than an official or
+complete name database.
 
 ## API layout
 

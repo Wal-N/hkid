@@ -4,4 +4,4 @@ commercialCode,character,romanisation,commonSurname,sexAssociation,weight
 # More descriptive metadata may appear before the first data row.
 
 # Invalid data begins below.
-0001,測,Test,not-a-boolean,UNISEX,1
+0001,測,Test,false,unknown,1

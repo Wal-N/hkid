@@ -1,8 +1,11 @@
 package io.github.wal_n.hkid.name;
 
+import io.github.wal_n.hkid.card.Sex;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,7 +49,13 @@ class ChineseNameUnicodeTest {
 
     @Test
     void seedEntryAcceptsOneSupplementaryIdeographCodePoint() {
-        ChineseNameEntry entry = new ChineseNameEntry("0001", SUPPLEMENTARY_IDEOGRAPH, "Wan", false, 1);
+        ChineseNameEntry entry = new ChineseNameEntry(
+                "0001",
+                SUPPLEMENTARY_IDEOGRAPH,
+                "Wan",
+                false,
+                EnumSet.allOf(Sex.class),
+                1);
 
         assertEquals(SUPPLEMENTARY_IDEOGRAPH, entry.getCharacter());
     }

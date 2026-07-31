@@ -1,5 +1,11 @@
 package io.github.wal_n.hkid.name;
 
+import io.github.wal_n.hkid.card.Sex;
+
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * One seed row used for random Chinese name generation.
  */
@@ -8,12 +14,14 @@ public final class ChineseNameEntry {
     private final String character;
     private final String romanisation;
     private final boolean commonSurname;
+    private final Set<Sex> supportedSexes;
     private final int weight;
 
     ChineseNameEntry(String commercialCode,
                      String character,
                      String romanisation,
                      boolean commonSurname,
+                     Set<Sex> supportedSexes,
                      int weight) {
         if (!ChineseNameUtil.isValidCommercialCode(commercialCode)) {
             throw new IllegalArgumentException("Commercial code must be four digits");
@@ -24,6 +32,15 @@ public final class ChineseNameEntry {
         if (romanisation == null || !romanisation.trim().matches("[A-Za-z]+")) {
             throw new IllegalArgumentException("Romanisation must contain letters only");
         }
+        if (supportedSexes == null || supportedSexes.isEmpty()) {
+            throw new IllegalArgumentException("Supported sexes cannot be empty");
+        }
+        if (supportedSexes.contains(null)) {
+            throw new IllegalArgumentException("Supported sexes cannot contain null");
+        }
+        if (commonSurname && !supportedSexes.containsAll(EnumSet.allOf(Sex.class))) {
+            throw new IllegalArgumentException("Common surnames must support every sex");
+        }
         if (weight <= 0) {
             throw new IllegalArgumentException("Weight must be positive");
         }
@@ -32,6 +49,7 @@ public final class ChineseNameEntry {
         this.character = character;
         this.romanisation = normaliseRomanisation(romanisation);
         this.commonSurname = commonSurname;
+        this.supportedSexes = Collections.unmodifiableSet(EnumSet.copyOf(supportedSexes));
         this.weight = weight;
     }
 
@@ -69,6 +87,30 @@ public final class ChineseNameEntry {
      */
     public boolean isCommonSurname() {
         return commonSurname;
+    }
+
+    /**
+     * Returns the card sex values for which this entry may be selected.
+     * Unisex entries and surnames support both values.
+     *
+     * @return an unmodifiable, non-empty set of supported sex values
+     */
+    public Set<Sex> getSupportedSexes() {
+        return supportedSexes;
+    }
+
+    /**
+     * Tests whether this entry may be selected for the requested sex.
+     *
+     * @param requestedSex requested generated-name sex
+     * @return {@code true} when this entry supports the requested sex
+     * @throws IllegalArgumentException if {@code requestedSex} is null
+     */
+    public boolean isCompatibleWith(Sex requestedSex) {
+        if (requestedSex == null) {
+            throw new IllegalArgumentException("Requested sex cannot be null");
+        }
+        return supportedSexes.contains(requestedSex);
     }
 
     /**

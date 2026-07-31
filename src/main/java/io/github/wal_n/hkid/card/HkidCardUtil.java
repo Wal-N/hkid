@@ -99,7 +99,8 @@ public final class HkidCardUtil {
                 dateOfBirth.plusDays(HONG_KONG_BIRTH_REGISTRATION_DAYS),
                 random);
 
-        GeneratedName name = HkidNameUtil.generateRandomName(random);
+        Sex sex = generateRandomSex(random);
+        GeneratedName name = HkidNameUtil.generateRandomName(sex, random);
         DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(
                 birthRegistrationDate, firstRegistrationYearMonth);
 
@@ -107,7 +108,7 @@ public final class HkidCardUtil {
                 .hkidNumber(HkidNumberUtil.generateRandomHkidNumber(random, compatiblePrefixes))
                 .chineseName(name.getChineseName())
                 .englishName(name.getEnglishName())
-                .sex(generateRandomSex(random))
+                .sex(sex)
                 .dateOfBirth(dateOfBirth)
                 .symbols(HkidSymbols.of(
                         ageSymbol,
