@@ -64,7 +64,7 @@
                 <directory>src/test/resources</directory>
             </testResource>
             <testResource>
-                <directory>conformance</directory>
+                <directory>${project.basedir}/../conformance</directory>
                 <targetPath>conformance</targetPath>
             </testResource>
         </testResources>
@@ -73,7 +73,7 @@
                 <directory>src/main/resources</directory>
             </resource>
             <resource>
-                <directory>data</directory>
+                <directory>${project.basedir}/../data</directory>
                 <targetPath>io/github/wal_n/hkid/data</targetPath>
                 <includes>
                     <include>*.csv</include>
@@ -105,7 +105,7 @@
                             <outputDirectory>${project.build.outputDirectory}/META-INF</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.basedir}</directory>
+                                    <directory>${project.basedir}/..</directory>
                                     <includes>
                                         <include>LICENSE</include>
                                     </includes>

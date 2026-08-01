@@ -1,0 +1,48 @@
+name: Java CI
+
+on:
+  push:
+    paths:
+      - "java/**"
+      - "data/**"
+      - "conformance/**"
+      - "LICENSE"
+      - ".github/workflows/java.yml"
+  pull_request:
+    paths:
+      - "java/**"
+      - "data/**"
+      - "conformance/**"
+      - "LICENSE"
+      - ".github/workflows/java.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ["8", "25"]
+    defaults:
+      run:
+        working-directory: java
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+          cache-dependency-path: java/pom.xml
+
+      - name: Verify Java implementation
+        run: bash ./mvnw --batch-mode --no-transfer-progress verify

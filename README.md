@@ -1,20 +1,27 @@
 # HKID Utilities
 
-Java utilities for parsing, validating, formatting, and generating Hong Kong
-Identity Card (HKID) data.
+Utilities for parsing, validating, formatting, and generating Hong Kong
+Identity Card (HKID) data. This repository contains shared reference data,
+cross-language conformance fixtures, and the Java implementation.
 
-The library includes:
+The Java library includes:
 
 - HKID numbers and check digits
 - Chinese and English names
 - current smart HKID symbols
 - complete card models and sample-data generation
 
-## Requirements
+## Repository layout
+
+- `java/` — Java 8+ implementation and Maven build
+- `data/` — language-neutral reference data
+- `conformance/` — deterministic behaviour fixtures shared by implementations
+
+## Java
+
+### Requirements
 
 - Java 8+
-
-## How to use
 
 ### Maven dependency
 
@@ -28,6 +35,17 @@ Add the following dependency inside the `<dependencies>` section of your
     <version>0.1.0</version>
 </dependency>
 ```
+
+### Build from source
+
+Run the Maven wrapper from the Java implementation directory:
+
+```shell
+cd java
+bash ./mvnw verify
+```
+
+On Windows, use `.\mvnw.cmd verify` after changing to `java`.
 
 ### Quick start
 
@@ -115,7 +133,7 @@ associations are generation hints rather than strict properties of real names.
 The seed file is a small, unverified starter dataset rather than an official or
 complete name database.
 
-## API layout
+### API layout
 
 - `io.github.wal_n.hkid.number` — numbers, prefixes, and check digits
 - `io.github.wal_n.hkid.name` — Chinese/English names and name generation
@@ -124,7 +142,7 @@ complete name database.
 Models are immutable. Build a card with `HkidCard.builder()`, or copy one with
 `toBuilder()`.
 
-## Reference data
+## Shared data and conformance
 
 Language-neutral tables are documented in [`data/README.md`](data/README.md).
 Cross-language behaviour fixtures are documented in
