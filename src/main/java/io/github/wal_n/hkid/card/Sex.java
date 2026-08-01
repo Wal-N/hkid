@@ -11,6 +11,7 @@ public enum Sex {
     /** Female marker printed as Chinese {@code 女} and English {@code F}. */
     FEMALE("女", "F");
 
+    private static final String FORMAT = "%s %s";
     private final String chiMarker;
     private final String engMarker;
 
@@ -43,7 +44,7 @@ public enum Sex {
      * @return the Chinese and English markers separated by a space
      */
     public String getPrintedValue() {
-        return String.format("%s %s", chiMarker, engMarker);
+        return String.format(FORMAT, chiMarker, engMarker);
     }
 
     /**
