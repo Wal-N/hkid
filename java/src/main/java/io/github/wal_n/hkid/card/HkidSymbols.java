@@ -1,7 +1,6 @@
 package io.github.wal_n.hkid.card;
 
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -197,7 +196,7 @@ public final class HkidSymbols {
             return;
         }
 
-        int age = Period.between(dateOfBirth, referenceDate).getYears();
+        int age = HkidCard.ageOn(dateOfBirth, referenceDate);
         if (eligibilitySymbol.get() == HkidSymbol.ADULT_RE_ENTRY_PERMIT && age < 18) {
             throw new IllegalArgumentException("The *** symbol requires the holder to be aged 18 or over");
         }

@@ -5,7 +5,6 @@ import io.github.wal_n.hkid.name.EnglishName;
 import io.github.wal_n.hkid.number.HkidNumber;
 
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -92,7 +91,14 @@ public final class HkidCard {
             throw new IllegalArgumentException("Date of birth cannot be after the reference date");
         }
         return Optional.ofNullable(dateOfBirth)
-                .map(dob -> Period.between(dob, referenceDate).getYears());
+                .map(dob -> ageOn(dob, referenceDate));
+    }
+
+    // Match LocalDate.plusYears(): February 29 anniversaries fall on
+    // February 28 in non-leap years.
+    static int ageOn(LocalDate dateOfBirth, LocalDate referenceDate) {
+        int age = referenceDate.getYear() - dateOfBirth.getYear();
+        return referenceDate.isBefore(dateOfBirth.plusYears(age)) ? age - 1 : age;
     }
 
     /**

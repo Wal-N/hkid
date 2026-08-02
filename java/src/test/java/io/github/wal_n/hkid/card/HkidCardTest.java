@@ -41,6 +41,21 @@ class HkidCardTest {
     }
 
     @Test
+    void generatesValidCardForLeapDayBirthAtLowerRandomBoundaries() {
+        LocalDate referenceDate = LocalDate.of(2028, 2, 28);
+
+        HkidCard card = HkidCardUtil.generateRandomCard(
+                new BoundaryRandom(false), referenceDate);
+
+        assertEquals(LocalDate.of(2016, 2, 29), card.getDateOfBirth());
+        assertEquals(LocalDate.of(2027, 2, 28), card.getDateOfRegistration());
+        assertEquals(Integer.valueOf(11),
+                card.getAge(card.getDateOfRegistration()).orElse(null));
+        assertEquals(HkidSymbols.parse("*AZ"), card.getSymbols());
+        card.validateAsOf(referenceDate);
+    }
+
+    @Test
     void generatesCompleteCardAtUpperRandomBoundaries() {
         HkidCard hkidCard = HkidCardUtil.generateRandomCard(new BoundaryRandom(true), REFERENCE_DATE);
 

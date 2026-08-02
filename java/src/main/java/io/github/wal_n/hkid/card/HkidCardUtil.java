@@ -6,7 +6,6 @@ import io.github.wal_n.hkid.number.DefinedPrefix;
 import io.github.wal_n.hkid.number.HkidNumberUtil;
 
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.Random;
@@ -214,7 +213,7 @@ public final class HkidCardUtil {
     }
 
     private static HkidSymbol generateAgeSymbol(LocalDate dateOfBirth, LocalDate referenceDate) {
-        return Period.between(dateOfBirth, referenceDate).getYears() >= 18
+        return HkidCard.ageOn(dateOfBirth, referenceDate) >= 18
                 ? HkidSymbol.ADULT_RE_ENTRY_PERMIT
                 : HkidSymbol.MINOR_RE_ENTRY_PERMIT;
     }
