@@ -54,9 +54,16 @@ class HkidCardTest {
 
     @Test
     void rejectsMissingRandomGenerationDependencies() {
-        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard((LocalDate) null));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard((Sex) null));
         assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(null, REFERENCE_DATE));
         assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(new Random(), null));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(REFERENCE_DATE, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(new Random(), REFERENCE_DATE, null));
     }
 
     @Test
@@ -91,6 +98,25 @@ class HkidCardTest {
         HkidCard hkidCard = HkidCardUtil.generateRandomCard(REFERENCE_DATE);
 
         assertGeneratedCard(hkidCard);
+    }
+
+    @Test
+    void generatesCompleteCardWithRequestedSex() {
+        for (Sex sex : Sex.values()) {
+            HkidCard card = HkidCardUtil.generateRandomCard(
+                    new Random(123456789L), REFERENCE_DATE, sex);
+
+            assertGeneratedCard(card);
+            assertEquals(sex, card.getSex());
+        }
+    }
+
+    @Test
+    void requestedSexConvenienceOverloadsUseRequestedSex() {
+        assertEquals(Sex.MALE, HkidCardUtil.generateRandomCard(Sex.MALE).getSex());
+        assertEquals(
+                Sex.FEMALE,
+                HkidCardUtil.generateRandomCard(REFERENCE_DATE, Sex.FEMALE).getSex());
     }
 
     @Test
