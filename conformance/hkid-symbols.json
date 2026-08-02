@@ -64,6 +64,20 @@
       "expectValid": false
     },
     {
+      "id": "adult-symbol-on-leap-day-adjusted-anniversary",
+      "symbols": "***",
+      "dateOfBirth": "2004-02-29",
+      "referenceDate": "2022-02-28",
+      "expectValid": true
+    },
+    {
+      "id": "adult-symbol-before-leap-day-adjusted-anniversary",
+      "symbols": "***",
+      "dateOfBirth": "2004-02-29",
+      "referenceDate": "2022-02-27",
+      "expectValid": false
+    },
+    {
       "id": "minor-symbol-at-eleven",
       "symbols": "*",
       "dateOfBirth": "2009-01-01",
