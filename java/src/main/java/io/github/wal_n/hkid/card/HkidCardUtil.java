@@ -37,6 +37,18 @@ public final class HkidCardUtil {
     }
 
     /**
+     * Generates a sample HKID card with the requested sex using the current
+     * system date and a thread-local random generator.
+     *
+     * @param sex requested card sex and generated-name association
+     * @return a randomly generated card with {@code sex}, valid as of the current system date
+     * @throws IllegalArgumentException if {@code sex} is null
+     */
+    public static HkidCard generateRandomCard(Sex sex) {
+        return generateRandomCard(LocalDate.now(), sex);
+    }
+
+    /**
      * Generates a sample HKID card for a caller-controlled reference date using
      * a thread-local random generator.
      *
@@ -50,6 +62,20 @@ public final class HkidCardUtil {
      */
     public static HkidCard generateRandomCard(LocalDate referenceDate) {
         return generateRandomCard(ThreadLocalRandom.current(), referenceDate);
+    }
+
+    /**
+     * Generates a sample HKID card with the requested sex for a
+     * caller-controlled reference date using a thread-local random generator.
+     *
+     * @param referenceDate date used to calculate age and registration ranges
+     * @param sex requested card sex and generated-name association
+     * @return a randomly generated card with {@code sex}, valid as of {@code referenceDate}
+     * @throws IllegalArgumentException if either argument is null, or if
+     *         {@code referenceDate} precedes the first issuance of the current smart HKID
+     */
+    public static HkidCard generateRandomCard(LocalDate referenceDate, Sex sex) {
+        return generateRandomCard(ThreadLocalRandom.current(), referenceDate, sex);
     }
 
     /**
@@ -67,6 +93,30 @@ public final class HkidCardUtil {
      *         or if {@code referenceDate} precedes the first issuance of the current smart HKID
      */
     public static HkidCard generateRandomCard(Random random, LocalDate referenceDate) {
+        return generateRandomCardInternal(random, referenceDate, null);
+    }
+
+    /**
+     * Generates a reproducible sample HKID card with the requested sex using
+     * caller-controlled random state and reference date.
+     *
+     * @param random random generator used for every generated card value
+     * @param referenceDate date used to calculate age and registration ranges
+     * @param sex requested card sex and generated-name association
+     * @return a generated card with {@code sex}, valid as of {@code referenceDate}
+     * @throws IllegalArgumentException if any argument is null, or if
+     *         {@code referenceDate} precedes the first issuance of the current smart HKID
+     */
+    public static HkidCard generateRandomCard(
+            Random random, LocalDate referenceDate, Sex sex) {
+        if (sex == null) {
+            throw new IllegalArgumentException("Sex cannot be null");
+        }
+        return generateRandomCardInternal(random, referenceDate, sex);
+    }
+
+    private static HkidCard generateRandomCardInternal(
+            Random random, LocalDate referenceDate, Sex requestedSex) {
         if (random == null) {
             throw new IllegalArgumentException("Random generator cannot be null");
         }
@@ -99,7 +149,7 @@ public final class HkidCardUtil {
                 dateOfBirth.plusDays(HONG_KONG_BIRTH_REGISTRATION_DAYS),
                 random);
 
-        Sex sex = generateRandomSex(random);
+        Sex sex = requestedSex != null ? requestedSex : generateRandomSex(random);
         GeneratedName name = HkidNameUtil.generateRandomName(sex, random);
         DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(
                 birthRegistrationDate, firstRegistrationYearMonth);

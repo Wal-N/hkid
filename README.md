@@ -11,12 +11,6 @@ The Java library includes:
 - current smart HKID symbols
 - complete card models and sample-data generation
 
-## Repository layout
-
-- `java/` — Java 8+ implementation and Maven build
-- `data/` — language-neutral reference data
-- `conformance/` — deterministic behaviour fixtures shared by implementations
-
 ## Java
 
 ### Requirements
@@ -36,17 +30,6 @@ Add the following dependency inside the `<dependencies>` section of your
 </dependency>
 ```
 
-### Build from source
-
-Run the Maven wrapper from the Java implementation directory:
-
-```shell
-cd java
-bash ./mvnw verify
-```
-
-On Windows, use `.\mvnw.cmd verify` after changing to `java`.
-
 ### Quick start
 
 #### HKID numbers
@@ -54,13 +37,12 @@ On Windows, use `.\mvnw.cmd verify` after changing to `java`.
 ```java
 import io.github.wal_n.hkid.number.HkidNumber;
 
-HkidNumber number = new HkidNumber("A123456(3)");
+HkidNumber number = new HkidNumber("A123456");
 
 System.out.println(number.getPrefix());       // A
 System.out.println(number.getNumerals());     // 123456
 System.out.println(number.getCheckDigit());   // 3
 System.out.println(number.toMaskedString());  // ****456(*)
-
 System.out.println(number.toString(
         HkidNumber.Format.COMPLETE));          // A123456(3)
 ```
@@ -107,7 +89,6 @@ import io.github.wal_n.hkid.name.GeneratedName;
 import io.github.wal_n.hkid.name.HkidNameUtil;
 
 HkidCard card = HkidCardUtil.generateRandomCard();
-GeneratedName femaleName = HkidNameUtil.generateRandomName(Sex.FEMALE);
 
 System.out.println(card.getChineseName());            // e.g. 陳大文
 System.out.println(card.getChineseCommercialCodes()); // e.g. [7115, 1129, 2429]
@@ -115,7 +96,6 @@ System.out.println(card.getEnglishName());            // e.g. Chan, Tai Man
 System.out.println(card.getSex());                    // e.g. 男 M
 System.out.println(card.getHkidNumber());             // e.g. A123456
 System.out.println(card.getSymbols());                // e.g. ***AZBN
-System.out.println(femaleName.getChineseFullName());  // e.g. 李雅雯
 ```
 
 > [!CAUTION]
@@ -132,6 +112,12 @@ generated card selects its name from the pool matching its sex marker. These
 associations are generation hints rather than strict properties of real names.
 The seed file is a small, unverified starter dataset rather than an official or
 complete name database.
+
+## Repository layout
+
+- `java/` — Java 8+ implementation and Maven build
+- `data/` — language-neutral reference data
+- `conformance/` — deterministic behaviour fixtures shared by implementations
 
 ### API layout
 
