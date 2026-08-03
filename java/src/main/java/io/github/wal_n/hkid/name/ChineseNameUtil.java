@@ -5,6 +5,11 @@ import java.util.regex.Pattern;
 
 /**
  * Utility methods for Chinese names printed on HKID cards.
+ *
+ * <p>Chinese commercial-code validation is structural only. This library does
+ * not bundle the complete Chinese Commercial Code table, so it does not verify
+ * that a supplied four-digit code corresponds to a particular Chinese
+ * character.</p>
  */
 public final class ChineseNameUtil {
     private static final Pattern COMMERCIAL_CODE_PATTERN = Pattern.compile("\\d{4}");
@@ -47,6 +52,9 @@ public final class ChineseNameUtil {
     /**
      * Tests whether Chinese surname and personal-name parts and their commercial
      * codes form a valid HKID name.
+     *
+     * <p>Commercial codes are checked for format and count only; mappings
+     * between Chinese characters and commercial codes are not verified.</p>
      *
      * @param surname Chinese surname, or {@code null} for an empty surname
      * @param personalName Chinese personal name, or {@code null} for an empty personal name
