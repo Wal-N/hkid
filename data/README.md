@@ -24,3 +24,7 @@ given-name entries. `UNISEX` maps to support for both card sex values rather
 than to a third public enum value. Classification describes a generation
 tendency, not an intrinsic property of a real person's name. Validation rules
 and domain behaviour remain in code rather than in these files.
+
+Date periods use an inclusive `start` and an exclusive `endExclusive`; a null
+`endExclusive` represents an open-ended period. A first-issue month overlaps a
+period when at least one day in that calendar month falls inside the period.

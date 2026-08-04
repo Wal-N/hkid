@@ -123,13 +123,26 @@ class HkidCardConformanceTest {
     }
 
     private static HkidCard buildDatedCard(JsonObject input) {
-        return HkidCard.builder()
-                .dateOfBirth(LocalDate.parse(input.get("dateOfBirth").getAsString()))
-                .symbols(HkidSymbols.parse(input.get("symbols").getAsString()))
-                .firstRegistrationYearMonth(
-                        YearMonth.parse(input.get("firstRegistrationYearMonth").getAsString()))
-                .dateOfRegistration(
-                        LocalDate.parse(input.get("dateOfRegistration").getAsString()))
-                .build();
+        HkidCard.Builder builder = HkidCard.builder()
+                .symbols(HkidSymbols.parse(input.get("symbols").getAsString()));
+
+        String dateOfBirth = ConformanceFixtures.nullableString(input, "dateOfBirth");
+        if (dateOfBirth != null) {
+            builder.dateOfBirth(LocalDate.parse(dateOfBirth));
+        }
+
+        String firstRegistrationYearMonth =
+                ConformanceFixtures.nullableString(input, "firstRegistrationYearMonth");
+        if (firstRegistrationYearMonth != null) {
+            builder.firstRegistrationYearMonth(
+                    YearMonth.parse(firstRegistrationYearMonth));
+        }
+
+        String dateOfRegistration =
+                ConformanceFixtures.nullableString(input, "dateOfRegistration");
+        if (dateOfRegistration != null) {
+            builder.dateOfRegistration(LocalDate.parse(dateOfRegistration));
+        }
+        return builder.build();
     }
 }

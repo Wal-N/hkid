@@ -124,6 +124,24 @@
       "dateOfRegistration": "2026-07-22",
       "referenceDate": "2026-07-21",
       "expectValid": false
+    },
+    {
+      "id": "date-of-birth-is-in-future",
+      "dateOfBirth": "2026-07-22",
+      "symbols": "",
+      "firstRegistrationYearMonth": null,
+      "dateOfRegistration": null,
+      "referenceDate": "2026-07-21",
+      "expectValid": false
+    },
+    {
+      "id": "first-registration-month-is-in-future",
+      "dateOfBirth": "1990-01-01",
+      "symbols": "",
+      "firstRegistrationYearMonth": "2026-08",
+      "dateOfRegistration": null,
+      "referenceDate": "2026-07-21",
+      "expectValid": false
     }
   ]
 }

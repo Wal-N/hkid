@@ -21,6 +21,34 @@
       "personalName": "\u5927\u6587",
       "commercialCodes": [],
       "expectFullName": "\u9673\u5927\u6587"
+    },
+    {
+      "id": "extension-a-han-letter",
+      "surname": "\u3400",
+      "personalName": "",
+      "commercialCodes": ["0001"],
+      "expectFullName": "\u3400"
+    },
+    {
+      "id": "compatibility-han-letter",
+      "surname": "\uFA0E",
+      "personalName": "",
+      "commercialCodes": ["0001"],
+      "expectFullName": "\uFA0E"
+    },
+    {
+      "id": "supplementary-han-counts-as-one-code-point",
+      "surname": "\uD840\uDC00",
+      "personalName": "\u4E00\u4E01\u4E02\u4E03\u4E04",
+      "commercialCodes": ["0001", "0002", "0003", "0004", "0005", "0006"],
+      "expectFullName": "\uD840\uDC00\u4E00\u4E01\u4E02\u4E03\u4E04"
+    },
+    {
+      "id": "supplementary-compatibility-han-letter",
+      "surname": "\uD87E\uDC00",
+      "personalName": "",
+      "commercialCodes": ["0001"],
+      "expectFullName": "\uD87E\uDC00"
     }
   ],
   "invalidChineseNameCases": [
@@ -53,6 +81,24 @@
       "surname": "\u9673",
       "personalName": "\u5927\u6587",
       "commercialCodes": ["7115", "1129", "ABC"]
+    },
+    {
+      "id": "kangxi-radical-is-not-a-han-letter",
+      "surname": "\u2F00",
+      "personalName": "",
+      "commercialCodes": []
+    },
+    {
+      "id": "cjk-radical-is-not-a-han-letter",
+      "surname": "\u2E80",
+      "personalName": "",
+      "commercialCodes": []
+    },
+    {
+      "id": "supplementary-han-still-obeys-six-code-point-limit",
+      "surname": "\uD840\uDC00",
+      "personalName": "\u4E00\u4E01\u4E02\u4E03\u4E04\u4E05",
+      "commercialCodes": []
     }
   ],
   "englishNameCases": [
@@ -85,6 +131,12 @@
       "surname": "",
       "personalName": "",
       "expectFullName": ""
+    },
+    {
+      "id": "period-separator",
+      "surname": "St.John",
+      "personalName": "Tai Man",
+      "expectFullName": "St.John, Tai Man"
     }
   ],
   "invalidEnglishNameCases": [
@@ -102,6 +154,11 @@
       "id": "trailing-space",
       "surname": "A ",
       "personalName": "Tai Man"
+    },
+    {
+      "id": "repeated-space-separator",
+      "surname": "Chan",
+      "personalName": "Tai  Man"
     }
   ]
 }

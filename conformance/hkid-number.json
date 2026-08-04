@@ -186,21 +186,36 @@
       "expectPrefix": "Y"
     },
     {
+      "id": "y-upper-boundary",
+      "date": "2005-03-31",
+      "expectPrefix": "Y"
+    },
+    {
       "id": "s-lower-boundary",
       "date": "2005-04-01",
+      "expectPrefix": "S"
+    },
+    {
+      "id": "s-upper-boundary",
+      "date": "2019-05-31",
       "expectPrefix": "S"
     },
     {
       "id": "n-lower-boundary",
       "date": "2019-06-01",
       "expectPrefix": "N"
+    },
+    {
+      "id": "n-open-ended-range",
+      "date": "2030-01-01",
+      "expectPrefix": "N"
     }
   ],
   "firstIssuePrefixCases": [
     {
-      "id": "k-lower-boundary-month",
-      "month": "1983-03",
-      "expectPrefixes": ["C", "D", "G", "H", "K"]
+      "id": "before-first-defined-issue-range",
+      "month": "1948-12",
+      "expectPrefixes": []
     },
     {
       "id": "overlapping-month-returns-all-matches",
@@ -208,9 +223,29 @@
       "expectPrefixes": ["A", "B", "C", "D", "E"]
     },
     {
+      "id": "k-lower-boundary-month",
+      "month": "1983-03",
+      "expectPrefixes": ["C", "D", "G", "H", "K"]
+    },
+    {
+      "id": "k-upper-boundary-month",
+      "month": "1990-07",
+      "expectPrefixes": ["K"]
+    },
+    {
+      "id": "k-to-p-transition-month",
+      "month": "1990-08",
+      "expectPrefixes": ["P"]
+    },
+    {
       "id": "r-lower-boundary-month",
       "month": "2004-11",
       "expectPrefixes": ["R"]
+    },
+    {
+      "id": "m-to-f-transition-month-overlaps-both",
+      "month": "2020-02",
+      "expectPrefixes": ["F", "M"]
     }
   ]
 }
