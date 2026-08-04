@@ -16,6 +16,25 @@ The fixtures cover:
 - Chinese and English name validation and formatting;
 - complete-card formatting and consistency rules.
 
+## Normative behaviour details
+
+- A Chinese name character is a Unicode code point whose script is Han and
+  whose general category is a letter. Han-script symbols such as Kangxi and
+  CJK radicals are not name characters.
+- Chinese name lengths and Chinese Commercial Code counts are measured in
+  Unicode code points, not UTF-8 bytes, UTF-16 code units, or grapheme
+  clusters. A supplementary-plane Han letter therefore counts as one
+  character.
+- Age calculation follows civil-date year addition. A 29 February birthday
+  has its anniversary on 28 February in a non-leap year.
+- Age-specific symbols describe the holder's age when the card was registered.
+  They are not reinterpreted using a later `validateAsOf` reference date.
+- Prefix periods use an inclusive start and an exclusive end. A first-issue
+  month matches a prefix when at least one day in that month overlaps the
+  prefix period.
+- `validateAsOf` checks each dated field that is present independently; a card
+  does not need every optional date field in order to validate the others.
+
 Language-specific API design is deliberately outside this contract. Java
 constructors, exception class names, builders, equality implementations, and
 Rust traits do not need to match.
