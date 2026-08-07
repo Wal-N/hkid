@@ -1,4 +1,4 @@
-# HKID Utilities
+# HKID Utilities 香港身份證工具庫
 
 Utilities for parsing, validating, formatting, and generating Hong Kong
 Identity Card (HKID) data. This repository contains shared reference data,
