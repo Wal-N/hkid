@@ -6,10 +6,10 @@ cross-language conformance fixtures, and the Java implementation.
 
 The Java library includes:
 
-- HKID numbers and check digits
-- Chinese and English names
-- current smart HKID symbols
-- complete card models and sample-data generation
+- HKID numbers and check digits 香港身份證號碼＆校驗碼
+- Chinese and English names 中英文名
+- current smart HKID symbols 智能身份證符號
+- complete card models and sample-data generation 完整身份證樣本數據生成
 
 ## Java
 
