@@ -8,7 +8,7 @@ library can:
 - validate Chinese and English names and current smart-HKID symbols
   驗證中英文姓名同埋智能身份證符號
 - model complete cards and generate internally consistent sample data
-  建立完整身份證資料模型，生成欄位互相一致嘅範例資料
+  生成欄位資訊一致嘅完整身份證資料
 
 ## Java
 
