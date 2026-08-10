@@ -246,6 +246,26 @@
       "id": "m-to-f-transition-month-overlaps-both",
       "month": "2020-02",
       "expectPrefixes": ["F", "M"]
+    },
+    {
+      "id": "f-before-l-transition-month",
+      "month": "2026-06",
+      "expectPrefixes": ["F"]
+    },
+    {
+      "id": "f-to-l-transition-month-overlaps-both",
+      "month": "2026-07",
+      "expectPrefixes": ["F", "L"]
+    },
+    {
+      "id": "l-after-f-transition-month",
+      "month": "2026-08",
+      "expectPrefixes": ["L"]
+    },
+    {
+      "id": "l-open-ended-range",
+      "month": "2030-01",
+      "expectPrefixes": ["L"]
     }
   ]
 }

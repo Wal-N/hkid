@@ -28,3 +28,8 @@ and domain behaviour remain in code rather than in these files.
 Date periods use an inclusive `start` and an exclusive `endExclusive`; a null
 `endExclusive` represents an open-ended period. A first-issue month overlaps a
 period when at least one day in that calendar month falls inside the period.
+When a source identifies only the month of a transition, the data expands the
+uncertain boundary to the whole month: a start uses the first day of that month,
+and an end uses the first day of the following month. Descriptions retain the
+source's original precision. This lets month-based lookups return every prefix
+that may apply without inventing an exact transition date.

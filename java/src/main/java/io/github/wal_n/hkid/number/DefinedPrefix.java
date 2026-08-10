@@ -31,7 +31,7 @@ public enum DefinedPrefix {
     D,
     /** Kowloon office issue sequence used from 1955 through 1969. */
     E,
-    /** First-issue sequence in use from 24 February 2020. */
+    /** First-issue sequence used from 24 February 2020 through late July 2026. */
     F,
     /** Kowloon office issue sequence used from 1967 through 1983. */
     G,
@@ -41,7 +41,7 @@ public enum DefinedPrefix {
     J,
     /** First-issue sequence used from 28 March 1983 through 31 July 1990. */
     K,
-    /** System-outage reserve sequence withdrawn on 23 June 2003. */
+    /** First-issue sequence reactivated in late July 2026; previously used as a system-outage reserve sequence until 23 June 2003. */
     L,
     /** First-issue sequence used from 1 August 2011 through 23 February 2020. */
     M,
