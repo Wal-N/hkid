@@ -64,13 +64,13 @@
     {
       "id": "F",
       "descriptions": {
-        "en": "First-issue sequence in use from 24 February 2020",
-        "zh-Hant": "2020年2月24日起使用的首次簽發系列"
+        "en": "First-issue sequence used from 24 February 2020 through late July 2026",
+        "zh-Hant": "2020年2月24日至2026年7月末使用的首次簽發系列"
       },
       "period": {
         "basis": "FIRST_ISSUE",
         "start": "2020-02-24",
-        "endExclusive": null
+        "endExclusive": "2026-08-01"
       }
     },
     {
@@ -120,10 +120,14 @@
     {
       "id": "L",
       "descriptions": {
-        "en": "System-outage reserve sequence used from 1983 until its withdrawal on 23 June 2003",
-        "zh-Hant": "1983年起供系統故障時使用、並於2003年6月23日停用的後備系列"
+        "en": "First-issue sequence reactivated in late July 2026; previously used as a system-outage reserve sequence from 1983 until its withdrawal on 23 June 2003",
+        "zh-Hant": "2026年7月末重新啟用作首次簽發的系列；此前於1983年起供系統故障時使用，並於2003年6月23日停用"
       },
-      "period": null
+      "period": {
+        "basis": "FIRST_ISSUE",
+        "start": "2026-07-01",
+        "endExclusive": null
+      }
     },
     {
       "id": "M",
