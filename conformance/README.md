@@ -25,8 +25,10 @@ The fixtures cover:
   Unicode code points, not UTF-8 bytes, UTF-16 code units, or grapheme
   clusters. A supplementary-plane Han letter therefore counts as one
   character.
-- Age calculation follows civil-date year addition. A 29 February birthday
-  has its anniversary on 28 February in a non-leap year.
+- Age calculation follows section 5 of Hong Kong's
+  [Age of Majority (Related Provisions) Ordinance (Cap. 410)](https://www.elegislation.gov.hk/hk/cap410!en/s5).
+  A 29 February birthday has its relevant anniversary on 1 March in a
+  non-leap year.
 - Age-specific symbols describe the holder's age when the card was registered.
   They are not reinterpreted using a later `validateAsOf` reference date.
 - Prefix periods use an inclusive start and an exclusive end. A first-issue

@@ -134,11 +134,13 @@ public final class HkidCardUtil {
         LocalDate earliestRegistrationDate = laterDate(
                 referenceDate.minusYears(RECENT_CARD_YEARS), HkidCard.CURRENT_SMART_HKID_START_DATE);
         earliestRegistrationDate = laterDate(
-                earliestRegistrationDate, dateOfBirth.plusYears(minimumRegistrationAge));
+                earliestRegistrationDate,
+                HkidCard.ageAnniversary(dateOfBirth, minimumRegistrationAge));
         LocalDate dateOfRegistration = generateRandomDateInRangeInclusive(
                 earliestRegistrationDate, referenceDate, random);
         YearMonth earliestFirstRegistrationMonth = laterYearMonth(
-                YearMonth.from(dateOfBirth.plusYears(MIN_AGE)), FIRST_HKID_ISSUE_MONTH);
+                YearMonth.from(HkidCard.ageAnniversary(dateOfBirth, MIN_AGE)),
+                FIRST_HKID_ISSUE_MONTH);
         YearMonth firstRegistrationYearMonth = generateRandomYearMonthInRangeInclusive(
                 earliestFirstRegistrationMonth,
                 YearMonth.from(dateOfRegistration),

@@ -29,6 +29,14 @@ class HkidCardConformanceTest {
     }
 
     @TestFactory
+    Stream<DynamicTest>calculatesSharedAgeCases() {
+        return ConformanceFixtures.cases(FIXTURE, "ageCases")
+                .map(testCase -> DynamicTest.dynamicTest(
+                        testCase.get("id").getAsString(),
+                        () -> assertAge(testCase)));
+    }
+
+    @TestFactory
     Stream<DynamicTest>rejectsSharedInvalidCardCases() {
         return ConformanceFixtures.cases(FIXTURE, "invalidCardCases")
                 .map(testCase -> DynamicTest.dynamicTest(
@@ -87,6 +95,19 @@ class HkidCardConformanceTest {
                         Integer.valueOf(expected.get("age").getAsInt()),
                         card.getAge(referenceDate).orElse(null)),
                 () -> assertDoesNotThrow(() -> card.validateAsOf(referenceDate)));
+    }
+
+    private static void assertAge(JsonObject testCase) {
+        HkidCard card = HkidCard.builder()
+                .dateOfBirth(LocalDate.parse(
+                        testCase.get("dateOfBirth").getAsString()))
+                .build();
+        LocalDate referenceDate = LocalDate.parse(
+                testCase.get("referenceDate").getAsString());
+
+        assertEquals(
+                Integer.valueOf(testCase.get("expectAge").getAsInt()),
+                card.getAge(referenceDate).orElse(null));
     }
 
     private static void assertAsOfValidation(JsonObject testCase) {
