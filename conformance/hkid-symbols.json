@@ -67,14 +67,14 @@
       "id": "adult-symbol-on-leap-day-adjusted-anniversary",
       "symbols": "***",
       "dateOfBirth": "2004-02-29",
-      "referenceDate": "2022-02-28",
+      "referenceDate": "2022-03-01",
       "expectValid": true
     },
     {
       "id": "adult-symbol-before-leap-day-adjusted-anniversary",
       "symbols": "***",
       "dateOfBirth": "2004-02-29",
-      "referenceDate": "2022-02-27",
+      "referenceDate": "2022-02-28",
       "expectValid": false
     },
     {
@@ -83,6 +83,20 @@
       "dateOfBirth": "2009-01-01",
       "referenceDate": "2020-01-01",
       "expectValid": true
+    },
+    {
+      "id": "minor-symbol-on-leap-day-adjusted-anniversary",
+      "symbols": "*",
+      "dateOfBirth": "2012-02-29",
+      "referenceDate": "2023-03-01",
+      "expectValid": true
+    },
+    {
+      "id": "minor-symbol-before-leap-day-adjusted-anniversary",
+      "symbols": "*",
+      "dateOfBirth": "2012-02-29",
+      "referenceDate": "2023-02-28",
+      "expectValid": false
     },
     {
       "id": "minor-symbol-before-eleven",

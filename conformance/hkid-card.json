@@ -62,6 +62,32 @@
       }
     }
   ],
+  "ageCases": [
+    {
+      "id": "leap-day-before-adjusted-anniversary",
+      "dateOfBirth": "2004-02-29",
+      "referenceDate": "2022-02-28",
+      "expectAge": 17
+    },
+    {
+      "id": "leap-day-on-adjusted-anniversary",
+      "dateOfBirth": "2004-02-29",
+      "referenceDate": "2022-03-01",
+      "expectAge": 18
+    },
+    {
+      "id": "leap-day-before-leap-year-anniversary",
+      "dateOfBirth": "2004-02-29",
+      "referenceDate": "2024-02-28",
+      "expectAge": 19
+    },
+    {
+      "id": "leap-day-on-leap-year-anniversary",
+      "dateOfBirth": "2004-02-29",
+      "referenceDate": "2024-02-29",
+      "expectAge": 20
+    }
+  ],
   "invalidCardCases": [
     {
       "id": "registration-before-current-smart-card-period",

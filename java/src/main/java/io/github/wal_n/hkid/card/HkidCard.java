@@ -82,6 +82,10 @@ public final class HkidCard {
     /**
      * Returns the holder's age on the supplied date.
      *
+     * <p>For a holder born on 29 February, the anniversary in a non-leap year
+     * is 1 March, in accordance with section 5 of the Age of Majority
+     * (Related Provisions) Ordinance (Cap. 410).</p>
+     *
      * @param referenceDate date on which the age is required
      * @return an empty optional when no date of birth is present
      */
@@ -94,11 +98,33 @@ public final class HkidCard {
                 .map(dob -> ageOn(dob, referenceDate));
     }
 
-    // Match LocalDate.plusYears(): February 29 anniversaries fall on
-    // February 28 in non-leap years.
     static int ageOn(LocalDate dateOfBirth, LocalDate referenceDate) {
         int age = referenceDate.getYear() - dateOfBirth.getYear();
-        return referenceDate.isBefore(dateOfBirth.plusYears(age)) ? age - 1 : age;
+        return referenceDate.isBefore(ageAnniversary(dateOfBirth, age)) ? age - 1 : age;
+    }
+
+    /**
+     * Returns the date on which a holder attains {@code age} under Hong Kong law.
+     *
+     * <p>Section 5(2) of the Age of Majority (Related Provisions) Ordinance
+     * (Cap. 410) treats 1 March as the relevant anniversary of a 29 February
+     * birth in a non-leap year. Do not replace this with an unadjusted
+     * {@link LocalDate#plusYears(long)} call: Java resolves the otherwise-invalid
+     * 29 February to 28 February, one day earlier than the statutory anniversary.</p>
+     *
+     * @param dateOfBirth holder's date of birth
+     * @param age age whose anniversary is required
+     * @return the date on which the holder attains {@code age}
+     * @see <a href="https://www.elegislation.gov.hk/hk/cap410!en/s5">Cap. 410, section 5</a>
+     */
+    static LocalDate ageAnniversary(LocalDate dateOfBirth, int age) {
+        LocalDate anniversary = dateOfBirth.plusYears(age);
+        if (dateOfBirth.getMonthValue() == 2
+                && dateOfBirth.getDayOfMonth() == 29
+                && anniversary.getDayOfMonth() == 28) {
+            return anniversary.plusDays(1);
+        }
+        return anniversary;
     }
 
     /**

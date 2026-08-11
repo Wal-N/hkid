@@ -31,7 +31,8 @@ class HkidCardTest {
         assertGeneratedCard(hkidCard);
         assertEquals(Sex.MALE, hkidCard.getSex());
         assertEquals(11, Period.between(hkidCard.getDateOfBirth(), REFERENCE_DATE).getYears());
-        assertEquals(hkidCard.getDateOfBirth().plusYears(11), hkidCard.getDateOfRegistration());
+        assertEquals(HkidCard.ageAnniversary(hkidCard.getDateOfBirth(), 11),
+                hkidCard.getDateOfRegistration());
         assertEquals(YearMonth.from(hkidCard.getDateOfRegistration()), hkidCard.getFirstRegistrationYearMonth());
         assertEquals(HkidSymbols.parse("*AZ"), hkidCard.getSymbols());
 
@@ -48,11 +49,34 @@ class HkidCardTest {
                 new BoundaryRandom(false), referenceDate);
 
         assertEquals(LocalDate.of(2016, 2, 29), card.getDateOfBirth());
-        assertEquals(LocalDate.of(2027, 2, 28), card.getDateOfRegistration());
+        assertEquals(LocalDate.of(2027, 3, 1), card.getDateOfRegistration());
+        assertEquals(YearMonth.of(2027, 3), card.getFirstRegistrationYearMonth());
         assertEquals(Integer.valueOf(11),
                 card.getAge(card.getDateOfRegistration()).orElse(null));
         assertEquals(HkidSymbols.parse("*AZ"), card.getSymbols());
         card.validateAsOf(referenceDate);
+    }
+
+    @Test
+    void randomLeapDayCardChangesToAdultSymbolOnMarchFirst() {
+        LocalDate dateOfBirth = LocalDate.of(2004, 2, 29);
+        LocalDate dayBeforeAnniversary = LocalDate.of(2022, 2, 28);
+        HkidCard juvenileCard = generateCardWithDateOfBirth(
+                dayBeforeAnniversary, dateOfBirth);
+
+        assertEquals(dateOfBirth, juvenileCard.getDateOfBirth());
+        assertEquals(HkidSymbols.parse("*AZ"), juvenileCard.getSymbols());
+        assertEquals(Integer.valueOf(17),
+                juvenileCard.getAge(dayBeforeAnniversary).orElse(null));
+
+        LocalDate anniversary = LocalDate.of(2022, 3, 1);
+        HkidCard adultCard = generateCardWithDateOfBirth(
+                anniversary, dateOfBirth);
+
+        assertEquals(dateOfBirth, adultCard.getDateOfBirth());
+        assertEquals(HkidSymbols.parse("***AZ"), adultCard.getSymbols());
+        assertEquals(anniversary, adultCard.getDateOfRegistration());
+        assertEquals(Integer.valueOf(18), adultCard.getAge(anniversary).orElse(null));
     }
 
     @Test
@@ -228,6 +252,16 @@ class HkidCardTest {
         return false;
     }
 
+    private static HkidCard generateCardWithDateOfBirth(
+            LocalDate referenceDate, LocalDate dateOfBirth) {
+        int age = HkidCard.ageOn(dateOfBirth, referenceDate);
+        LocalDate earliestDateOfBirth = referenceDate.minusYears(age + 1L).plusDays(1);
+        int dateOfBirthOffset = Math.toIntExact(
+                ChronoUnit.DAYS.between(earliestDateOfBirth, dateOfBirth));
+        Random random = new SequenceRandom(age - 11, dateOfBirthOffset);
+        return HkidCardUtil.generateRandomCard(random, referenceDate);
+    }
+
     private void assertGeneratedCard(HkidCard hkidCard) {
         assertNotNull(hkidCard.getHkidNumber());
         assertNotNull(hkidCard.getChineseName());
@@ -243,7 +277,8 @@ class HkidCardTest {
         assertFalse(hkidCard.getDateOfRegistration().isBefore(earliestCurrentRegistration));
         assertFalse(hkidCard.getDateOfRegistration().isAfter(REFERENCE_DATE));
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
-                .isBefore(YearMonth.from(hkidCard.getDateOfBirth().plusYears(11))));
+                .isBefore(YearMonth.from(
+                        HkidCard.ageAnniversary(hkidCard.getDateOfBirth(), 11))));
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
                 .isAfter(YearMonth.from(hkidCard.getDateOfRegistration())));
         assertEquals(hkidCard.getChineseName().length(), hkidCard.getChineseCommercialCodes().size());
