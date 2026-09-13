@@ -67,6 +67,19 @@
       }
     },
     {
+      "id": "normalizes-lowercase-letter-check-digit",
+      "input": "a000002(a)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "000002",
+        "checkDigit": "A",
+        "withoutCheckDigit": "A000002",
+        "withoutParentheses": "A000002A",
+        "complete": "A000002(A)",
+        "masked": "****002(*)"
+      }
+    },
+    {
       "id": "normalizes-case-and-outer-whitespace",
       "input": "  a123456(3)  ",
       "expect": {
@@ -99,6 +112,26 @@
     {
       "id": "invalid-prefix-characters",
       "input": "#$123456",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "rejects-sharp-s-prefix-expansion",
+      "input": "\u00df123456(8)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "rejects-dotless-i-prefix",
+      "input": "\u0131123456",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "rejects-long-s-prefix",
+      "input": "\u017f123456",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "rejects-ligature-prefix-expansion",
+      "input": "\ufb00123456",
       "expectError": "INVALID_FORMAT"
     },
     {
@@ -144,6 +177,12 @@
       "input": "a000002",
       "checkDigit": " a ",
       "expectValid": true
+    },
+    {
+      "id": "check-digit-validation-rejects-non-ascii-prefix",
+      "input": "\u00df123456",
+      "checkDigit": "8",
+      "expectValid": false
     },
     {
       "id": "check-digit-validation-wrong-check-digit",

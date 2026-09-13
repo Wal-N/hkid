@@ -1,6 +1,8 @@
 package io.github.wal_n.hkid.number;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -42,6 +44,67 @@ class HkidNumberTest {
         assertThrows(HkidNumber.InvalidHkidNumberFormatException.class, () -> new HkidNumber("AB1234567((9)"));
         assertThrows(HkidNumber.InvalidHkidNumberFormatException.class, () -> new HkidNumber("AB1234567(9"));
         assertThrows(HkidNumber.InvalidHkidNumberFormatException.class, () -> new HkidNumber("AB12345679)"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "ß, 8",
+            "ı, 5",
+            "ſ, 2",
+            "ﬀ, 9",
+            "Aı, 8",
+            "ıA, 0",
+            "Aſ, 5",
+            "ſA, 9",
+            "ıſ, A"
+    })
+    void rejectsNonAsciiPrefixesBeforeCaseNormalization(String prefix, String checkDigit) {
+        String withoutCheckDigit = prefix + "123456";
+        // These digits match the ASCII prefixes produced by Unicode uppercasing.
+        // A matching checksum must not make a non-ASCII prefix valid.
+        for (String input : new String[]{
+                withoutCheckDigit,
+                withoutCheckDigit + checkDigit,
+                withoutCheckDigit + "(" + checkDigit + ")"}) {
+            assertThrows(
+                    HkidNumber.InvalidHkidNumberFormatException.class,
+                    () -> new HkidNumber(input), input);
+            assertFalse(HkidNumberUtil.isValid(input), input);
+        }
+        assertThrows(
+                HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> new HkidNumber(prefix, "123456"));
+        assertThrows(
+                HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> new HkidNumber(prefix, "123456", checkDigit));
+        assertFalse(HkidNumberUtil.validateCheckDigit(withoutCheckDigit, checkDigit));
+        assertFalse(HkidNumber.validateCheckDigit(withoutCheckDigit, checkDigit));
+        assertFalse(DefinedPrefix.fromPrefix(" " + prefix + " ").isPresent());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "a, 000002, a, A000002(A)",
+            "ab, 123456, 9, AB123456(9)",
+            "aB, 123456, 9, AB123456(9)"
+    })
+    void acceptsAsciiCaseVariations(
+            String prefix, String numerals, String checkDigit, String expectedComplete) {
+        String withoutCheckDigit = prefix + numerals;
+        for (String input : new String[]{
+                withoutCheckDigit,
+                withoutCheckDigit + checkDigit,
+                withoutCheckDigit + "(" + checkDigit + ")"}) {
+            assertEquals(expectedComplete,
+                    new HkidNumber(input).toString(HkidNumber.Format.COMPLETE));
+            assertTrue(HkidNumberUtil.isValid(input), input);
+        }
+        assertEquals(expectedComplete,
+                new HkidNumber(prefix, numerals).toString(HkidNumber.Format.COMPLETE));
+        assertEquals(expectedComplete,
+                new HkidNumber(prefix, numerals, checkDigit).toString(HkidNumber.Format.COMPLETE));
+        assertTrue(HkidNumberUtil.validateCheckDigit(withoutCheckDigit, checkDigit));
+        assertTrue(HkidNumber.validateCheckDigit(withoutCheckDigit, checkDigit));
     }
 
     @Test
@@ -128,6 +191,12 @@ class HkidNumberTest {
         assertEquals(DefinedPrefix.A.getDescription(), hkidNumber.getPrefixDescription());
         assertEquals(DefinedPrefix.A.getTraditionalChineseDescription(),
                 hkidNumber.getPrefixTraditionalChineseDescription());
+    }
+
+    @Test
+    void definedPrefixLookupPreservesAsciiCaseAndWhitespaceSupport() {
+        assertEquals(DefinedPrefix.S, DefinedPrefix.fromPrefix(" s ").orElse(null));
+        assertEquals(DefinedPrefix.WX, DefinedPrefix.fromPrefix(" wX ").orElse(null));
     }
 
     @Test
