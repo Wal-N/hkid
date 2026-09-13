@@ -174,7 +174,7 @@ public enum DefinedPrefix {
     /**
      * Looks up predefined metadata for a prefix.
      *
-     * @param prefix A one- or two-letter HKID prefix.
+     * @param prefix A one- or two-letter ASCII HKID prefix, in either case.
      * @return The matching predefined prefix, or an empty optional when no metadata is defined.
      */
     public static Optional<DefinedPrefix> fromPrefix(String prefix) {
@@ -182,7 +182,11 @@ public enum DefinedPrefix {
             return Optional.empty();
         }
 
-        String normalizedPrefix = prefix.trim().toUpperCase(Locale.ROOT);
+        String trimmedPrefix = prefix.trim();
+        if (!HkidNumberUtil.isValidPrefix(trimmedPrefix)) {
+            return Optional.empty();
+        }
+        String normalizedPrefix = trimmedPrefix.toUpperCase(Locale.ROOT);
         for (DefinedPrefix definedPrefix : values()) {
             if (definedPrefix.name().equals(normalizedPrefix)) {
                 return Optional.of(definedPrefix);

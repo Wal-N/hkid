@@ -11,8 +11,8 @@ import java.util.regex.Pattern;
  */
 public final class HkidNumberUtil {
     private static final Pattern HKID_NUMBER_PATTERN =
-            Pattern.compile("^([A-Z]{1,2})(\\d{6})(?:([\\dA])|\\(([\\dA])\\))?$");
-    private static final Pattern PREFIX_PATTERN = Pattern.compile("^[A-Z]{1,2}$");
+            Pattern.compile("^([A-Za-z]{1,2})(\\d{6})(?:([\\dAa])|\\(([\\dAa])\\))?$");
+    private static final Pattern PREFIX_PATTERN = Pattern.compile("^[A-Za-z]{1,2}$");
     private static final Pattern NUMERALS_PATTERN = Pattern.compile("^\\d{6}$");
     private static final Pattern CHECK_DIGIT_PATTERN = Pattern.compile("^[\\dA]$");
     private static final Pattern WITHOUT_CHECK_DIGIT_PATTERN =
@@ -161,8 +161,7 @@ public final class HkidNumberUtil {
                     "HKID number cannot be null or empty.");
         }
 
-        Matcher matcher =
-                HKID_NUMBER_PATTERN.matcher(hkidNumber.trim().toUpperCase(Locale.ROOT));
+        Matcher matcher = HKID_NUMBER_PATTERN.matcher(hkidNumber.trim());
         if (!matcher.matches()) {
             throw new HkidNumber.InvalidHkidNumberFormatException(
                     INVALID_HKID_NUMBER_FORMAT_MESSAGE);
@@ -181,12 +180,15 @@ public final class HkidNumberUtil {
                     "Prefix of HKID Number cannot be null or empty.");
         }
 
-        String normalizedPrefix = prefix.toUpperCase(Locale.ROOT);
-        if (!PREFIX_PATTERN.matcher(normalizedPrefix).matches()) {
+        if (!isValidPrefix(prefix)) {
             throw new HkidNumber.InvalidHkidNumberFormatException(
                     INVALID_PREFIX_FORMAT_MESSAGE);
         }
-        return normalizedPrefix;
+        return prefix.toUpperCase(Locale.ROOT);
+    }
+
+    static boolean isValidPrefix(String prefix) {
+        return prefix != null && PREFIX_PATTERN.matcher(prefix).matches();
     }
 
     static String validateNumerals(String numerals) {

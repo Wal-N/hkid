@@ -25,6 +25,7 @@ public final class HkidNumber {
     /**
      * Constructs a new {@code HkidNumber} instance by parsing the provided HKID number string.
      * The input string may include or exclude the check digit and parentheses around the check digit.
+     * Prefixes must contain one or two ASCII letters (A-Z or a-z), normalized to uppercase.
      *
      * @param hkidNumber The HKID number string to parse. Acceptable formats include "X123456(A)", "XX123456A", or "X123456".
      *                The check digit and parentheses are optional.
@@ -43,7 +44,7 @@ public final class HkidNumber {
      * This constructor automatically calculates and assigns the check digit based on the provided prefix and numerals.
      * The generated instance will represent a complete HKID number including a valid check digit.
      *
-     * @param prefix The prefix part of the HKID number. It should consist of one or two alphabetical characters.
+     * @param prefix The prefix part of the HKID number. It must consist of one or two ASCII letters (A-Z or a-z).
      * @param numerals The numerals part of the HKID number. It should consist of six digits.
      * @throws InvalidHkidNumberFormatException If either the prefix or numerals are null, empty, do not match expected patterns,
      *                                       or contain characters that are not allowed.
@@ -58,7 +59,7 @@ public final class HkidNumber {
      * This constructor allows for the explicit specification of the check digit and verifies it against the calculated value.
      * It is useful for creating {@code HkidNumber} instances that need to match existing HKID numbers exactly, including their check digits.
      *
-     * @param prefix The prefix part of the HKID number. It should consist of one or two alphabetical characters.
+     * @param prefix The prefix part of the HKID number. It must consist of one or two ASCII letters (A-Z or a-z).
      * @param numerals The numerals part of the HKID number. It should consist of six digits.
      * @param checkDigit The check digit of the HKID number. It is a single digit or the letter 'A'. This parameter is optional;
      *                   if null or empty, the check digit will be automatically calculated.
