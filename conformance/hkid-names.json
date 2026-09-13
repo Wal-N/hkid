@@ -101,6 +101,122 @@
       "commercialCodes": []
     }
   ],
+  "englishNameValidationCases": [
+    {
+      "id": "null-english-name",
+      "surname": null,
+      "personalName": null,
+      "expectValid": false
+    },
+    {
+      "id": "empty-english-name",
+      "surname": "",
+      "personalName": "",
+      "expectValid": false
+    },
+    {
+      "id": "null-surname-empty-personal-name",
+      "surname": null,
+      "personalName": "",
+      "expectValid": false
+    },
+    {
+      "id": "empty-surname-null-personal-name",
+      "surname": "",
+      "personalName": null,
+      "expectValid": false
+    },
+    {
+      "id": "personal-name-without-surname",
+      "surname": "",
+      "personalName": "Tai Man",
+      "expectValid": false
+    },
+    {
+      "id": "personal-name-with-null-surname",
+      "surname": null,
+      "personalName": "Tai Man",
+      "expectValid": false
+    },
+    {
+      "id": "complete-english-name",
+      "surname": "Chan",
+      "personalName": "Tai Man",
+      "expectValid": true
+    },
+    {
+      "id": "surname-only-empty-personal-name",
+      "surname": "Chan",
+      "personalName": "",
+      "expectValid": true
+    },
+    {
+      "id": "surname-only-null-personal-name",
+      "surname": "Chan",
+      "personalName": null,
+      "expectValid": true
+    },
+    {
+      "id": "supported-punctuation",
+      "surname": "St.John",
+      "personalName": "Anne-Marie O'Connor",
+      "expectValid": true
+    },
+    {
+      "id": "whitespace-surname",
+      "surname": " ",
+      "personalName": "Tai Man",
+      "expectValid": false
+    },
+    {
+      "id": "numeric-personal-name",
+      "surname": "Chan",
+      "personalName": "123",
+      "expectValid": false
+    },
+    {
+      "id": "formatted-name-at-39-characters",
+      "surname": "Chan",
+      "personalName": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expectValid": true
+    },
+    {
+      "id": "formatted-name-at-40-characters",
+      "surname": "Chan",
+      "personalName": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expectValid": true
+    },
+    {
+      "id": "formatted-name-at-41-characters",
+      "surname": "Chan",
+      "personalName": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "expectValid": false
+    },
+    {
+      "id": "surname-only-at-40-characters",
+      "surname": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "personalName": "",
+      "expectValid": true
+    },
+    {
+      "id": "surname-only-at-40-characters-with-null-personal-name",
+      "surname": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "personalName": null,
+      "expectValid": true
+    },
+    {
+      "id": "surname-only-at-41-characters",
+      "surname": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "personalName": "",
+      "expectValid": false
+    },
+    {
+      "id": "surname-only-at-41-characters-with-null-personal-name",
+      "surname": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "personalName": null,
+      "expectValid": false
+    }
+  ],
   "englishNameCases": [
     {
       "id": "complete-english-name",

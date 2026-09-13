@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
  * Utility methods for English names printed on HKID cards.
  */
 public final class EnglishNameUtil {
+    private static final int MAX_LENGTH = 40;
     private static final Pattern PART_PATTERN = Pattern.compile("[A-Za-z]+(?:[ .'-][A-Za-z]+)*");
 
     private EnglishNameUtil() {
@@ -15,6 +16,8 @@ public final class EnglishNameUtil {
     /**
      * Tests whether a non-empty name part contains only supported Latin letters,
      * with spaces, periods, apostrophes, or hyphens between letter groups.
+     *
+     * <p>This checks character syntax only, without enforcing the HKID length limit.</p>
      *
      * @param value name part to inspect
      * @return {@code true} when the value is a valid English name part
@@ -26,12 +29,27 @@ public final class EnglishNameUtil {
     /**
      * Tests whether English surname and personal-name parts form a valid HKID name.
      *
-     * @param surname English surname, or {@code null} for an empty surname
+     * <p>A surname is required; the personal name is optional. The formatted name
+     * must not exceed 40 characters, including the comma and space between the
+     * surname and a non-empty personal name.</p>
+     *
+     * @param surname required English surname
      * @param personalName English personal name, or {@code null} for an empty personal name
-     * @return {@code true} when both non-empty parts contain only supported characters
+     * @return {@code true} when the surname is present, all non-empty parts have
+     *         valid character syntax, and the formatted name fits the HKID limit
      */
     public static boolean isValid(String surname, String personalName) {
-        return isValidOptionalNamePart(surname) && isValidOptionalNamePart(personalName);
+        if (surname == null || surname.isEmpty()) {
+            return false;
+        }
+
+        long fullNameLength = surname.length();
+        if (personalName != null && !personalName.isEmpty()) {
+            fullNameLength += 2L + personalName.length();
+        }
+        return fullNameLength <= MAX_LENGTH
+                && isValidNamePart(surname)
+                && isValidOptionalNamePart(personalName);
     }
 
     static void validate(String surname, String personalName) {
