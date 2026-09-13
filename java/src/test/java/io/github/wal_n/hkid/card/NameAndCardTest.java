@@ -12,6 +12,7 @@ import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -82,11 +83,19 @@ class NameAndCardTest {
     void reportsWhetherEnglishNamesAreValid() {
         assertTrue(EnglishNameUtil.isValid("Chan", "Tai Man"));
         assertTrue(EnglishNameUtil.isValid("O'Connor", "Anne-Marie"));
-        assertTrue(EnglishNameUtil.isValid(null, null));
-        assertTrue(EnglishNameUtil.isValid("", "Tai Man"));
+        assertFalse(EnglishNameUtil.isValid(null, null));
+        assertFalse(EnglishNameUtil.isValid("", "Tai Man"));
         assertTrue(EnglishNameUtil.isValid("Chan", ""));
         assertFalse(EnglishNameUtil.isValid("123", "Tai Man"));
         assertFalse(EnglishNameUtil.isValid("Chan---", "Tai Man"));
+    }
+
+    @Test
+    void rejectsOverlongEnglishNamesBeforeMatchingNameParts() {
+        String longName = String.join(" ", Collections.nCopies(10000, "A"));
+
+        assertFalse(EnglishNameUtil.isValid(longName, "Tai Man"));
+        assertFalse(EnglishNameUtil.isValid("Chan", longName));
     }
 
     @Test

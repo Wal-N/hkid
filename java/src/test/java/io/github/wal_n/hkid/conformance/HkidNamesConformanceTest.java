@@ -3,6 +3,7 @@ package io.github.wal_n.hkid.conformance;
 import com.google.gson.JsonObject;
 import io.github.wal_n.hkid.name.ChineseName;
 import io.github.wal_n.hkid.name.EnglishName;
+import io.github.wal_n.hkid.name.EnglishNameUtil;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -47,6 +48,18 @@ class HkidNamesConformanceTest {
                         () -> assertThrows(
                                 IllegalArgumentException.class,
                                 () -> buildChineseName(testCase))));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> validatesSharedEnglishNameCases() {
+        return ConformanceFixtures.cases(FIXTURE, "englishNameValidationCases")
+                .map(testCase -> DynamicTest.dynamicTest(
+                        testCase.get("id").getAsString(),
+                        () -> assertEquals(
+                                testCase.get("expectValid").getAsBoolean(),
+                                EnglishNameUtil.isValid(
+                                        ConformanceFixtures.nullableString(testCase, "surname"),
+                                        ConformanceFixtures.nullableString(testCase, "personalName")))));
     }
 
     @TestFactory
