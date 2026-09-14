@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,7 +43,8 @@ class ChineseNameUnicodeTest {
         assertDoesNotThrow(() -> new ChineseName(
                 SUPPLEMENTARY_IDEOGRAPH,
                 fiveBmpCharacters,
-                Arrays.asList("0001", "0002", "0003", "0004", "0005", "0006")));
+                Arrays.stream(new String[]{"0001", "0002", "0003", "0004", "0005", "0006"})
+                        .map(ChineseCommercialCode::new).collect(Collectors.toList())));
         assertThrows(IllegalArgumentException.class,
                 () -> new ChineseName(SUPPLEMENTARY_IDEOGRAPH, fiveBmpCharacters + "\u4E05"));
     }

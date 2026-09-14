@@ -1,6 +1,7 @@
 package io.github.wal_n.hkid.name;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -12,7 +13,7 @@ import java.util.regex.Pattern;
  * character.</p>
  */
 public final class ChineseNameUtil {
-    private static final Pattern COMMERCIAL_CODE_PATTERN = Pattern.compile("\\d{4}");
+    private static final Pattern COMMERCIAL_CODE_PATTERN = Pattern.compile("[0-9]{4}");
 
     private ChineseNameUtil() {
         throw new AssertionError("ChineseNameUtil cannot be instantiated");
@@ -53,7 +54,7 @@ public final class ChineseNameUtil {
      * Tests whether Chinese surname and personal-name parts and their commercial
      * codes form a valid HKID name.
      *
-     * <p>Commercial codes are checked for format and count only; mappings
+     * <p>Commercial codes are checked for null entries and count only; mappings
      * between Chinese characters and commercial codes are not verified.</p>
      *
      * @param surname Chinese surname, or {@code null} for an empty surname
@@ -63,7 +64,7 @@ public final class ChineseNameUtil {
      *         count matches the name length
      */
     public static boolean isValid(
-            String surname, String personalName, List<String> commercialCodes) {
+            String surname, String personalName, List<ChineseCommercialCode> commercialCodes) {
         return isValid(surname, personalName)
                 && isValidChineseCommercialCodes(commercialCodes)
                 && (commercialCodes == null
@@ -75,7 +76,7 @@ public final class ChineseNameUtil {
      * Tests whether a value is one four-digit Chinese commercial code.
      *
      * @param code code to inspect
-     * @return {@code true} when {@code code} contains exactly four decimal digits
+     * @return {@code true} when {@code code} contains exactly four ASCII digits
      */
     public static boolean isValidCommercialCode(String code) {
         return code != null && COMMERCIAL_CODE_PATTERN.matcher(code).matches();
@@ -86,17 +87,17 @@ public final class ChineseNameUtil {
      *
      * @param codes codes to inspect; {@code null} is treated as no codes
      * @return {@code true} when there are at most {@link ChineseName#MAX_LENGTH}
-     *         entries and every entry is a valid four-digit code
+     *         entries and every entry is non-null
      */
-    public static boolean isValidChineseCommercialCodes(List<String> codes) {
+    public static boolean isValidChineseCommercialCodes(List<ChineseCommercialCode> codes) {
         return codes == null
                 || codes.isEmpty()
                 || (codes.size() <= ChineseName.MAX_LENGTH
-                && codes.stream().allMatch(ChineseNameUtil::isValidCommercialCode));
+                && codes.stream().allMatch(Objects::nonNull));
     }
 
     static void validate(
-            String surname, String personalName, List<String> commercialCodes) {
+            String surname, String personalName, List<ChineseCommercialCode> commercialCodes) {
         if (!isValidOptionalChinesePart(surname)) {
             throw new IllegalArgumentException("Invalid Chinese surname");
         }
@@ -115,14 +116,15 @@ public final class ChineseNameUtil {
         }
     }
 
-    static void validateCommercialCodes(List<String> codes) {
+    static void validateCommercialCodes(List<ChineseCommercialCode> codes) {
         if (!isValidChineseCommercialCodes(codes)) {
-            throw new IllegalArgumentException("Chinese commercial codes must be 4 digits each and contain at most "
+            throw new IllegalArgumentException("Chinese commercial codes must be non-null and contain at most "
                     + ChineseName.MAX_LENGTH + " entries");
         }
     }
 
-    static void validateCommercialCodeCount(String surname, String personalName, List<String> codes) {
+    static void validateCommercialCodeCount(
+            String surname, String personalName, List<ChineseCommercialCode> codes) {
         if (codes == null || codes.isEmpty()) {
             return;
         }

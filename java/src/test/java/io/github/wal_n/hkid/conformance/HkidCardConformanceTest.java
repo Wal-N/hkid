@@ -130,7 +130,7 @@ class HkidCardConformanceTest {
                 .chineseSurname(input.get("chineseSurname").getAsString())
                 .chinesePersonalName(input.get("chinesePersonalName").getAsString())
                 .chineseCommercialCodes(
-                        ConformanceFixtures.strings(input, "chineseCommercialCodes"))
+                        ConformanceFixtures.commercialCodes(input, "chineseCommercialCodes"))
                 .englishSurname(input.get("englishSurname").getAsString())
                 .englishPersonalName(input.get("englishPersonalName").getAsString())
                 .sex(Sex.fromEngMarker(input.get("sex").getAsString()))

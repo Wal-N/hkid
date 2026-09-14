@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.github.wal_n.hkid.name.ChineseCommercialCode;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,6 +12,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -70,6 +72,12 @@ final class ConformanceFixtures {
             result.add(value.getAsString());
         }
         return result;
+    }
+
+    static List<ChineseCommercialCode> commercialCodes(JsonObject object, String memberName) {
+        return strings(object, memberName).stream()
+                .map(ChineseCommercialCode::new)
+                .collect(Collectors.toList());
     }
 
     static String nullableString(JsonObject object, String memberName) {

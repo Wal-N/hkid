@@ -1,12 +1,14 @@
 package io.github.wal_n.hkid.conformance;
 
 import com.google.gson.JsonObject;
+import io.github.wal_n.hkid.name.ChineseCommercialCode;
 import io.github.wal_n.hkid.name.ChineseName;
 import io.github.wal_n.hkid.name.EnglishName;
 import io.github.wal_n.hkid.name.EnglishNameUtil;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -36,7 +38,9 @@ class HkidNamesConformanceTest {
                                     () -> assertEquals(
                                             ConformanceFixtures.strings(
                                                     testCase, "commercialCodes"),
-                                            name.getCommercialCodes()));
+                                            name.getCommercialCodes().stream()
+                                                    .map(ChineseCommercialCode::getCode)
+                                                    .collect(Collectors.toList())));
                         }));
     }
 
@@ -96,7 +100,7 @@ class HkidNamesConformanceTest {
         return new ChineseName(
                 testCase.get("surname").getAsString(),
                 testCase.get("personalName").getAsString(),
-                ConformanceFixtures.strings(testCase, "commercialCodes"));
+                ConformanceFixtures.commercialCodes(testCase, "commercialCodes"));
     }
 
     private static EnglishName buildEnglishName(JsonObject testCase) {

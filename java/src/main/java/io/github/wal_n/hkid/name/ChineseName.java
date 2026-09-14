@@ -16,7 +16,7 @@ public final class ChineseName {
 
     private final String surname;
     private final String personalName;
-    private final List<String> commercialCodes;
+    private final List<ChineseCommercialCode> commercialCodes;
 
     /**
      * Creates an empty Chinese name with no commercial codes.
@@ -46,10 +46,10 @@ public final class ChineseName {
      * @throws IllegalArgumentException if a name part, total length, commercial code,
      *         or code count is invalid
      */
-    public ChineseName(String surname, String personalName, List<String> commercialCodes) {
+    public ChineseName(String surname, String personalName, List<ChineseCommercialCode> commercialCodes) {
         String normalizedSurname = Objects.toString(surname, "");
         String normalizedPersonalName = Objects.toString(personalName, "");
-        List<String> normalizedCommercialCodes = commercialCodes == null
+        List<ChineseCommercialCode> normalizedCommercialCodes = commercialCodes == null
                 ? Collections.emptyList()
                 : new ArrayList<>(commercialCodes);
 
@@ -93,7 +93,7 @@ public final class ChineseName {
      *
      * @return an unmodifiable list of four-digit commercial codes
      */
-    public List<String> getCommercialCodes() {
+    public List<ChineseCommercialCode> getCommercialCodes() {
         return commercialCodes;
     }
 

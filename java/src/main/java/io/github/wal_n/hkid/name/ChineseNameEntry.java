@@ -10,7 +10,7 @@ import java.util.Set;
  * One seed row used for random Chinese name generation.
  */
 public final class ChineseNameEntry {
-    private final String commercialCode;
+    private final ChineseCommercialCode commercialCode;
     private final String character;
     private final String romanisation;
     private final boolean commonSurname;
@@ -23,9 +23,7 @@ public final class ChineseNameEntry {
                      boolean commonSurname,
                      Set<Sex> supportedSexes,
                      int weight) {
-        if (!ChineseNameUtil.isValidCommercialCode(commercialCode)) {
-            throw new IllegalArgumentException("Commercial code must be four digits");
-        }
+        this.commercialCode = new ChineseCommercialCode(commercialCode);
         if (character == null || ChineseNameUtil.lengthOf(character) != 1 || !ChineseNameUtil.isChinese(character)) {
             throw new IllegalArgumentException("Name seed character must be one Chinese character");
         }
@@ -45,7 +43,6 @@ public final class ChineseNameEntry {
             throw new IllegalArgumentException("Weight must be positive");
         }
 
-        this.commercialCode = commercialCode;
         this.character = character;
         this.romanisation = normaliseRomanisation(romanisation);
         this.commonSurname = commonSurname;
@@ -58,7 +55,7 @@ public final class ChineseNameEntry {
      *
      * @return the commercial code
      */
-    public String getCommercialCode() {
+    public ChineseCommercialCode getCommercialCode() {
         return commercialCode;
     }
 
