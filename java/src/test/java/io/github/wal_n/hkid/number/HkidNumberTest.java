@@ -242,6 +242,54 @@ class HkidNumberTest {
     }
 
     @Test
+    void boundsFirstIssueMonthByExactFToLTransitionDate() {
+        YearMonth july = YearMonth.of(2026, 7);
+        LocalDate dayBeforeTransition = LocalDate.of(2026, 7, 26);
+        LocalDate transitionDate = LocalDate.of(2026, 7, 27);
+
+        assertTrue(DefinedPrefix.F.supportsFirstIssueMonth(july, dayBeforeTransition));
+        assertFalse(DefinedPrefix.L.supportsFirstIssueMonth(july, dayBeforeTransition));
+        assertTrue(DefinedPrefix.L.supportsFirstIssueMonth(july, transitionDate));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.F},
+                DefinedPrefix.fromFirstIssueMonth(july, dayBeforeTransition));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.F, DefinedPrefix.L},
+                DefinedPrefix.fromFirstIssueMonth(july, transitionDate));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.F, DefinedPrefix.L},
+                DefinedPrefix.fromFirstIssueMonth(july));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.F, DefinedPrefix.L},
+                DefinedPrefix.fromFirstIssueMonth(july, LocalDate.of(2026, 8, 1)));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.L},
+                DefinedPrefix.fromFirstIssueMonth(
+                        YearMonth.of(2026, 8), LocalDate.of(2026, 8, 1)));
+    }
+
+    @Test
+    void boundsFirstIssueMonthAcrossEarlierMidMonthTransitions() {
+        YearMonth february = YearMonth.of(2020, 2);
+
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.M},
+                DefinedPrefix.fromFirstIssueMonth(february, LocalDate.of(2020, 2, 23)));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.F, DefinedPrefix.M},
+                DefinedPrefix.fromFirstIssueMonth(february, LocalDate.of(2020, 2, 24)));
+    }
+
+    @Test
+    void boundedFirstIssueLookupReturnsNoMatchesForMissingOrEmptyDateRanges() {
+        YearMonth july = YearMonth.of(2026, 7);
+        LocalDate transitionDate = LocalDate.of(2026, 7, 27);
+        LocalDate beforeMonth = LocalDate.of(2026, 6, 30);
+
+        assertFalse(DefinedPrefix.L.supportsFirstIssueMonth(null, transitionDate));
+        assertFalse(DefinedPrefix.L.supportsFirstIssueMonth(july, null));
+        assertFalse(DefinedPrefix.F.supportsFirstIssueMonth(july, beforeMonth));
+        assertFalse(DefinedPrefix.J.supportsFirstIssueMonth(july, transitionDate));
+        assertFalse(DefinedPrefix.N.supportsFirstIssueMonth(july, transitionDate));
+        assertArrayEquals(new DefinedPrefix[0], DefinedPrefix.fromFirstIssueMonth(null, transitionDate));
+        assertArrayEquals(new DefinedPrefix[0], DefinedPrefix.fromFirstIssueMonth(july, null));
+        assertArrayEquals(new DefinedPrefix[0], DefinedPrefix.fromFirstIssueMonth(july, beforeMonth));
+    }
+
+    @Test
     void usesDescriptionFallbacksForValidUndefinedPrefixes() {
         HkidNumber hkidNumber = new HkidNumber("Q123456");
 

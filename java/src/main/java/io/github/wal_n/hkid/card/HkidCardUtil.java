@@ -153,7 +153,7 @@ public final class HkidCardUtil {
         Sex sex = requestedSex != null ? requestedSex : generateRandomSex(random);
         GeneratedName name = HkidNameUtil.generateRandomName(random, sex);
         DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(
-                birthRegistrationDate, firstRegistrationYearMonth);
+                birthRegistrationDate, firstRegistrationYearMonth, dateOfRegistration);
 
         return HkidCard.builder()
                 .hkidNumber(HkidNumberUtil.generateRandomHkidNumber(random, compatiblePrefixes))
@@ -221,7 +221,9 @@ public final class HkidCardUtil {
     }
 
     private static DefinedPrefix[] compatiblePrefixesFor(
-            LocalDate birthRegistrationDate, YearMonth firstRegistrationMonth) {
+            LocalDate birthRegistrationDate,
+            YearMonth firstRegistrationMonth,
+            LocalDate dateOfRegistration) {
         DefinedPrefix exactBirthRegistrationPrefix = DefinedPrefix
                 .fromHongKongBirthRegistrationDate(birthRegistrationDate)
                 .orElse(null);
@@ -230,7 +232,7 @@ public final class HkidCardUtil {
         }
 
         DefinedPrefix[] compatiblePrefixes = DefinedPrefix
-                .fromFirstIssueMonth(firstRegistrationMonth);
+                .fromFirstIssueMonth(firstRegistrationMonth, dateOfRegistration);
         if (compatiblePrefixes.length == 0) {
             throw new IllegalStateException(
                     "No HKID prefix supports first registration month " + firstRegistrationMonth);
