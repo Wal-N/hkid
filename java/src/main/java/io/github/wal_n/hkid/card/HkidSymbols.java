@@ -87,10 +87,11 @@ public final class HkidSymbols {
     }
 
     /**
-     * Parses concatenated current smart-HKID symbol codes.
+     * Parses concatenated current smart-HKID symbol codes, ignoring letter case.
      *
-     * @param value printed symbol string; surrounding whitespace is ignored
-     * @return the parsed immutable symbol collection
+     * @param value printed symbol string, trimmed with {@link String#trim()}
+     * @return the parsed immutable symbol collection, empty if the trimmed string
+     *         is empty
      * @throws IllegalArgumentException if the value is null, contains an unsupported
      *         code, duplicates a symbol, or combines mutually exclusive symbols
      */

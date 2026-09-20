@@ -11,13 +11,15 @@ public final class EnglishNameUtil {
     }
 
     /**
-     * Tests whether a non-empty name part contains only supported Latin letters,
-     * with spaces, periods, apostrophes, or hyphens between letter groups.
+     * Tests whether a name part contains ASCII letters ({@code A-Z}/{@code a-z}),
+     * optionally separated by a single ASCII space, period, apostrophe, or hyphen
+     * between letter groups.
      *
      * <p>This checks character syntax only, without enforcing the HKID length limit.</p>
      *
      * @param value name part to inspect
-     * @return {@code true} when the value is a valid English name part
+     * @return {@code true} when the value has valid syntax; {@code false} for
+     *         null or empty input
      */
     public static boolean isValidNamePart(String value) {
         if (value == null || value.isEmpty()) {

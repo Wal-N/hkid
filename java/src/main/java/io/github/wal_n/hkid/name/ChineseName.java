@@ -31,20 +31,25 @@ public final class ChineseName {
      * @param surname Chinese surname, or {@code null} for an empty surname
      * @param personalName Chinese personal name, or {@code null} for an empty personal name
      * @throws IllegalArgumentException if either part contains a non-Chinese character
-     *         or the combined name exceeds {@link #MAX_LENGTH}
+     *         or the combined name exceeds {@link #MAX_LENGTH} Unicode code points
      */
     public ChineseName(String surname, String personalName) {
         this(surname, personalName, Collections.emptyList());
     }
 
     /**
-     * Creates a Chinese name and its matching Chinese commercial codes.
+     * Creates a Chinese name with optional Chinese commercial codes.
+     *
+     * <p>Name length is measured in Unicode code points. Non-empty code lists
+     * must contain one non-null entry per name code point; character-to-code
+     * mappings are not checked.</p>
      *
      * @param surname Chinese surname, or {@code null} for an empty surname
      * @param personalName Chinese personal name, or {@code null} for an empty personal name
      * @param commercialCodes four-digit codes in printed-name order, or {@code null} for none
-     * @throws IllegalArgumentException if a name part, total length, commercial code,
-     *         or code count is invalid
+     * @throws IllegalArgumentException if a name part contains a non-Chinese character,
+     *         the combined name exceeds {@link #MAX_LENGTH} Unicode code points,
+     *         a code entry is null, or a non-empty code list has the wrong size
      */
     public ChineseName(String surname, String personalName, List<ChineseCommercialCode> commercialCodes) {
         String normalizedSurname = Objects.toString(surname, "");
