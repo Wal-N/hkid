@@ -53,7 +53,7 @@ public final class GeneratedName {
      *
      * @return an unmodifiable list of commercial codes in name order
      */
-    public List<String> getCommercialCodes() {
+    public List<ChineseCommercialCode> getCommercialCodes() {
         return chineseName.getCommercialCodes();
     }
 

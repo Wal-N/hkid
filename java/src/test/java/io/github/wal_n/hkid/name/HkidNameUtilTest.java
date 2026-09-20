@@ -165,7 +165,7 @@ class HkidNameUtilTest {
                 .findFirst()
                 .orElseThrow(AssertionError::new);
 
-        assertEquals("7115", entry.getCommercialCode());
+        assertEquals(new ChineseCommercialCode("7115"), entry.getCommercialCode());
         assertEquals("Chan", entry.getRomanisation());
         assertTrue(entry.isCommonSurname());
         assertEquals(EnumSet.allOf(Sex.class), entry.getSupportedSexes());

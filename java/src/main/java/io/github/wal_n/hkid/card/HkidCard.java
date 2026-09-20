@@ -1,5 +1,6 @@
 package io.github.wal_n.hkid.card;
 
+import io.github.wal_n.hkid.name.ChineseCommercialCode;
 import io.github.wal_n.hkid.name.ChineseName;
 import io.github.wal_n.hkid.name.EnglishName;
 import io.github.wal_n.hkid.number.HkidNumber;
@@ -207,7 +208,7 @@ public final class HkidCard {
      *
      * @return an unmodifiable list of commercial codes
      */
-    public List<String> getChineseCommercialCodes() {
+    public List<ChineseCommercialCode> getChineseCommercialCodes() {
         return chineseName.getCommercialCodes();
     }
 
@@ -448,7 +449,7 @@ public final class HkidCard {
         private HkidNumber hkidNumber;
         private String chineseSurname = "";
         private String chinesePersonalName = "";
-        private List<String> chineseCommercialCodes = Collections.emptyList();
+        private List<ChineseCommercialCode> chineseCommercialCodes = Collections.emptyList();
         private String englishSurname = "";
         private String englishPersonalName = "";
         private Sex sex;
@@ -527,7 +528,7 @@ public final class HkidCard {
          * @param chineseCommercialCodes codes to copy when built, or {@code null} for none
          * @return this builder
          */
-        public Builder chineseCommercialCodes(List<String> chineseCommercialCodes) {
+        public Builder chineseCommercialCodes(List<ChineseCommercialCode> chineseCommercialCodes) {
             this.chineseCommercialCodes = chineseCommercialCodes;
             return this;
         }

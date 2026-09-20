@@ -216,7 +216,7 @@ public final class HkidNameUtil {
 
     private static GeneratedName buildGeneratedName(ChineseNameEntry surname, List<ChineseNameEntry> personalNameEntries) {
         StringBuilder personalName = new StringBuilder();
-        List<String> commercialCodes = new ArrayList<>();
+        List<ChineseCommercialCode> commercialCodes = new ArrayList<>();
         List<String> englishGivenName = new ArrayList<>();
 
         commercialCodes.add(surname.getCommercialCode());

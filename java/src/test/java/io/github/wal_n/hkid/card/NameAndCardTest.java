@@ -1,5 +1,6 @@
 package io.github.wal_n.hkid.card;
 
+import io.github.wal_n.hkid.name.ChineseCommercialCode;
 import io.github.wal_n.hkid.name.ChineseName;
 import io.github.wal_n.hkid.name.ChineseNameUtil;
 import io.github.wal_n.hkid.name.EnglishName;
@@ -11,8 +12,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,6 +31,7 @@ class NameAndCardTest {
     void cardAndNestedModelsAreImmutable() {
         assertImmutable(HkidCard.class);
         assertImmutable(ChineseName.class);
+        assertImmutable(ChineseCommercialCode.class);
         assertImmutable(EnglishName.class);
         assertImmutable(HkidSymbols.class);
     }
@@ -36,7 +41,7 @@ class NameAndCardTest {
         ChineseName name = new ChineseName(
                 "陳",
                 "大文",
-                Arrays.asList("1234", "5678", "9999"));
+                commercialCodes("1234", "5678", "9999"));
 
         assertEquals("陳大文", name.getFullName());
         assertThrows(IllegalArgumentException.class,
@@ -44,11 +49,14 @@ class NameAndCardTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new ChineseName("Chan", "大文", null));
         assertThrows(IllegalArgumentException.class,
-                () -> new ChineseName("陳", "大文", Arrays.asList("1234", "5678")));
+                () -> new ChineseName("陳", "大文", commercialCodes("1234", "5678")));
         assertThrows(IllegalArgumentException.class,
-                () -> new ChineseName("", "", Arrays.asList("1234")));
+                () -> new ChineseName("", "", commercialCodes("1234")));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ChineseName("陳", "大文", Arrays.asList(
+                        new ChineseCommercialCode("1234"), new ChineseCommercialCode("5678"), null)));
         assertThrows(UnsupportedOperationException.class,
-                () -> name.getCommercialCodes().add("0000"));
+                () -> name.getCommercialCodes().add(new ChineseCommercialCode("0000")));
     }
 
     @Test
@@ -58,12 +66,47 @@ class NameAndCardTest {
         assertFalse(ChineseNameUtil.isValid("Chan", "大文"));
         assertFalse(ChineseNameUtil.isValid("陳", "大文一二三四"));
         assertTrue(ChineseNameUtil.isValid(
-                "陳", "大文", Arrays.asList("1234", "5678", "9999")));
+                "陳", "大文", commercialCodes("1234", "5678", "9999")));
         assertTrue(ChineseNameUtil.isValid("陳", "大文", null));
         assertFalse(ChineseNameUtil.isValid(
-                "陳", "大文", Arrays.asList("1234", "5678")));
+                "陳", "大文", commercialCodes("1234", "5678")));
         assertFalse(ChineseNameUtil.isValid(
-                "陳", "大文", Arrays.asList("1234", "5678", "invalid")));
+                "陳", "大文", Arrays.asList(
+                        new ChineseCommercialCode("1234"), new ChineseCommercialCode("5678"), null)));
+    }
+
+    @Test
+    void namesAndCardsPreserveCodeOrderAndCopyMutableLists() {
+        List<ChineseCommercialCode> codes = new ArrayList<>(commercialCodes("0001", "0002", "0001"));
+        ChineseName name = new ChineseName("陳", "大文", codes);
+        HkidCard card = HkidCard.builder()
+                .chineseSurname("陳")
+                .chinesePersonalName("大文")
+                .chineseCommercialCodes(codes)
+                .build();
+        codes.clear();
+
+        assertEquals(commercialCodes("0001", "0002", "0001"), name.getCommercialCodes());
+        assertEquals(name, card.getChineseNameInfo());
+        assertEquals(card, card.toBuilder().build());
+        assertEquals(card.hashCode(), card.toBuilder().build().hashCode());
+        assertEquals(card, HkidCard.builder().chineseName(name).build());
+        assertThrows(UnsupportedOperationException.class, card.getChineseCommercialCodes()::clear);
+        assertThrows(IllegalArgumentException.class,
+                () -> card.toBuilder().chinesePersonalName("大").build());
+        assertTrue(card.toBuilder().chineseCommercialCodes(null).build().getChineseCommercialCodes().isEmpty());
+    }
+
+    @Test
+    void commercialCodeListsAreOptionalAndLimitedToSixEntries() {
+        ChineseCommercialCode code = new ChineseCommercialCode("0001");
+
+        assertTrue(ChineseNameUtil.isValidChineseCommercialCodes(null));
+        assertTrue(ChineseNameUtil.isValidChineseCommercialCodes(Collections.emptyList()));
+        assertTrue(ChineseNameUtil.isValidChineseCommercialCodes(Collections.nCopies(6, code)));
+        assertFalse(ChineseNameUtil.isValidChineseCommercialCodes(Collections.nCopies(7, code)));
+        assertFalse(ChineseNameUtil.isValidChineseCommercialCodes(Collections.singletonList(null)));
+        assertTrue(new ChineseName("陳", "大文", null).getCommercialCodes().isEmpty());
     }
 
     @Test
@@ -335,6 +378,10 @@ class NameAndCardTest {
 
         card.validateAsOf(LocalDate.of(2025, 12, 31));
         card.validateAsOf(LocalDate.of(2026, 1, 1));
+    }
+
+    private static List<ChineseCommercialCode> commercialCodes(String... codes) {
+        return Arrays.stream(codes).map(ChineseCommercialCode::new).collect(Collectors.toList());
     }
 
     private static void assertImmutable(Class<?> type) {
