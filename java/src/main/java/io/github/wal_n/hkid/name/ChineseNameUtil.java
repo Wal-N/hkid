@@ -27,8 +27,8 @@ public final class ChineseNameUtil {
      * letters. The supported repertoire may therefore vary by Java version.
      *
      * @param value value to inspect
-     * @return {@code true} when the value is non-empty and contains only supported
-     *         unified ideographs
+     * @return {@code true} when the value is non-null, non-empty, and contains only
+     *         supported Han-script letters
      */
     public static boolean isChinese(String value) {
         return value != null

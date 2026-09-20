@@ -4,7 +4,7 @@ package io.github.wal_n.hkid.card;
  * Official categories used to group symbols printed on a current smart HKID card.
  */
 public enum HkidSymbolCategory {
-    /** Re-entry Permit eligibility; exactly one age-specific symbol is permitted. */
+    /** Re-entry Permit eligibility; at most one age-specific symbol is permitted. */
     RE_ENTRY_PERMIT_ELIGIBILITY(false),
     /** Residential status; only one status symbol is permitted. */
     RESIDENTIAL_STATUS(false),

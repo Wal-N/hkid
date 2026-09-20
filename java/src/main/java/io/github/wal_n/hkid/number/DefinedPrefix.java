@@ -114,7 +114,8 @@ public enum DefinedPrefix {
      * treated as exact metadata by this method.
      *
      * @param birthRegistrationDate Hong Kong birth-registration date to test
-     * @return {@code true} when the date falls within this prefix's exact period
+     * @return {@code true} when the date falls within this prefix's exact period;
+     *         {@code false} for null or a date outside that period
      */
     public boolean supportsHongKongBirthRegistrationDate(LocalDate birthRegistrationDate) {
         PrefixMetadata metadata = metadata();
@@ -130,7 +131,7 @@ public enum DefinedPrefix {
      * the supplied date.
      *
      * @param birthRegistrationDate Hong Kong birth-registration date to look up
-     * @return the matching prefix, or an empty optional when no exact period matches
+     * @return the matching prefix, or an empty optional for null or when no exact period matches
      */
     public static Optional<DefinedPrefix> fromHongKongBirthRegistrationDate(
             LocalDate birthRegistrationDate) {
@@ -147,7 +148,8 @@ public enum DefinedPrefix {
      * prefix's exact first-issue period.
      *
      * @param firstIssueMonth first-issue month to test
-     * @return {@code true} when the month overlaps this prefix's exact period
+     * @return {@code true} when the month overlaps this prefix's exact period;
+     *         {@code false} for null or a month outside that period
      */
     public boolean supportsFirstIssueMonth(YearMonth firstIssueMonth) {
         PrefixMetadata metadata = metadata();
@@ -163,7 +165,7 @@ public enum DefinedPrefix {
      * supplied month.
      *
      * @param firstIssueMonth first-issue month to look up
-     * @return all matching prefixes, or an empty array when no exact period matches
+     * @return all matching prefixes, or an empty array for null or when no exact period matches
      */
     public static DefinedPrefix[] fromFirstIssueMonth(YearMonth firstIssueMonth) {
         return Arrays.stream(values())
@@ -173,9 +175,11 @@ public enum DefinedPrefix {
 
     /**
      * Looks up predefined metadata for a prefix.
+     * Input is trimmed using {@link String#trim()}, and letter case is ignored.
      *
-     * @param prefix A one- or two-letter ASCII HKID prefix, in either case.
-     * @return The matching predefined prefix, or an empty optional when no metadata is defined.
+     * @param prefix one or two ASCII letters
+     * @return the matching predefined prefix, or an empty optional for null, invalid input,
+     *         or a prefix without predefined metadata
      */
     public static Optional<DefinedPrefix> fromPrefix(String prefix) {
         if (prefix == null) {

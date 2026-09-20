@@ -91,7 +91,10 @@ public final class HkidCard {
      * (Related Provisions) Ordinance (Cap. 410).</p>
      *
      * @param referenceDate date on which the age is required
-     * @return an empty optional when no date of birth is present
+     * @return the age in completed years, or an empty optional when no date of
+     *         birth is present
+     * @throws IllegalArgumentException if {@code referenceDate} is null or precedes
+     *         the date of birth
      */
     public Optional<Integer> getAge(LocalDate referenceDate) {
         requireReferenceDate(referenceDate);
@@ -369,6 +372,9 @@ public final class HkidCard {
      * is checked against the date of registration during construction.
      *
      * @param referenceDate date on which the card is being checked
+     * @throws IllegalArgumentException if {@code referenceDate} is null, the birth
+     *         or registration date is after it, or the first registration month
+     *         is after its calendar month
      */
     public void validateAsOf(LocalDate referenceDate) {
         requireReferenceDate(referenceDate);

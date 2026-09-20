@@ -35,7 +35,8 @@ public final class HkidNumberUtil {
      * Tests whether a complete or check-digit-free HKID number can be parsed.
      *
      * @param hkidNumber HKID number in a format accepted by {@link HkidNumber}
-     * @return {@code true} when the format and any supplied check digit are valid
+     * @return {@code true} when the format and any supplied check digit are valid;
+     *         {@code false} for null or invalid input
      */
     public static boolean isValid(String hkidNumber) {
         try {
@@ -48,10 +49,11 @@ public final class HkidNumberUtil {
 
     /**
      * Checks a supplied check digit against an HKID prefix and six numerals.
+     * Both inputs are trimmed using {@link String#trim()}, and letter case is ignored.
      *
-     * @param hkidNumberWithoutCheckDigit one- or two-letter prefix followed by six numerals
-     * @param checkDigit check digit to test, as a decimal digit or {@code A}
-     * @return {@code true} when both inputs are valid and the check digit matches
+     * @param hkidNumberWithoutCheckDigit one or two ASCII letters followed by six ASCII digits
+     * @param checkDigit one ASCII digit or {@code A}/{@code a}, without parentheses
+     * @return {@code true} when the check digit matches; {@code false} for null or invalid inputs
      */
     public static boolean isValidCheckDigit(
             String hkidNumberWithoutCheckDigit, String checkDigit) {
