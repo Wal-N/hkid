@@ -137,21 +137,21 @@ public final class HkidCardUtil {
                 earliestRegistrationDate,
                 HkidCard.ageAnniversary(dateOfBirth, minimumRegistrationAge));
         LocalDate dateOfRegistration = generateRandomDateInRangeInclusive(
-                earliestRegistrationDate, referenceDate, random);
+                random, earliestRegistrationDate, referenceDate);
         YearMonth earliestFirstRegistrationMonth = laterYearMonth(
                 YearMonth.from(HkidCard.ageAnniversary(dateOfBirth, MIN_AGE)),
                 FIRST_HKID_ISSUE_MONTH);
         YearMonth firstRegistrationYearMonth = generateRandomYearMonthInRangeInclusive(
+                random,
                 earliestFirstRegistrationMonth,
-                YearMonth.from(dateOfRegistration),
-                random);
+                YearMonth.from(dateOfRegistration));
         LocalDate birthRegistrationDate = generateRandomDateInRangeInclusive(
+                random,
                 dateOfBirth,
-                dateOfBirth.plusDays(HONG_KONG_BIRTH_REGISTRATION_DAYS),
-                random);
+                dateOfBirth.plusDays(HONG_KONG_BIRTH_REGISTRATION_DAYS));
 
         Sex sex = requestedSex != null ? requestedSex : generateRandomSex(random);
-        GeneratedName name = HkidNameUtil.generateRandomName(sex, random);
+        GeneratedName name = HkidNameUtil.generateRandomName(random, sex);
         DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(
                 birthRegistrationDate, firstRegistrationYearMonth);
 
@@ -246,11 +246,11 @@ public final class HkidCardUtil {
         int age = MIN_AGE + random.nextInt(MAX_AGE - MIN_AGE + 1);
         LocalDate earliestDateOfBirth = referenceDate.minusYears(age + 1L).plusDays(1);
         LocalDate latestDateOfBirth = referenceDate.minusYears(age);
-        return generateRandomDateInRangeInclusive(earliestDateOfBirth, latestDateOfBirth, random);
+        return generateRandomDateInRangeInclusive(random, earliestDateOfBirth, latestDateOfBirth);
     }
 
     private static LocalDate generateRandomDateInRangeInclusive(
-            LocalDate startDate, LocalDate endDate, Random random) {
+            Random random, LocalDate startDate, LocalDate endDate) {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date cannot be after end date");
         }
@@ -260,7 +260,7 @@ public final class HkidCardUtil {
     }
 
     private static YearMonth generateRandomYearMonthInRangeInclusive(
-            YearMonth startMonth, YearMonth endMonth, Random random) {
+            Random random, YearMonth startMonth, YearMonth endMonth) {
         if (startMonth.isAfter(endMonth)) {
             throw new IllegalArgumentException("Start month cannot be after end month");
         }

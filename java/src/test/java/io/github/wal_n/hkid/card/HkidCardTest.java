@@ -189,7 +189,7 @@ class HkidCardTest {
         String value = card.toString();
 
         assertEquals("HkidCard[hkidNumber=****456(*), dateOfRegistration=01-06-20]", value);
-        assertFalse(value.contains(card.getHkidNumberStr(HkidNumber.Format.COMPLETE)));
+        assertFalse(value.contains(card.getHkidNumberString(HkidNumber.Format.COMPLETE)));
     }
 
     @Test
@@ -281,13 +281,13 @@ class HkidCardTest {
                         HkidCard.ageAnniversary(hkidCard.getDateOfBirth(), 11))));
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
                 .isAfter(YearMonth.from(hkidCard.getDateOfRegistration())));
-        assertEquals(hkidCard.getChineseName().length(), hkidCard.getChineseCommercialCodes().size());
+        assertEquals(hkidCard.getChineseNameString().length(), hkidCard.getChineseCommercialCodes().size());
         assertNameMatchesSex(hkidCard);
         hkidCard.validateAsOf(REFERENCE_DATE);
     }
 
     private void assertNameMatchesSex(HkidCard hkidCard) {
-        String personalName = hkidCard.getChineseNameInfo().getPersonalName();
+        String personalName = hkidCard.getChineseName().getPersonalName();
 
         for (int i = 0; i < personalName.length(); i++) {
             String character = String.valueOf(personalName.charAt(i));

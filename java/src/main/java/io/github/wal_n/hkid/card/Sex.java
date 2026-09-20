@@ -12,12 +12,12 @@ public enum Sex {
     FEMALE("女", "F");
 
     private static final String FORMAT = "%s %s";
-    private final String chiMarker;
-    private final String engMarker;
+    private final String chineseMarker;
+    private final String englishMarker;
 
-    Sex(String chiMarker, String engMarker) {
-        this.chiMarker = chiMarker;
-        this.engMarker = engMarker;
+    Sex(String chineseMarker, String englishMarker) {
+        this.chineseMarker = chineseMarker;
+        this.englishMarker = englishMarker;
     }
 
     /**
@@ -25,8 +25,8 @@ public enum Sex {
      *
      * @return {@code 男} or {@code 女}
      */
-    public String getChiMarker() {
-        return chiMarker;
+    public String getChineseMarker() {
+        return chineseMarker;
     }
 
     /**
@@ -34,34 +34,25 @@ public enum Sex {
      *
      * @return {@code M} or {@code F}
      */
-    public String getEngMarker() {
-        return engMarker;
-    }
-
-    /**
-     * Returns the value as printed on the smart HKID card, for example {@code "男 M"}.
-     *
-     * @return the Chinese and English markers separated by a space
-     */
-    public String getPrintedValue() {
-        return String.format(FORMAT, chiMarker, engMarker);
+    public String getEnglishMarker() {
+        return englishMarker;
     }
 
     /**
      * Parses the HKID card marker, accepting either upper or lower case text.
      *
-     * @param engMarker English marker to parse
+     * @param englishMarker English marker to parse
      * @return the matching sex value
      * @throws IllegalArgumentException if the marker is null or is not {@code M} or {@code F}
      */
-    public static Sex fromEngMarker(String engMarker) {
-        if (engMarker == null) {
+    public static Sex fromEnglishMarker(String englishMarker) {
+        if (englishMarker == null) {
             throw new IllegalArgumentException("English sex marker cannot be null");
         }
 
-        String normalizedMarker = engMarker.trim().toUpperCase(Locale.ROOT);
+        String normalizedMarker = englishMarker.trim().toUpperCase(Locale.ROOT);
         for (Sex sex : values()) {
-            if (sex.engMarker.equals(normalizedMarker)) {
+            if (sex.englishMarker.equals(normalizedMarker)) {
                 return sex;
             }
         }
@@ -69,10 +60,12 @@ public enum Sex {
     }
 
     /**
-     * Keeps human-readable output aligned with the value printed on the card.
+     * Returns the value as printed on the smart HKID card, for example {@code "男 M"}.
+     *
+     * @return the Chinese and English markers separated by a space
      */
     @Override
     public String toString() {
-        return getPrintedValue();
+        return String.format(FORMAT, chineseMarker, englishMarker);
     }
 }

@@ -63,34 +63,34 @@ class HkidCardConformanceTest {
         assertAll(
                 () -> assertEquals(
                         expected.get("hkidWithoutCheckDigit").getAsString(),
-                        card.getHkidNumberStr()),
+                        card.getHkidNumberString()),
                 () -> assertEquals(
                         expected.get("hkidComplete").getAsString(),
-                        card.getHkidNumberStr(HkidNumber.Format.COMPLETE)),
+                        card.getHkidNumberString(HkidNumber.Format.COMPLETE)),
                 () -> assertEquals(
                         expected.get("hkidMasked").getAsString(),
-                        card.getHkidNumberMaskedStr()),
+                        card.getMaskedHkidNumberString()),
                 () -> assertEquals(
                         expected.get("chineseName").getAsString(),
-                        card.getChineseName()),
+                        card.getChineseNameString()),
                 () -> assertEquals(
                         expected.get("englishName").getAsString(),
-                        card.getEnglishName()),
+                        card.getEnglishNameString()),
                 () -> assertEquals(
                         expected.get("sexPrintedValue").getAsString(),
-                        card.getSexPrintedValue()),
+                        card.getSexString()),
                 () -> assertEquals(
                         expected.get("dateOfBirth").getAsString(),
-                        card.getDateOfBirthStr()),
+                        card.getDateOfBirthString()),
                 () -> assertEquals(
                         expected.get("symbols").getAsString(),
-                        card.getSymbolCodes()),
+                        card.getSymbolsString()),
                 () -> assertEquals(
                         expected.get("firstRegistrationYearMonth").getAsString(),
-                        card.getFirstRegistrationYearMonthStr()),
+                        card.getFirstRegistrationYearMonthString()),
                 () -> assertEquals(
                         expected.get("dateOfRegistration").getAsString(),
-                        card.getDateOfRegistrationStr()),
+                        card.getDateOfRegistrationString()),
                 () -> assertEquals(
                         Integer.valueOf(expected.get("age").getAsInt()),
                         card.getAge(referenceDate).orElse(null)),
@@ -133,7 +133,7 @@ class HkidCardConformanceTest {
                         ConformanceFixtures.commercialCodes(input, "chineseCommercialCodes"))
                 .englishSurname(input.get("englishSurname").getAsString())
                 .englishPersonalName(input.get("englishPersonalName").getAsString())
-                .sex(Sex.fromEngMarker(input.get("sex").getAsString()))
+                .sex(Sex.fromEnglishMarker(input.get("sex").getAsString()))
                 .dateOfBirth(LocalDate.parse(input.get("dateOfBirth").getAsString()))
                 .symbolCodes(input.get("symbols").getAsString())
                 .firstRegistrationYearMonth(

@@ -206,6 +206,11 @@ public final class HkidSymbols {
         }
     }
 
+    /**
+     * Formats the symbol codes in canonical card order without separators.
+     *
+     * @return the concatenated symbol codes, possibly empty
+     */
     @Override
     public String toString() {
         StringBuilder value = new StringBuilder();

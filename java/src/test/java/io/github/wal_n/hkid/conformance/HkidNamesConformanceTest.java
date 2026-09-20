@@ -28,7 +28,7 @@ class HkidNamesConformanceTest {
                             assertAll(
                                     () -> assertEquals(
                                             testCase.get("expectFullName").getAsString(),
-                                            name.getFullName()),
+                                            name.getFullNameString()),
                                     () -> assertEquals(
                                             testCase.get("surname").getAsString(),
                                             name.getSurname()),
@@ -76,7 +76,7 @@ class HkidNamesConformanceTest {
                             assertAll(
                                     () -> assertEquals(
                                             testCase.get("expectFullName").getAsString(),
-                                            name.getFullName()),
+                                            name.getFullNameString()),
                                     () -> assertEquals(
                                             testCase.get("surname").getAsString(),
                                             name.getSurname()),

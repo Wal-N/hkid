@@ -77,8 +77,8 @@ class HkidNumberTest {
         assertThrows(
                 HkidNumber.InvalidHkidNumberFormatException.class,
                 () -> new HkidNumber(prefix, "123456", checkDigit));
-        assertFalse(HkidNumberUtil.validateCheckDigit(withoutCheckDigit, checkDigit));
-        assertFalse(HkidNumber.validateCheckDigit(withoutCheckDigit, checkDigit));
+        assertFalse(HkidNumberUtil.isValidCheckDigit(withoutCheckDigit, checkDigit));
+        assertFalse(HkidNumber.isValidCheckDigit(withoutCheckDigit, checkDigit));
         assertFalse(DefinedPrefix.fromPrefix(" " + prefix + " ").isPresent());
     }
 
@@ -103,8 +103,8 @@ class HkidNumberTest {
                 new HkidNumber(prefix, numerals).toString(HkidNumber.Format.COMPLETE));
         assertEquals(expectedComplete,
                 new HkidNumber(prefix, numerals, checkDigit).toString(HkidNumber.Format.COMPLETE));
-        assertTrue(HkidNumberUtil.validateCheckDigit(withoutCheckDigit, checkDigit));
-        assertTrue(HkidNumber.validateCheckDigit(withoutCheckDigit, checkDigit));
+        assertTrue(HkidNumberUtil.isValidCheckDigit(withoutCheckDigit, checkDigit));
+        assertTrue(HkidNumber.isValidCheckDigit(withoutCheckDigit, checkDigit));
     }
 
     @Test
@@ -144,6 +144,7 @@ class HkidNumberTest {
         HkidNumber hkidNumber = new HkidNumber("A123456(3)");
 
         assertEquals("A123456", hkidNumber.toString());
+        assertEquals("A123456", hkidNumber.toString(null));
         assertEquals("A123456", hkidNumber.toString(HkidNumber.Format.WITHOUT_CHECK_DIGIT));
         assertEquals("A1234563", hkidNumber.toString(HkidNumber.Format.WITHOUT_PARENTHESES));
         assertEquals("A123456(3)", hkidNumber.toString(HkidNumber.Format.COMPLETE));
@@ -154,22 +155,21 @@ class HkidNumberTest {
         HkidNumber hkidNumber = new HkidNumber("A123456(3)");
 
         assertEquals("****456(*)", hkidNumber.toMaskedString());
-        assertEquals("****456(*)", HkidNumberUtil.maskHkidNumber(hkidNumber));
-        assertEquals("*****456(*)", HkidNumberUtil.maskHkidNumber(new HkidNumber("WX123456")));
-        assertNull(HkidNumberUtil.maskHkidNumber(null));
+        assertEquals("****456(*)", HkidNumberUtil.toMaskedString(hkidNumber));
+        assertEquals("*****456(*)", HkidNumberUtil.toMaskedString(new HkidNumber("WX123456")));
+        assertNull(HkidNumberUtil.toMaskedString(null));
     }
 
     @Test
     void validatesCheckDigit() {
-        assertTrue(HkidNumberUtil.validateCheckDigit("A123456", "3"));
-        assertTrue(HkidNumberUtil.validateCheckDigit("a123456", "3"));
-        assertFalse(HkidNumberUtil.validateCheckDigit("A123456", "7"));
-        assertFalse(HkidNumberUtil.validateCheckDigit("A12345", "3"));
-        assertFalse(HkidNumberUtil.validateCheckDigit("A1234563", "3"));
-        assertFalse(HkidNumberUtil.validateCheckDigit("A123456(3)", "3"));
+        assertTrue(HkidNumberUtil.isValidCheckDigit("A123456", "3"));
+        assertTrue(HkidNumberUtil.isValidCheckDigit("a123456", "3"));
+        assertFalse(HkidNumberUtil.isValidCheckDigit("A123456", "7"));
+        assertFalse(HkidNumberUtil.isValidCheckDigit("A12345", "3"));
+        assertFalse(HkidNumberUtil.isValidCheckDigit("A1234563", "3"));
+        assertFalse(HkidNumberUtil.isValidCheckDigit("A123456(3)", "3"));
 
-        // Keep the original entry point compatible.
-        assertTrue(HkidNumber.validateCheckDigit("A123456", "3"));
+        assertTrue(HkidNumber.isValidCheckDigit("A123456", "3"));
     }
 
     @Test

@@ -19,6 +19,9 @@ import java.util.Optional;
  * <p>Use {@link #builder()} to assemble a card. Time-dependent operations require
  * an explicit reference date so that a card's behaviour does not change merely
  * because the system date changed.</p>
+ *
+ * <p>Getters return domain values or their components. Methods named
+ * {@code getXString} return the text representation of a card field.</p>
  */
 public final class HkidCard {
     static final LocalDate CURRENT_SMART_HKID_START_DATE = LocalDate.of(2018, 11, 26);
@@ -76,8 +79,8 @@ public final class HkidCard {
     public String toString() {
         return String.format("%s[hkidNumber=%s, dateOfRegistration=%s]",
                 getClass().getSimpleName(),
-                getHkidNumberMaskedStr(),
-                getDateOfRegistrationStr());
+                getMaskedHkidNumberString(),
+                getDateOfRegistrationString());
     }
 
     /**
@@ -142,8 +145,8 @@ public final class HkidCard {
      *
      * @return the unadorned HKID number, or {@code null} when absent
      */
-    public String getHkidNumberStr() {
-        return getHkidNumberStr(HkidNumber.Format.WITHOUT_CHECK_DIGIT);
+    public String getHkidNumberString() {
+        return getHkidNumberString(HkidNumber.Format.WITHOUT_CHECK_DIGIT);
     }
 
     /**
@@ -153,7 +156,7 @@ public final class HkidCard {
      *         {@link HkidNumber.Format#WITHOUT_CHECK_DIGIT}
      * @return the formatted HKID number, or {@code null} when absent
      */
-    public String getHkidNumberStr(HkidNumber.Format format) {
+    public String getHkidNumberString(HkidNumber.Format format) {
         return hkidNumber != null ? hkidNumber.toString(format) : null;
     }
 
@@ -162,18 +165,18 @@ public final class HkidCard {
      *
      * @return the masked HKID number, or {@code null} when absent
      */
-    public String getHkidNumberMaskedStr() {
+    public String getMaskedHkidNumberString() {
         return hkidNumber != null ? hkidNumber.toMaskedString() : null;
     }
 
     /**
-     * Returns the printed Chinese name. Use {@link #getChineseNameInfo()} when surname,
+     * Returns the printed Chinese name. Use {@link #getChineseName()} when surname,
      * personal name, or commercial codes are needed separately.
      *
      * @return the complete Chinese name, possibly empty
      */
-    public String getChineseName() {
-        return chineseName.getFullName();
+    public String getChineseNameString() {
+        return chineseName.getFullNameString();
     }
 
     /**
@@ -181,7 +184,7 @@ public final class HkidCard {
      *
      * @return the immutable Chinese name
      */
-    public ChineseName getChineseNameInfo() {
+    public ChineseName getChineseName() {
         return chineseName;
     }
 
@@ -213,13 +216,13 @@ public final class HkidCard {
     }
 
     /**
-     * Returns the printed English name. Use {@link #getEnglishNameInfo()} when surname
+     * Returns the printed English name. Use {@link #getEnglishName()} when surname
      * and personal name are needed separately.
      *
      * @return the formatted English name, possibly empty
      */
-    public String getEnglishName() {
-        return englishName.getFullName();
+    public String getEnglishNameString() {
+        return englishName.getFullNameString();
     }
 
     /**
@@ -227,7 +230,7 @@ public final class HkidCard {
      *
      * @return the immutable English name
      */
-    public EnglishName getEnglishNameInfo() {
+    public EnglishName getEnglishName() {
         return englishName;
     }
 
@@ -263,8 +266,8 @@ public final class HkidCard {
      *
      * @return the Chinese marker, or {@code null} when sex is absent
      */
-    public String getSexChiMarker() {
-        return sex != null ? sex.getChiMarker() : null;
+    public String getSexChineseMarker() {
+        return sex != null ? sex.getChineseMarker() : null;
     }
 
     /**
@@ -272,8 +275,8 @@ public final class HkidCard {
      *
      * @return the English marker, or {@code null} when sex is absent
      */
-    public String getSexEngMarker() {
-        return sex != null ? sex.getEngMarker() : null;
+    public String getSexEnglishMarker() {
+        return sex != null ? sex.getEnglishMarker() : null;
     }
 
     /**
@@ -282,8 +285,8 @@ public final class HkidCard {
      *
      * @return the combined printed value, or {@code null} when sex is absent
      */
-    public String getSexPrintedValue() {
-        return sex != null ? sex.getPrintedValue() : null;
+    public String getSexString() {
+        return sex != null ? sex.toString() : null;
     }
 
     /**
@@ -300,7 +303,7 @@ public final class HkidCard {
      *
      * @return the formatted date, or {@code null} when absent
      */
-    public String getDateOfBirthStr() {
+    public String getDateOfBirthString() {
         return dateOfBirth != null ? dateOfBirth.format(DOB_FORMATTER) : null;
     }
 
@@ -318,7 +321,7 @@ public final class HkidCard {
      *
      * @return the symbol-code string, possibly empty
      */
-    public String getSymbolCodes() {
+    public String getSymbolsString() {
         return symbols.toString();
     }
 
@@ -336,7 +339,7 @@ public final class HkidCard {
      *
      * @return the formatted month, or {@code null} when absent
      */
-    public String getFirstRegistrationYearMonthStr() {
+    public String getFirstRegistrationYearMonthString() {
         return firstRegistrationYearMonth != null
                 ? firstRegistrationYearMonth.format(FIRST_REGISTRATION_YEAR_MONTH_FORMATTER)
                 : null;
@@ -356,7 +359,7 @@ public final class HkidCard {
      *
      * @return the formatted date, or {@code null} when absent
      */
-    public String getDateOfRegistrationStr() {
+    public String getDateOfRegistrationString() {
         return dateOfRegistration != null ? dateOfRegistration.format(DOR_FORMATTER) : null;
     }
 
@@ -582,12 +585,12 @@ public final class HkidCard {
         /**
          * Sets the sex marker from its English card value.
          *
-         * @param sexEngMarker {@code M} or {@code F}, or {@code null} to clear the value
+         * @param sexEnglishMarker {@code M} or {@code F}, or {@code null} to clear the value
          * @return this builder
          * @throws IllegalArgumentException if a non-null marker is unsupported
          */
-        public Builder sexEngMarker(String sexEngMarker) {
-            this.sex = sexEngMarker != null ? Sex.fromEngMarker(sexEngMarker) : null;
+        public Builder sexEnglishMarker(String sexEnglishMarker) {
+            this.sex = sexEnglishMarker != null ? Sex.fromEnglishMarker(sexEnglishMarker) : null;
             return this;
         }
 

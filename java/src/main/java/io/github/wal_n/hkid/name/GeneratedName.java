@@ -4,6 +4,9 @@ import java.util.List;
 
 /**
  * Generated Chinese name with matching commercial codes and English form.
+ *
+ * <p>Name getters return the same domain types as those on a card. Methods
+ * named {@code getXString} return their text representation.</p>
  */
 public final class GeneratedName {
     private final ChineseName chineseName;
@@ -44,8 +47,8 @@ public final class GeneratedName {
      *
      * @return the surname and personal name with no separator
      */
-    public String getChineseFullName() {
-        return chineseName.getFullName();
+    public String getChineseNameString() {
+        return chineseName.getFullNameString();
     }
 
     /**
@@ -53,7 +56,7 @@ public final class GeneratedName {
      *
      * @return an unmodifiable list of commercial codes in name order
      */
-    public List<ChineseCommercialCode> getCommercialCodes() {
+    public List<ChineseCommercialCode> getChineseCommercialCodes() {
         return chineseName.getCommercialCodes();
     }
 
@@ -62,7 +65,7 @@ public final class GeneratedName {
      *
      * @return the formatted English name
      */
-    public String getEnglishFullName() {
-        return englishName.getFullName();
+    public String getEnglishNameString() {
+        return englishName.getFullNameString();
     }
 }
