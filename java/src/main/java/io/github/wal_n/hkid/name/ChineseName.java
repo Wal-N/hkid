@@ -66,7 +66,7 @@ public final class ChineseName {
      *
      * @return the complete Chinese name
      */
-    public String getFullName() {
+    public String getFullNameString() {
         return surname + personalName;
     }
 
@@ -99,7 +99,7 @@ public final class ChineseName {
 
     @Override
     public String toString() {
-        return getFullName();
+        return getFullNameString();
     }
 
     @Override

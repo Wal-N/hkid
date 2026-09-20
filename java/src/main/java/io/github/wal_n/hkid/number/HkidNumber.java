@@ -80,8 +80,8 @@ public final class HkidNumber {
      * @param checkDigit check digit to test, as a decimal digit or {@code A}
      * @return {@code true} when both inputs are valid and the check digit matches
      */
-    public static boolean validateCheckDigit(String hkidNumberWithoutCheckDigit, String checkDigit) {
-        return HkidNumberUtil.validateCheckDigit(hkidNumberWithoutCheckDigit, checkDigit);
+    public static boolean isValidCheckDigit(String hkidNumberWithoutCheckDigit, String checkDigit) {
+        return HkidNumberUtil.isValidCheckDigit(hkidNumberWithoutCheckDigit, checkDigit);
     }
 
     /**
@@ -97,7 +97,7 @@ public final class HkidNumber {
     /**
      * Returns a string representation of the HKID number in the specified format.
      *
-     * @param format The desired format of the HKID number string as defined by the {@link Format} enum.
+     * @param format output format; {@code null} selects {@link Format#WITHOUT_CHECK_DIGIT}
      * @return A formatted string representation of the HKID number.
      */
     public String toString(Format format) {
@@ -117,7 +117,7 @@ public final class HkidNumber {
      * @return the masked HKID number
      */
     public String toMaskedString() {
-        return HkidNumberUtil.maskHkidNumber(this);
+        return HkidNumberUtil.toMaskedString(this);
     }
 
     /**

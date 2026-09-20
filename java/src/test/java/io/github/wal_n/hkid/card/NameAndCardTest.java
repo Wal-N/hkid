@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,7 +44,7 @@ class NameAndCardTest {
                 "大文",
                 commercialCodes("1234", "5678", "9999"));
 
-        assertEquals("陳大文", name.getFullName());
+        assertEquals("陳大文", name.getFullNameString());
         assertThrows(IllegalArgumentException.class,
                 () -> new ChineseName("陳", "大文一二三四", null));
         assertThrows(IllegalArgumentException.class,
@@ -87,7 +88,7 @@ class NameAndCardTest {
         codes.clear();
 
         assertEquals(commercialCodes("0001", "0002", "0001"), name.getCommercialCodes());
-        assertEquals(name, card.getChineseNameInfo());
+        assertEquals(name, card.getChineseName());
         assertEquals(card, card.toBuilder().build());
         assertEquals(card.hashCode(), card.toBuilder().build().hashCode());
         assertEquals(card, HkidCard.builder().chineseName(name).build());
@@ -113,7 +114,7 @@ class NameAndCardTest {
     void englishNameValidatesNameParts() {
         EnglishName name = new EnglishName("Chan", "Tai Man");
 
-        assertEquals("Chan, Tai Man", name.getFullName());
+        assertEquals("Chan, Tai Man", name.getFullNameString());
         assertTrue(EnglishNameUtil.isValidNamePart("Anne-Marie"));
         assertTrue(EnglishNameUtil.isValidNamePart("O'Connor"));
         assertFalse(EnglishNameUtil.isValidNamePart("A "));
@@ -188,9 +189,9 @@ class NameAndCardTest {
             String personalName = String.join("", Collections.nCopies(length - 6, "A"));
 
             assertTrue(EnglishNameUtil.isValid("Chan", personalName));
-            assertEquals(length, new EnglishName("Chan", personalName).getFullName().length());
+            assertEquals(length, new EnglishName("Chan", personalName).getFullNameString().length());
             assertEquals(length, HkidCard.builder()
-                    .englishSurname("Chan").englishPersonalName(personalName).build().getEnglishName().length());
+                    .englishSurname("Chan").englishPersonalName(personalName).build().getEnglishNameString().length());
         }
 
         String personalName = String.join("", Collections.nCopies(35, "A"));
@@ -206,18 +207,18 @@ class NameAndCardTest {
         String overLimit = atLimit + "A";
 
         for (String emptyPart : Arrays.asList(null, "")) {
-            assertEquals("", new EnglishName(emptyPart, emptyPart).getFullName());
+            assertEquals("", new EnglishName(emptyPart, emptyPart).getFullNameString());
             assertTrue(EnglishNameUtil.isValid(atLimit, emptyPart));
             assertFalse(EnglishNameUtil.isValid(overLimit, emptyPart));
             assertFalse(EnglishNameUtil.isValid(emptyPart, atLimit));
-            assertEquals(atLimit, new EnglishName(atLimit, emptyPart).getFullName());
-            assertEquals(atLimit, new EnglishName(emptyPart, atLimit).getFullName());
+            assertEquals(atLimit, new EnglishName(atLimit, emptyPart).getFullNameString());
+            assertEquals(atLimit, new EnglishName(emptyPart, atLimit).getFullNameString());
             assertThrows(IllegalArgumentException.class, () -> new EnglishName(overLimit, emptyPart));
             assertThrows(IllegalArgumentException.class, () -> new EnglishName(emptyPart, overLimit));
             assertEquals(atLimit, HkidCard.builder()
-                    .englishSurname(atLimit).englishPersonalName(emptyPart).build().getEnglishName());
+                    .englishSurname(atLimit).englishPersonalName(emptyPart).build().getEnglishNameString());
             assertEquals(atLimit, HkidCard.builder()
-                    .englishSurname(emptyPart).englishPersonalName(atLimit).build().getEnglishName());
+                    .englishSurname(emptyPart).englishPersonalName(atLimit).build().getEnglishNameString());
             assertThrows(IllegalArgumentException.class,
                     () -> HkidCard.builder().englishSurname(overLimit).englishPersonalName(emptyPart).build());
             assertThrows(IllegalArgumentException.class,
@@ -229,15 +230,25 @@ class NameAndCardTest {
     void emptyCardUsesNonNullEmptyNames() {
         HkidCard card = HkidCard.builder().build();
 
-        assertNotNull(card.getChineseNameInfo());
-        assertNotNull(card.getEnglishNameInfo());
+        assertNotNull(card.getChineseName());
+        assertNotNull(card.getEnglishName());
         assertEquals("", card.getChineseSurname());
         assertEquals("", card.getChinesePersonalName());
-        assertEquals("", card.getChineseName());
+        assertEquals("", card.getChineseNameString());
         assertEquals("", card.getEnglishSurname());
         assertEquals("", card.getEnglishPersonalName());
-        assertEquals("", card.getEnglishName());
+        assertEquals("", card.getEnglishNameString());
         assertTrue(card.getChineseCommercialCodes().isEmpty());
+        assertEquals("", card.getSymbolsString());
+        assertNull(card.getHkidNumberString());
+        assertNull(card.getHkidNumberString(null));
+        assertNull(card.getMaskedHkidNumberString());
+        assertNull(card.getSexString());
+        assertNull(card.getSexChineseMarker());
+        assertNull(card.getSexEnglishMarker());
+        assertNull(card.getDateOfBirthString());
+        assertNull(card.getFirstRegistrationYearMonthString());
+        assertNull(card.getDateOfRegistrationString());
     }
 
     @Test
@@ -251,8 +262,8 @@ class NameAndCardTest {
                 .englishPersonalName(null)
                 .build();
 
-        assertEquals("", card.getChineseName());
-        assertEquals("", card.getEnglishName());
+        assertEquals("", card.getChineseNameString());
+        assertEquals("", card.getEnglishNameString());
     }
 
     @Test
@@ -266,8 +277,8 @@ class NameAndCardTest {
                 .chineseSurname("陳")
                 .englishSurname("Chan")
                 .build();
-        assertEquals("陳", validCard.getChineseName());
-        assertEquals("Chan", validCard.getEnglishName());
+        assertEquals("陳", validCard.getChineseNameString());
+        assertEquals("Chan", validCard.getEnglishNameString());
     }
 
     @Test
@@ -279,7 +290,7 @@ class NameAndCardTest {
         HkidCard card = HkidCard.builder().symbols(symbols).build();
 
         assertEquals(symbols, card.getSymbols());
-        assertEquals("***AZ", card.getSymbolCodes());
+        assertEquals("***AZ", card.getSymbolsString());
     }
 
     @Test
@@ -290,7 +301,7 @@ class NameAndCardTest {
                 .dateOfRegistration(LocalDate.of(2020, 6, 1))
                 .build();
 
-        assertEquals("06-01", card.getFirstRegistrationYearMonthStr());
+        assertEquals("06-01", card.getFirstRegistrationYearMonthString());
         assertThrows(IllegalArgumentException.class, () -> HkidCard.builder()
                 .dateOfRegistration(HkidCard.CURRENT_SMART_HKID_START_DATE.minusDays(1))
                 .build());
@@ -332,23 +343,23 @@ class NameAndCardTest {
 
     @Test
     void sexParsesCaseInsensitiveEnglishMarker() {
-        assertEquals(Sex.MALE, Sex.fromEngMarker("m"));
-        assertEquals("男", Sex.MALE.getChiMarker());
-        assertEquals("M", Sex.MALE.getEngMarker());
-        assertEquals("男 M", Sex.MALE.getPrintedValue());
+        assertEquals(Sex.MALE, Sex.fromEnglishMarker("m"));
+        assertEquals("男", Sex.MALE.getChineseMarker());
+        assertEquals("M", Sex.MALE.getEnglishMarker());
+        assertEquals("男 M", Sex.MALE.toString());
         assertEquals("女 F", Sex.FEMALE.toString());
-        assertThrows(IllegalArgumentException.class, () -> Sex.fromEngMarker("X"));
+        assertThrows(IllegalArgumentException.class, () -> Sex.fromEnglishMarker("X"));
     }
 
     @Test
     void cardExposesSexMarkersAndPrintedValueSeparately() {
         HkidCard femaleCard = HkidCard.builder().sex(Sex.FEMALE).build();
 
-        assertEquals("女", femaleCard.getSexChiMarker());
-        assertEquals("F", femaleCard.getSexEngMarker());
-        assertEquals("女 F", femaleCard.getSexPrintedValue());
+        assertEquals("女", femaleCard.getSexChineseMarker());
+        assertEquals("F", femaleCard.getSexEnglishMarker());
+        assertEquals("女 F", femaleCard.getSexString());
 
-        HkidCard maleCard = femaleCard.toBuilder().sexEngMarker("m").build();
+        HkidCard maleCard = femaleCard.toBuilder().sexEnglishMarker("m").build();
         assertEquals(Sex.MALE, maleCard.getSex());
         assertEquals(Sex.FEMALE, femaleCard.getSex());
     }

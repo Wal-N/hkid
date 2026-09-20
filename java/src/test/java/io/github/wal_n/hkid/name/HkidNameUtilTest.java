@@ -1,5 +1,6 @@
 package io.github.wal_n.hkid.name;
 
+import io.github.wal_n.hkid.card.HkidCard;
 import io.github.wal_n.hkid.card.Sex;
 
 import org.junit.jupiter.api.Test;
@@ -111,7 +112,7 @@ class HkidNameUtilTest {
             for (int personalNameLength = 1; personalNameLength <= 5; personalNameLength++) {
                 for (int seed = 0; seed < 50; seed++) {
                     GeneratedName name = HkidNameUtil.generateRandomName(
-                            personalNameLength, sex, new Random(seed));
+                            new Random(seed), personalNameLength, sex);
 
                     assertGeneratedNameMatchesSeed(name, personalNameLength);
                     assertGeneratedNameMatchesSex(name, sex);
@@ -127,19 +128,40 @@ class HkidNameUtilTest {
                 () -> HkidNameUtil.generateRandomName((Sex) null));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> HkidNameUtil.generateRandomName(Sex.MALE, null));
+                () -> HkidNameUtil.generateRandomName(null, Sex.MALE));
     }
 
     @Test
     void sexSpecificGenerationIsDeterministicWithSeededRandom() {
         GeneratedName first = HkidNameUtil.generateRandomName(
-                Sex.FEMALE, new Random(123456789L));
+                new Random(123456789L), Sex.FEMALE);
         GeneratedName second = HkidNameUtil.generateRandomName(
-                Sex.FEMALE, new Random(123456789L));
+                new Random(123456789L), Sex.FEMALE);
 
-        assertEquals(first.getChineseFullName(), second.getChineseFullName());
-        assertEquals(first.getEnglishFullName(), second.getEnglishFullName());
-        assertEquals(first.getCommercialCodes(), second.getCommercialCodes());
+        assertEquals(first.getChineseNameString(), second.getChineseNameString());
+        assertEquals(first.getEnglishNameString(), second.getEnglishNameString());
+        assertEquals(first.getChineseCommercialCodes(), second.getChineseCommercialCodes());
+    }
+
+    @Test
+    void generatedNamesAndCardsExposeTheSameNameValuesAndText() {
+        GeneratedName generated = HkidNameUtil.generateRandomName(new Random(1234L), 2, Sex.FEMALE);
+        HkidCard card = HkidCard.builder()
+                .chineseName(generated.getChineseName())
+                .englishName(generated.getEnglishName())
+                .build();
+
+        ChineseName chineseName = card.getChineseName();
+        EnglishName englishName = card.getEnglishName();
+        assertEquals(generated.getChineseName(), chineseName);
+        assertEquals(generated.getEnglishName(), englishName);
+        assertEquals(generated.getChineseCommercialCodes(), card.getChineseCommercialCodes());
+        assertEquals(generated.getChineseNameString(), card.getChineseNameString());
+        assertEquals(generated.getEnglishNameString(), card.getEnglishNameString());
+        assertEquals(chineseName.getFullNameString(), card.getChineseNameString());
+        assertEquals(englishName.getFullNameString(), card.getEnglishNameString());
+        assertEquals(chineseName.getFullNameString(), chineseName.toString());
+        assertEquals(englishName.getFullNameString(), englishName.toString());
     }
 
     @Test
@@ -182,19 +204,19 @@ class HkidNameUtilTest {
         assertNotNull(name.getChineseName());
         assertNotNull(name.getEnglishName());
         assertEquals(personalNameLength, name.getChineseName().getPersonalName().length());
-        assertEquals(personalNameLength + 1, name.getCommercialCodes().size());
+        assertEquals(personalNameLength + 1, name.getChineseCommercialCodes().size());
 
         Map<String, ChineseNameEntry> entriesByCharacter = new HashMap<>();
         for (ChineseNameEntry entry : HkidNameUtil.getDefaultEntries()) {
             entriesByCharacter.put(entry.getCharacter(), entry);
         }
 
-        String fullName = name.getChineseFullName();
+        String fullName = name.getChineseNameString();
         for (int i = 0; i < fullName.length(); i++) {
             String character = String.valueOf(fullName.charAt(i));
             ChineseNameEntry entry = entriesByCharacter.get(character);
             assertNotNull(entry);
-            assertEquals(entry.getCommercialCode(), name.getCommercialCodes().get(i));
+            assertEquals(entry.getCommercialCode(), name.getChineseCommercialCodes().get(i));
             assertEquals(i == 0, entry.isCommonSurname());
         }
 

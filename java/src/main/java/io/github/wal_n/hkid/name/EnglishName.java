@@ -42,7 +42,7 @@ public final class EnglishName {
      *
      * @return the complete English name
      */
-    public String getFullName() {
+    public String getFullNameString() {
         if (surname.isEmpty()) {
             return personalName;
         }
@@ -72,7 +72,7 @@ public final class EnglishName {
 
     @Override
     public String toString() {
-        return getFullName();
+        return getFullNameString();
     }
 
     @Override

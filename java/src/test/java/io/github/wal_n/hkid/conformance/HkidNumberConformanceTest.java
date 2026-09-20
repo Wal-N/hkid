@@ -44,7 +44,7 @@ class HkidNumberConformanceTest {
                         testCase.get("id").getAsString(),
                         () -> assertEquals(
                                 testCase.get("expectValid").getAsBoolean(),
-                                HkidNumberUtil.validateCheckDigit(
+                                HkidNumberUtil.isValidCheckDigit(
                                         testCase.get("input").getAsString(),
                                         testCase.get("checkDigit").getAsString()))));
     }
