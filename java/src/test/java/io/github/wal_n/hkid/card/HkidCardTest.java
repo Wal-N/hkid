@@ -6,6 +6,8 @@ import io.github.wal_n.hkid.number.DefinedPrefix;
 import io.github.wal_n.hkid.number.HkidNumber;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -224,6 +226,48 @@ class HkidCardTest {
         assertEquals(DefinedPrefix.R, card.getHkidNumber().getDefinedPrefix().orElse(null));
         assertTrue(DefinedPrefix.R.supportsFirstIssueMonth(
                 card.getFirstRegistrationYearMonth()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2026-07-01, F",
+            "2026-07-21, F",
+            "2026-07-26, F",
+            "2026-07-27, L",
+            "2026-08-01, L"
+    })
+    void generatedFirstIssuePrefixRespectsExactTransitionDate(
+            LocalDate referenceDate, DefinedPrefix expectedPrefix) {
+        HkidCard card = HkidCardUtil.generateRandomCard(
+                new BoundaryRandom(true), referenceDate);
+
+        assertTrue(card.getDateOfBirth().isBefore(LocalDate.of(1980, 1, 1)));
+        assertEquals(referenceDate, card.getDateOfRegistration());
+        assertEquals(YearMonth.from(referenceDate), card.getFirstRegistrationYearMonth());
+        assertEquals(expectedPrefix, card.getHkidNumber().getDefinedPrefix().orElse(null));
+        card.validateAsOf(referenceDate);
+    }
+
+    @Test
+    void generatedFirstIssuePrefixIsBoundedByCardRegistrationDate() {
+        LocalDate referenceDate = LocalDate.of(2026, 7, 27);
+        Random random = new Random() {
+            private static final long serialVersionUID = 1L;
+            private int calls;
+
+            @Override
+            public int nextInt(int bound) {
+                // Choose the previous day for card registration; all other choices use the upper bound.
+                return ++calls == 3 ? bound - 2 : bound - 1;
+            }
+        };
+
+        HkidCard card = HkidCardUtil.generateRandomCard(random, referenceDate);
+
+        assertEquals(LocalDate.of(2026, 7, 26), card.getDateOfRegistration());
+        assertEquals(YearMonth.of(2026, 7), card.getFirstRegistrationYearMonth());
+        assertEquals(DefinedPrefix.F, card.getHkidNumber().getDefinedPrefix().orElse(null));
+        card.validateAsOf(referenceDate);
     }
 
     @Test

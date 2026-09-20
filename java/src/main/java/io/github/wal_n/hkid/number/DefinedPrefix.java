@@ -31,7 +31,7 @@ public enum DefinedPrefix {
     D,
     /** Kowloon office issue sequence used from 1955 through 1969. */
     E,
-    /** First-issue sequence used from 24 February 2020 through late July 2026. */
+    /** First-issue sequence used from 24 February 2020 through 26 July 2026. */
     F,
     /** Kowloon office issue sequence used from 1967 through 1983. */
     G,
@@ -41,7 +41,7 @@ public enum DefinedPrefix {
     J,
     /** First-issue sequence used from 28 March 1983 through 31 July 1990. */
     K,
-    /** First-issue sequence reactivated in late July 2026; previously used as a system-outage reserve sequence until 23 June 2003. */
+    /** First-issue sequence reactivated on 27 July 2026; previously used as a system-outage reserve sequence until 23 June 2003. */
     L,
     /** First-issue sequence used from 1 August 2011 through 23 February 2020. */
     M,
@@ -161,6 +161,24 @@ public enum DefinedPrefix {
     }
 
     /**
+     * Returns whether at least one day in the supplied month, on or before the
+     * supplied upper date bound, falls within this prefix's exact first-issue period.
+     *
+     * @param firstIssueMonth first-issue month to test
+     * @param latestFirstIssueDate inclusive upper bound on the possible first-issue date;
+     *                            a date after the month leaves the whole month eligible
+     * @return {@code true} when an eligible day exists; {@code false} if either argument
+     *         is null, the upper bound precedes the month, or no eligible day matches
+     */
+    public boolean supportsFirstIssueMonth(
+            YearMonth firstIssueMonth, LocalDate latestFirstIssueDate) {
+        return latestFirstIssueDate != null
+                && supportsFirstIssueMonth(firstIssueMonth)
+                && !latestFirstIssueDate.isBefore(firstIssueMonth.atDay(1))
+                && !latestFirstIssueDate.isBefore(metadata().firstIssueStartDate);
+    }
+
+    /**
      * Finds all standard prefixes whose exact first-issue period overlaps the
      * supplied month.
      *
@@ -170,6 +188,23 @@ public enum DefinedPrefix {
     public static DefinedPrefix[] fromFirstIssueMonth(YearMonth firstIssueMonth) {
         return Arrays.stream(values())
                 .filter(prefix -> prefix.supportsFirstIssueMonth(firstIssueMonth))
+                .toArray(DefinedPrefix[]::new);
+    }
+
+    /**
+     * Finds all standard prefixes whose exact first-issue period overlaps the
+     * supplied month on or before the supplied upper date bound.
+     *
+     * @param firstIssueMonth first-issue month to look up
+     * @param latestFirstIssueDate inclusive upper bound on the possible first-issue date;
+     *                            a date after the month leaves the whole month eligible
+     * @return all matching prefixes, or an empty array if either argument is null,
+     *         the upper bound precedes the month, or no eligible day matches
+     */
+    public static DefinedPrefix[] fromFirstIssueMonth(
+            YearMonth firstIssueMonth, LocalDate latestFirstIssueDate) {
+        return Arrays.stream(values())
+                .filter(prefix -> prefix.supportsFirstIssueMonth(firstIssueMonth, latestFirstIssueDate))
                 .toArray(DefinedPrefix[]::new);
     }
 
