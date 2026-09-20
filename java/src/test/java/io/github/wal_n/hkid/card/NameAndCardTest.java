@@ -99,6 +99,90 @@ class NameAndCardTest {
     }
 
     @Test
+    void englishNamePartsHandleLongInputsWithoutRecursion() {
+        for (String separator : Arrays.asList(" ", ".", "'", "-")) {
+            String longName = String.join(separator, Collections.nCopies(10000, "A"));
+
+            assertTrue(EnglishNameUtil.isValidNamePart(longName));
+            assertFalse(EnglishNameUtil.isValidNamePart(longName + separator));
+            assertFalse(EnglishNameUtil.isValidNamePart(longName + separator + separator + "A"));
+            assertFalse(EnglishNameUtil.isValidNamePart(longName + "1"));
+        }
+    }
+
+    @Test
+    void englishNamePartsRequireAsciiLettersBetweenSingleSeparators() {
+        for (String valid : Arrays.asList("A", "aZ", "St.John", "Anne-Marie O'Connor")) {
+            assertTrue(EnglishNameUtil.isValidNamePart(valid), valid);
+        }
+        for (String invalid : Arrays.asList(null, "", " ", ".A", "'A", "-A", " A",
+                "A.", "A'", "A-", "A ", "A.-B", "A  B", "A\tB", "A\nB", "A,B", "Jos\u00e9")) {
+            assertFalse(EnglishNameUtil.isValidNamePart(invalid), invalid);
+        }
+    }
+
+    @Test
+    void englishNameConstructorRejectsLongSeparatedParts() {
+        String longName = String.join(" ", Collections.nCopies(10000, "A"));
+
+        assertThrows(IllegalArgumentException.class, () -> new EnglishName(longName, "Tai Man"));
+        assertThrows(IllegalArgumentException.class, () -> new EnglishName("Chan", longName));
+    }
+
+    @Test
+    void cardBuilderRejectsLongSeparatedEnglishNameParts() {
+        String longName = String.join(" ", Collections.nCopies(10000, "A"));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCard.builder().englishSurname(longName).build());
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCard.builder().englishPersonalName(longName).build());
+    }
+
+    @Test
+    void englishNameLengthIncludesCommaAndSpace() {
+        for (int length : Arrays.asList(39, 40)) {
+            String personalName = String.join("", Collections.nCopies(length - 6, "A"));
+
+            assertTrue(EnglishNameUtil.isValid("Chan", personalName));
+            assertEquals(length, new EnglishName("Chan", personalName).getFullName().length());
+            assertEquals(length, HkidCard.builder()
+                    .englishSurname("Chan").englishPersonalName(personalName).build().getEnglishName().length());
+        }
+
+        String personalName = String.join("", Collections.nCopies(35, "A"));
+        assertFalse(EnglishNameUtil.isValid("Chan", personalName));
+        assertThrows(IllegalArgumentException.class, () -> new EnglishName("Chan", personalName));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCard.builder().englishSurname("Chan").englishPersonalName(personalName).build());
+    }
+
+    @Test
+    void englishNameLengthOmitsSeparatorForEmptyParts() {
+        String atLimit = String.join("", Collections.nCopies(40, "A"));
+        String overLimit = atLimit + "A";
+
+        for (String emptyPart : Arrays.asList(null, "")) {
+            assertEquals("", new EnglishName(emptyPart, emptyPart).getFullName());
+            assertTrue(EnglishNameUtil.isValid(atLimit, emptyPart));
+            assertFalse(EnglishNameUtil.isValid(overLimit, emptyPart));
+            assertFalse(EnglishNameUtil.isValid(emptyPart, atLimit));
+            assertEquals(atLimit, new EnglishName(atLimit, emptyPart).getFullName());
+            assertEquals(atLimit, new EnglishName(emptyPart, atLimit).getFullName());
+            assertThrows(IllegalArgumentException.class, () -> new EnglishName(overLimit, emptyPart));
+            assertThrows(IllegalArgumentException.class, () -> new EnglishName(emptyPart, overLimit));
+            assertEquals(atLimit, HkidCard.builder()
+                    .englishSurname(atLimit).englishPersonalName(emptyPart).build().getEnglishName());
+            assertEquals(atLimit, HkidCard.builder()
+                    .englishSurname(emptyPart).englishPersonalName(atLimit).build().getEnglishName());
+            assertThrows(IllegalArgumentException.class,
+                    () -> HkidCard.builder().englishSurname(overLimit).englishPersonalName(emptyPart).build());
+            assertThrows(IllegalArgumentException.class,
+                    () -> HkidCard.builder().englishSurname(emptyPart).englishPersonalName(overLimit).build());
+        }
+    }
+
+    @Test
     void emptyCardUsesNonNullEmptyNames() {
         HkidCard card = HkidCard.builder().build();
 

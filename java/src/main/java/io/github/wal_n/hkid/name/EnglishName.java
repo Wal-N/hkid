@@ -21,9 +21,13 @@ public final class EnglishName {
     /**
      * Creates an English name from its surname and personal-name portions.
      *
+     * <p>Either portion may be empty. The formatted name must not exceed 40
+     * characters, including the comma and space when both portions are non-empty.</p>
+     *
      * @param surname English surname, or {@code null} for an empty surname
      * @param personalName English personal name, or {@code null} for an empty personal name
-     * @throws IllegalArgumentException if either non-empty part contains unsupported characters
+     * @throws IllegalArgumentException if either non-empty part has invalid character syntax
+     *         or the formatted name exceeds 40 characters
      */
     public EnglishName(String surname, String personalName) {
         String normalizedSurname = Objects.toString(surname, "");
