@@ -10,6 +10,11 @@ library can:
 - model complete cards and generate internally consistent sample data
   生成欄位資訊一致嘅完整身份證資料
 
+## Why this project?
+
+After writing the same HKID logic three times for three different systems at three companies in Hong Kong, I decided it was time for a reusable library. Hopefully, this saves you some time—and a few tokens along the way.
+喺香港三間公司、三個 system 入面寫過三次同樣嘅 code 之後，我決定整一個可以重用嘅 library。希望幫大家慳返啲時間，順便慳埋啲 token。
+
 ## Java
 
 ### Requirements
@@ -73,12 +78,12 @@ public final class GeneratedDataExample {
     public static void main(String[] args) {
         HkidCard card = HkidCardUtil.generateRandomCard();
 
-        System.out.println(card.getChineseName());              // e.g. 陳大文
-        System.out.println(card.getChineseCommercialCodes());   // e.g. [7115, 1129, 2429]
-        System.out.println(card.getEnglishName());              // e.g. Chan, Tai Man
-        System.out.println(card.getSex());                      // e.g. 男 M
-        System.out.println(card.getHkidNumber());               // e.g. A123456
-        System.out.println(card.getSymbols());                  // e.g. ***AZBN
+        System.out.println(card.getChineseName());              // e.g. 樂永晴
+        System.out.println(card.getChineseCommercialCodes());   // e.g. [2867, 3057, 2532]
+        System.out.println(card.getEnglishName());              // e.g. LOK, Wing Ching
+        System.out.println(card.getSex());                      // e.g. 女 F
+        System.out.println(card.getHkidNumber());               // e.g. Z683365
+        System.out.println(card.getSymbols());                  // e.g. ***AZ
     }
 }
 ```
