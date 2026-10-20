@@ -13,6 +13,7 @@ library can:
 ## Why this project?
 
 After writing the same HKID logic three times for three different systems at three companies in Hong Kong, I decided it was time for a reusable library. Hopefully, this saves you some time—and a few tokens along the way.
+
 喺香港三間公司、三個 system 入面寫過三次同樣嘅 code 之後，我決定整一個可以重用嘅 library。希望幫大家慳返啲時間，順便慳埋啲 token。
 
 ## Java
