@@ -39,9 +39,12 @@ public final class ChineseNameUtil {
     /**
      * Tests whether Chinese surname and personal-name parts form a valid HKID name.
      *
+     * <p>Either or both parts may be null or empty, as in
+     * {@link ChineseName#ChineseName(String, String)}. No surname is required.</p>
+     *
      * @param surname Chinese surname, or {@code null} for an empty surname
      * @param personalName Chinese personal name, or {@code null} for an empty personal name
-     * @return {@code true} when both parts contain only Chinese characters and
+     * @return {@code true} when all non-empty parts contain only Chinese characters and
      *         their combined length does not exceed the HKID name-area limit
      */
     public static boolean isValid(String surname, String personalName) {
@@ -54,8 +57,10 @@ public final class ChineseNameUtil {
      * Tests whether Chinese surname and personal-name parts and their commercial
      * codes form a valid HKID name.
      *
-     * <p>Commercial codes are checked for null entries and count only; mappings
-     * between Chinese characters and commercial codes are not verified.</p>
+     * <p>Name parts follow {@link #isValid(String, String)}, including support
+     * for empty or partial names. Commercial codes are checked for null entries
+     * and count only; mappings between Chinese characters and commercial codes
+     * are not verified.</p>
      *
      * @param surname Chinese surname, or {@code null} for an empty surname
      * @param personalName Chinese personal name, or {@code null} for an empty personal name

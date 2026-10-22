@@ -44,11 +44,17 @@ public final class EnglishNameUtil {
     }
 
     /**
-     * Tests whether English surname and personal-name parts form a valid HKID name.
+     * Tests whether English name parts form a valid HKID name with a non-empty surname.
      *
      * <p>A surname is required; the personal name is optional. The formatted name
      * must not exceed 40 characters, including the comma and space between the
      * surname and a non-empty personal name.</p>
+     *
+     * <p>This method is not a precheck for
+     * {@link EnglishName#EnglishName(String, String)}, which also accepts empty
+     * or partial name data. For example, {@code isValid("", "Tai Man")} returns
+     * {@code false}, although construction succeeds; {@code isValid("Chan", "")}
+     * returns {@code true}.</p>
      *
      * @param surname required English surname
      * @param personalName English personal name, or {@code null} for an empty personal name

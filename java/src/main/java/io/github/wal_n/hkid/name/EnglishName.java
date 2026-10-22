@@ -19,10 +19,14 @@ public final class EnglishName {
     }
 
     /**
-     * Creates an English name from its surname and personal-name portions.
+     * Creates an English name, including empty or partial name data.
      *
-     * <p>Either portion may be empty. The formatted name must not exceed 40
+     * <p>Either or both portions may be null or empty. Non-empty portions must
+     * have valid character syntax. The formatted name must not exceed 40
      * characters, including the comma and space when both portions are non-empty.</p>
+     *
+     * <p>{@link EnglishNameUtil#isValid(String, String)} additionally requires a
+     * non-empty surname, so it is not a precheck for this constructor.</p>
      *
      * @param surname English surname, or {@code null} for an empty surname
      * @param personalName English personal name, or {@code null} for an empty personal name
