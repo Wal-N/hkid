@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -107,6 +108,28 @@ class HkidNameUtilTest {
     }
 
     @Test
+    void nameAssertionsHandleSupplementarySurnameAndPersonalName() {
+        ChineseNameEntry surname = new ChineseNameEntry(
+                "0001", "\uD840\uDC00", "Wan", true, EnumSet.allOf(Sex.class), 1);
+        ChineseNameEntry supplementaryGivenName = new ChineseNameEntry(
+                "0002", "\uD840\uDC01", "Yau", false, EnumSet.allOf(Sex.class), 1);
+        ChineseNameEntry bmpGivenName = new ChineseNameEntry(
+                "0003", "明", "Ming", false, EnumSet.allOf(Sex.class), 1);
+        List<ChineseNameEntry> entries = Arrays.asList(surname, supplementaryGivenName, bmpGivenName);
+        GeneratedName name = new GeneratedName(
+                new ChineseName(surname.getCharacter(),
+                        supplementaryGivenName.getCharacter() + bmpGivenName.getCharacter(),
+                        Arrays.asList(surname.getCommercialCode(),
+                                supplementaryGivenName.getCommercialCode(), bmpGivenName.getCommercialCode())),
+                new EnglishName(surname.getRomanisation(), "Yau Ming"));
+
+        assertGeneratedNameMatchesSeed(name, 2, entries);
+        for (Sex sex : Sex.values()) {
+            assertGeneratedNameMatchesSex(name, sex, entries);
+        }
+    }
+
+    @Test
     void sexSpecificGenerationUsesOnlyCompatibleGivenNameEntries() {
         for (Sex sex : Sex.values()) {
             for (int personalNameLength = 1; personalNameLength <= 5; personalNameLength++) {
@@ -201,19 +224,29 @@ class HkidNameUtilTest {
     }
 
     private void assertGeneratedNameMatchesSeed(GeneratedName name, int personalNameLength) {
+        assertGeneratedNameMatchesSeed(name, personalNameLength, HkidNameUtil.getDefaultEntries());
+    }
+
+    private void assertGeneratedNameMatchesSeed(
+            GeneratedName name, int personalNameLength, List<ChineseNameEntry> entries) {
         assertNotNull(name.getChineseName());
         assertNotNull(name.getEnglishName());
-        assertEquals(personalNameLength, name.getChineseName().getPersonalName().length());
+        String personalName = name.getChineseName().getPersonalName();
+        // A supplementary Han character (e.g. U+20000) uses two UTF-16 units but is one code point.
+        // Count code points; length() is only the UTF-16 end offset for the whole string.
+        assertEquals(personalNameLength, personalName.codePointCount(0, personalName.length()));
         assertEquals(personalNameLength + 1, name.getChineseCommercialCodes().size());
 
         Map<String, ChineseNameEntry> entriesByCharacter = new HashMap<>();
-        for (ChineseNameEntry entry : HkidNameUtil.getDefaultEntries()) {
+        for (ChineseNameEntry entry : entries) {
             entriesByCharacter.put(entry.getCharacter(), entry);
         }
 
-        String fullName = name.getChineseNameString();
-        for (int i = 0; i < fullName.length(); i++) {
-            String character = String.valueOf(fullName.charAt(i));
+        // Index by complete Han characters so each index matches one commercial code.
+        // charAt() would split supplementary characters into surrogate halves.
+        int[] codePoints = name.getChineseNameString().codePoints().toArray();
+        for (int i = 0; i < codePoints.length; i++) {
+            String character = new String(Character.toChars(codePoints[i]));
             ChineseNameEntry entry = entriesByCharacter.get(character);
             assertNotNull(entry);
             assertEquals(entry.getCommercialCode(), name.getChineseCommercialCodes().get(i));
@@ -227,17 +260,23 @@ class HkidNameUtilTest {
     }
 
     private void assertGeneratedNameMatchesSex(GeneratedName name, Sex sex) {
+        assertGeneratedNameMatchesSex(name, sex, HkidNameUtil.getDefaultEntries());
+    }
+
+    private void assertGeneratedNameMatchesSex(
+            GeneratedName name, Sex sex, List<ChineseNameEntry> entries) {
         Map<String, ChineseNameEntry> entriesByCharacter = new HashMap<>();
-        for (ChineseNameEntry entry : HkidNameUtil.getDefaultEntries()) {
+        for (ChineseNameEntry entry : entries) {
             entriesByCharacter.put(entry.getCharacter(), entry);
         }
 
         String personalName = name.getChineseName().getPersonalName();
-        for (int i = 0; i < personalName.length(); i++) {
+        // Reconstruct each complete character for seed lookup, including any surrogate pair.
+        personalName.codePoints().forEach(codePoint -> {
             ChineseNameEntry entry = entriesByCharacter.get(
-                    String.valueOf(personalName.charAt(i)));
+                    new String(Character.toChars(codePoint)));
             assertNotNull(entry);
             assertTrue(entry.isCompatibleWith(sex));
-        }
+        });
     }
 }

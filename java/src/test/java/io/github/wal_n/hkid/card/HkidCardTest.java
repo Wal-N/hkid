@@ -325,7 +325,11 @@ class HkidCardTest {
                         HkidCard.ageAnniversary(hkidCard.getDateOfBirth(), 11))));
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
                 .isAfter(YearMonth.from(hkidCard.getDateOfRegistration())));
-        assertEquals(hkidCard.getChineseNameString().length(), hkidCard.getChineseCommercialCodes().size());
+        String chineseName = hkidCard.getChineseNameString();
+        // Each Han code point has one commercial code. A supplementary character uses two
+        // UTF-16 units, so length() is only the end offset here, not the character count.
+        assertEquals(chineseName.codePointCount(0, chineseName.length()),
+                hkidCard.getChineseCommercialCodes().size());
         assertNameMatchesSex(hkidCard);
         hkidCard.validateAsOf(REFERENCE_DATE);
     }
@@ -333,14 +337,16 @@ class HkidCardTest {
     private void assertNameMatchesSex(HkidCard hkidCard) {
         String personalName = hkidCard.getChineseName().getPersonalName();
 
-        for (int i = 0; i < personalName.length(); i++) {
-            String character = String.valueOf(personalName.charAt(i));
+        // charAt() would split supplementary Han characters; preserve each whole character
+        // with codePoints() and Character.toChars() so it matches its seed entry.
+        personalName.codePoints().forEach(codePoint -> {
+            String character = new String(Character.toChars(codePoint));
             ChineseNameEntry entry = HkidNameUtil.getDefaultEntries().stream()
                     .filter(candidate -> character.equals(candidate.getCharacter()))
                     .findFirst()
                     .orElseThrow(AssertionError::new);
             assertTrue(entry.isCompatibleWith(hkidCard.getSex()));
-        }
+        });
     }
 
     private static final class BoundaryRandom extends Random {
