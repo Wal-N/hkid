@@ -31,7 +31,7 @@ Add the following dependency inside the `<dependencies>` section of your
 <dependency>
     <groupId>io.github.wal-n</groupId>
     <artifactId>hkid-utils</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
