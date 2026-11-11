@@ -12,8 +12,6 @@ library can:
 
 ## Why this project?
 
-After writing the same HKID logic three times for three different systems at three companies in Hong Kong, I decided it was time for a reusable library. Hopefully, this saves you some time—and a few tokens along the way.
-
 喺香港三間公司、三個 system 入面寫過三次同樣嘅 code 之後，我決定整一個可以重用嘅 library。希望幫大家慳返啲時間，順便慳埋啲 token。
 
 ## Java
@@ -65,10 +63,6 @@ HKID inputs may use a one- or two-letter prefix and may omit the check digit.
 When supplied, a bare or parenthesised check digit is validated automatically.
 Use the `isValid` helpers when invalid input should return `false` instead of
 throwing an exception.
-
-`HkidNumber.toString()` and `HkidCard.getHkidNumberString()` default to the card
-format with a parenthesised check digit. To choose a different output format,
-pass `HkidNumber.Format.WITHOUT_CHECK_DIGIT` or `HkidNumber.Format.WITHOUT_PARENTHESES`.
 
 Card construction additionally validates date order and age-specific symbols.
 Call `validateAsOf(referenceDate)` to reject future-dated fields.
