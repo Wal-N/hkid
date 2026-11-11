@@ -10,15 +10,17 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Immutable data printed on a Hong Kong Identity Card.
  *
- * <p>Use {@link #builder()} to assemble a card. Time-dependent operations require
- * an explicit reference date so that a card's behaviour does not change merely
- * because the system date changed.</p>
+ * <p>Use {@link #builder()} to assemble a card. Age calculation and date validation
+ * require an explicit reference date. Holder summaries also offer convenience
+ * overloads using today's date in Hong Kong; supply a reference date when a
+ * reproducible summary is required.</p>
  *
  * <p>Getters return domain values or their components. Methods named
  * {@code getXString} return the text representation of a card field.</p>
@@ -365,6 +367,47 @@ public final class HkidCard {
      */
     public String getDateOfRegistrationString() {
         return dateOfRegistration != null ? dateOfRegistration.format(DOR_FORMATTER) : null;
+    }
+
+    /**
+     * Describes the holder using today's date in Hong Kong and the JVM's current
+     * default locale, read on every call.
+     *
+     * @return the summary, or an empty string when no describable information is present
+     * @throws IllegalArgumentException if the birth date is in the future
+     * @see HkidCardUtil#describeHolder(HkidCard, Locale, LocalDate)
+     */
+    public String describeHolder() {
+        return HkidCardUtil.describeHolder(this);
+    }
+
+    /**
+     * Describes the holder using today's date in Hong Kong.
+     *
+     * @param locale output locale; {@code null} uses {@link Locale#getDefault()} on this call
+     * @return the summary in Traditional Chinese for {@code zh} locales, or English otherwise;
+     *         empty when no describable information is present
+     * @throws IllegalArgumentException if the birth date is in the future
+     * @see HkidCardUtil#describeHolder(HkidCard, Locale, LocalDate)
+     */
+    public String describeHolder(Locale locale) {
+        return HkidCardUtil.describeHolder(this, locale);
+    }
+
+    /**
+     * Describes available age, sex, reported birthplace, and card symbols without
+     * names, exact birth date, HKID number, or registration dates. Missing fields
+     * are omitted; symbols retain their recorded meaning at registration.
+     *
+     * @param locale output locale; {@code null} uses {@link Locale#getDefault()} on this call
+     * @param referenceDate date used only to calculate the holder's age
+     * @return the summary in Traditional Chinese for {@code zh} locales, or English otherwise;
+     *         empty when no describable information is present
+     * @throws IllegalArgumentException if {@code referenceDate} is null or precedes the birth date
+     * @see HkidCardUtil#describeHolder(HkidCard, Locale, LocalDate)
+     */
+    public String describeHolder(Locale locale, LocalDate referenceDate) {
+        return HkidCardUtil.describeHolder(this, locale, referenceDate);
     }
 
     /**

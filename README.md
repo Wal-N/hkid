@@ -43,6 +43,7 @@ Add to your `pom.xml` for Maven dependencies:
 
 ```java
 import io.github.wal_n.hkid.card.HkidCard;
+import io.github.wal_n.hkid.card.HkidCardUtil;
 import io.github.wal_n.hkid.card.HkidSymbolsUtil;
 import io.github.wal_n.hkid.name.ChineseNameUtil;
 import io.github.wal_n.hkid.name.EnglishNameUtil;
@@ -50,6 +51,7 @@ import io.github.wal_n.hkid.number.HkidNumber;
 import io.github.wal_n.hkid.number.HkidNumberUtil;
 
 import java.time.LocalDate;
+import java.util.Locale;
 
 public final class ValidationExample {
   public static void main(String[] args) {
@@ -73,6 +75,11 @@ public final class ValidationExample {
     card.isSuspicious(); // true
     card.findSuspicions();
     // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
+
+    // Holder summaries
+    card.describeHolder(); // JVM default locale
+    card.describeHolder(Locale.TRADITIONAL_CHINESE);
+    HkidCardUtil.describeHolder(card, Locale.ENGLISH, LocalDate.of(2026, 11, 11));
   }
 }
 ```
@@ -84,6 +91,17 @@ for invalid input.
 Card construction additionally validates date order and age-specific symbols.
 Call `validateAsOf(referenceDate)` to reject future-dated fields.
 Suspicion checks skip missing fields; `findSuspicions` returns the reasons found.
+
+Holder summaries include available age, sex, reported birthplace and symbol
+meanings. Missing information is omitted; a card with nothing to describe
+returns an empty string. Names, Chinese Commercial Codes, exact birth dates,
+HKID numbers and registration dates are excluded. Age-specific and
+stay-restriction symbols retain their meaning at registration.
+
+Omitting the locale or passing `null` uses `Locale.getDefault()` on each call.
+Chinese locales produce Traditional Chinese; all other locales produce English.
+Age is calculated using the current date in `Asia/Hong_Kong`, unless an explicit
+`referenceDate` is passed to either the card or utility API.
 
 ### Generated data
 
