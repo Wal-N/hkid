@@ -42,11 +42,14 @@ Add to your `pom.xml` for Maven dependencies:
 ### Validation and formatting
 
 ```java
+import io.github.wal_n.hkid.card.HkidCard;
 import io.github.wal_n.hkid.card.HkidSymbolsUtil;
 import io.github.wal_n.hkid.name.ChineseNameUtil;
 import io.github.wal_n.hkid.name.EnglishNameUtil;
 import io.github.wal_n.hkid.number.HkidNumber;
 import io.github.wal_n.hkid.number.HkidNumberUtil;
+
+import java.time.LocalDate;
 
 public final class ValidationExample {
   public static void main(String[] args) {
@@ -60,6 +63,16 @@ public final class ValidationExample {
     ChineseNameUtil.isValid("陳", "大文");       // true
     EnglishNameUtil.isValid("Chan", "Tai Man"); // true
     HkidSymbolsUtil.isValid("***AZ");           // true
+
+    // Suspicious field combinations
+    HkidCard card = HkidCard.builder()
+      .hkidNumber(new HkidNumber("Z123456"))
+      .dateOfBirth(LocalDate.of(2000, 1, 1))
+      .symbolCodes("X")
+      .build();
+    card.isSuspicious(); // true
+    card.findSuspicions();
+    // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
   }
 }
 ```
@@ -70,6 +83,7 @@ for invalid input.
 
 Card construction additionally validates date order and age-specific symbols.
 Call `validateAsOf(referenceDate)` to reject future-dated fields.
+Suspicion checks skip missing fields; `findSuspicions` returns the reasons found.
 
 ### Generated data
 
@@ -98,34 +112,6 @@ public final class GeneratedDataExample {
 
 Name seeds include sex-associated and unisex entries; these guide generation
 and do not restrict validation of real names.
-
-### Suspicious field combinations (unreleased)
-
-These APIs are available in the current source (`0.2.1-SNAPSHOT`), which must
-be built locally. They are not included in the `0.2.0` dependency above.
-
-```java
-import io.github.wal_n.hkid.card.HkidCard;
-import io.github.wal_n.hkid.card.HkidCardUtil;
-import io.github.wal_n.hkid.number.HkidNumber;
-
-import java.time.LocalDate;
-
-public final class SuspicionExample {
-  public static void main(String[] args) {
-    HkidCard card = HkidCard.builder()
-      .hkidNumber(new HkidNumber("Z123456"))
-      .dateOfBirth(LocalDate.of(2000, 1, 1))
-      .symbolCodes("X")
-      .build();
-    HkidCardUtil.isSuspicious(card); // true
-    HkidCardUtil.findSuspicions(card);
-    // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
-  }
-}
-```
-
-Suspicion checks skip missing fields; `findSuspicions` returns the reasons found.
 
 ## For AI agents
 

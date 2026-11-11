@@ -252,5 +252,7 @@ class HkidCardSuspicionTest {
     private static void assertSuspicions(HkidCard card, HkidSuspicion... expected) {
         assertEquals(Arrays.asList(expected), HkidCardUtil.findSuspicions(card));
         assertEquals(expected.length > 0, HkidCardUtil.isSuspicious(card));
+        assertEquals(Arrays.asList(expected), card.findSuspicions());
+        assertEquals(expected.length > 0, card.isSuspicious());
     }
 }

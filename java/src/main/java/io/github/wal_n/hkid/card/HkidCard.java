@@ -368,6 +368,29 @@ public final class HkidCard {
     }
 
     /**
+     * Tests whether any supplied fields form a suspicious combination.
+     * Missing fields and unavailable prefix metadata are skipped.
+     *
+     * @return {@code true} when at least one suspicion is found
+     * @see HkidCardUtil#isSuspicious(HkidCard)
+     */
+    public boolean isSuspicious() {
+        return HkidCardUtil.isSuspicious(this);
+    }
+
+    /**
+     * Finds suspicious combinations of supplied fields using the bundled prefix metadata.
+     * Results are advisory; an empty list does not establish completeness or authenticity.
+     *
+     * @return an unmodifiable list of distinct reasons in {@link HkidSuspicion}
+     *         declaration order, empty when no suspicion is found
+     * @see HkidCardUtil#findSuspicions(HkidCard)
+     */
+    public List<HkidSuspicion> findSuspicions() {
+        return HkidCardUtil.findSuspicions(this);
+    }
+
+    /**
      * Validates that the card's dated fields are not in the future relative to
      * the supplied date. Card-face consistency, including age-dependent symbols,
      * is checked against the date of registration during construction.
