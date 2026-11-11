@@ -12,8 +12,6 @@ library can:
 
 ## Why this project?
 
-After writing the same HKID logic three times for three different systems at three companies in Hong Kong, I decided it was time for a reusable library. Hopefully, this saves you some time—and a few tokens along the way.
-
 喺香港三間公司、三個 system 入面寫過三次同樣嘅 code 之後，我決定整一個可以重用嘅 library。希望幫大家慳返啲時間，順便慳埋啲 token。
 
 ## Java
@@ -50,8 +48,8 @@ public final class ValidationExample {
     public static void main(String[] args) {
         HkidNumber number = new HkidNumber("A123456");
 
-        System.out.println(number.toString(HkidNumber.Format.COMPLETE)); // A123456(3)
-        System.out.println(number.toMaskedString());                     // ****456(*)
+        System.out.println(number);                  // A123456(3)
+        System.out.println(number.toMaskedString()); // ****456(*)
 
         System.out.println(HkidNumberUtil.isValid("A123456(3)"));
         System.out.println(ChineseNameUtil.isValid("陳", "大文"));
@@ -83,7 +81,7 @@ public final class GeneratedDataExample {
         System.out.println(card.getChineseCommercialCodes());   // e.g. [2867, 3057, 2532]
         System.out.println(card.getEnglishName());              // e.g. LOK, Wing Ching
         System.out.println(card.getSex());                      // e.g. 女 F
-        System.out.println(card.getHkidNumber());               // e.g. Z683365
+        System.out.println(card.getHkidNumber());               // e.g. Z683365(A)
         System.out.println(card.getSymbols());                  // e.g. ***AZ
     }
 }

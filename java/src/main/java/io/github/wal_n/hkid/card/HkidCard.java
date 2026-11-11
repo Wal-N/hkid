@@ -144,19 +144,20 @@ public final class HkidCard {
     }
 
     /**
-     * Returns the HKID prefix and numerals without the check digit.
+     * Returns the HKID number as shown on the card, including the check digit in parentheses.
      *
-     * @return the unadorned HKID number, or {@code null} when absent
+     * @return the HKID number in {@link HkidNumber.Format#COMPLETE} format,
+     *         or {@code null} when absent
      */
     public String getHkidNumberString() {
-        return getHkidNumberString(HkidNumber.Format.WITHOUT_CHECK_DIGIT);
+        return getHkidNumberString(null);
     }
 
     /**
      * Returns the HKID number in the requested format.
      *
      * @param format output format; {@code null} selects
-     *         {@link HkidNumber.Format#WITHOUT_CHECK_DIGIT}
+     *         {@link HkidNumber.Format#COMPLETE}
      * @return the formatted HKID number, or {@code null} when absent
      */
     public String getHkidNumberString(HkidNumber.Format format) {

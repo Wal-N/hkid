@@ -143,8 +143,8 @@ class HkidNumberTest {
     void formatsOutput() {
         HkidNumber hkidNumber = new HkidNumber("A123456(3)");
 
-        assertEquals("A123456", hkidNumber.toString());
-        assertEquals("A123456", hkidNumber.toString(null));
+        assertEquals("A123456(3)", hkidNumber.toString());
+        assertEquals("A123456(3)", hkidNumber.toString(null));
         assertEquals("A123456", hkidNumber.toString(HkidNumber.Format.WITHOUT_CHECK_DIGIT));
         assertEquals("A1234563", hkidNumber.toString(HkidNumber.Format.WITHOUT_PARENTHESES));
         assertEquals("A123456(3)", hkidNumber.toString(HkidNumber.Format.COMPLETE));
