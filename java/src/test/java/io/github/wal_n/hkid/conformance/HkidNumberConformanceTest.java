@@ -90,9 +90,7 @@ class HkidNumberConformanceTest {
                 () -> assertEquals(
                         expected.get("withoutCheckDigit").getAsString(),
                         number.toString(HkidNumber.Format.WITHOUT_CHECK_DIGIT)),
-                () -> assertEquals(
-                        expected.get("withoutCheckDigit").getAsString(),
-                        number.toString()),
+                () -> assertEquals(expected.get("complete").getAsString(), number.toString()),
                 () -> assertEquals(
                         expected.get("withoutParentheses").getAsString(),
                         number.toString(HkidNumber.Format.WITHOUT_PARENTHESES)),

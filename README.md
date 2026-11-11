@@ -50,8 +50,8 @@ public final class ValidationExample {
     public static void main(String[] args) {
         HkidNumber number = new HkidNumber("A123456");
 
-        System.out.println(number.toString(HkidNumber.Format.COMPLETE)); // A123456(3)
-        System.out.println(number.toMaskedString());                     // ****456(*)
+        System.out.println(number);                  // A123456(3)
+        System.out.println(number.toMaskedString()); // ****456(*)
 
         System.out.println(HkidNumberUtil.isValid("A123456(3)"));
         System.out.println(ChineseNameUtil.isValid("陳", "大文"));
@@ -65,6 +65,10 @@ HKID inputs may use a one- or two-letter prefix and may omit the check digit.
 When supplied, a bare or parenthesised check digit is validated automatically.
 Use the `isValid` helpers when invalid input should return `false` instead of
 throwing an exception.
+
+`HkidNumber.toString()` and `HkidCard.getHkidNumberString()` default to the card
+format with a parenthesised check digit. To choose a different output format,
+pass `HkidNumber.Format.WITHOUT_CHECK_DIGIT` or `HkidNumber.Format.WITHOUT_PARENTHESES`.
 
 Card construction additionally validates date order and age-specific symbols.
 Call `validateAsOf(referenceDate)` to reject future-dated fields.
@@ -83,7 +87,7 @@ public final class GeneratedDataExample {
         System.out.println(card.getChineseCommercialCodes());   // e.g. [2867, 3057, 2532]
         System.out.println(card.getEnglishName());              // e.g. LOK, Wing Ching
         System.out.println(card.getSex());                      // e.g. 女 F
-        System.out.println(card.getHkidNumber());               // e.g. Z683365
+        System.out.println(card.getHkidNumber());               // e.g. Z683365(A)
         System.out.println(card.getSymbols());                  // e.g. ***AZ
     }
 }

@@ -75,24 +75,24 @@ public final class HkidNumber {
     }
 
     /**
-     * Formats the number without its check digit.
+     * Formats the number as shown on the card, including its check digit in parentheses.
      *
-     * @return the uppercase prefix followed by six numerals
+     * @return the number in {@link Format#COMPLETE} format
      */
     @Override
     public String toString() {
-        return toString(Format.WITHOUT_CHECK_DIGIT);
+        return toString(null);
     }
 
     /**
      * Formats the number with an optional check digit and parentheses.
      *
-     * @param format output format; {@code null} selects {@link Format#WITHOUT_CHECK_DIGIT}
+     * @param format output format; {@code null} selects {@link Format#COMPLETE}
      * @return the formatted number
      */
     public String toString(Format format) {
         if (format == null) {
-            format = Format.WITHOUT_CHECK_DIGIT;
+            format = Format.COMPLETE;
         }
         return String.format(
                 format.strFormat,

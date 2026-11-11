@@ -57,15 +57,19 @@ class HkidCardConformanceTest {
     private static void assertCard(JsonObject testCase) {
         HkidCard card = buildCompleteCard(testCase.getAsJsonObject("input"));
         JsonObject expected = testCase.getAsJsonObject("expect");
+        String hkidComplete = expected.get("hkidComplete").getAsString();
         LocalDate referenceDate = LocalDate.parse(
                 testCase.get("referenceDate").getAsString());
 
         assertAll(
+                () -> assertEquals(hkidComplete, card.getHkidNumber().toString()),
+                () -> assertEquals(hkidComplete, card.getHkidNumberString()),
+                () -> assertEquals(hkidComplete, card.getHkidNumberString(null)),
                 () -> assertEquals(
                         expected.get("hkidWithoutCheckDigit").getAsString(),
-                        card.getHkidNumberString()),
+                        card.getHkidNumberString(HkidNumber.Format.WITHOUT_CHECK_DIGIT)),
                 () -> assertEquals(
-                        expected.get("hkidComplete").getAsString(),
+                        hkidComplete,
                         card.getHkidNumberString(HkidNumber.Format.COMPLETE)),
                 () -> assertEquals(
                         expected.get("hkidMasked").getAsString(),
