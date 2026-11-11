@@ -9,7 +9,7 @@ rules and edge cases so you don't have to implement them from scratch.
   Includes the [27 July 2026 F-to-L prefix transition](https://accessinfo.hk/request/guan_yu_xiang_gang_shen_fen_zhen),
   with date-aware prefix selection and boundary tests.
 
-- **Hong Kong age rules ｜ 香港歲數計算、閏日生日**
+- **Hong Kong age rules ｜ 香港法定歲數計算方式**
 
   For 29 February births, the age anniversary is 1 March in non-leap years,
   following [Cap. 410, section 5](https://www.elegislation.gov.hk/hk/cap410!en/s5).
