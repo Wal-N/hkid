@@ -50,15 +50,16 @@ import io.github.wal_n.hkid.number.HkidNumberUtil;
 
 public final class ValidationExample {
   public static void main(String[] args) {
+    // Formatting
     HkidNumber number = new HkidNumber("A123456");
-
     System.out.println(number);                  // A123456(3)
     System.out.println(number.toMaskedString()); // ****456(*)
 
-    System.out.println(HkidNumberUtil.isValid("A123456(3)"));
-    System.out.println(ChineseNameUtil.isValid("陳", "大文"));
-    System.out.println(EnglishNameUtil.isValid("Chan", "Tai Man"));
-    System.out.println(HkidSymbolsUtil.isValid("***AZ"));
+    // Field validation
+    HkidNumberUtil.isValid("Z123456(1)");       // true
+    ChineseNameUtil.isValid("陳", "大文");       // true
+    EnglishNameUtil.isValid("Chan", "Tai Man"); // true
+    HkidSymbolsUtil.isValid("***AZ");           // true
   }
 }
 ```
@@ -97,6 +98,34 @@ public final class GeneratedDataExample {
 
 Name seeds include sex-associated and unisex entries; these guide generation
 and do not restrict validation of real names.
+
+### Suspicious field combinations (unreleased)
+
+These APIs are available in the current source (`0.2.1-SNAPSHOT`), which must
+be built locally. They are not included in the `0.2.0` dependency above.
+
+```java
+import io.github.wal_n.hkid.card.HkidCard;
+import io.github.wal_n.hkid.card.HkidCardUtil;
+import io.github.wal_n.hkid.number.HkidNumber;
+
+import java.time.LocalDate;
+
+public final class SuspicionExample {
+  public static void main(String[] args) {
+    HkidCard card = HkidCard.builder()
+      .hkidNumber(new HkidNumber("Z123456"))
+      .dateOfBirth(LocalDate.of(2000, 1, 1))
+      .symbolCodes("X")
+      .build();
+    HkidCardUtil.isSuspicious(card); // true
+    HkidCardUtil.findSuspicions(card);
+    // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
+  }
+}
+```
+
+Suspicion checks skip missing fields; `findSuspicions` returns the reasons found.
 
 ## For AI agents
 

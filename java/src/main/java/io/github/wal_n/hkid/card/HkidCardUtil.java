@@ -8,11 +8,14 @@ import io.github.wal_n.hkid.number.HkidNumberUtil;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Utility methods for generating complete HKID card data.
+ * Utility methods for generating HKID card data and finding suspicious field combinations.
  */
 public final class HkidCardUtil {
     private static final int MIN_AGE = 11;
@@ -23,6 +26,84 @@ public final class HkidCardUtil {
 
     private HkidCardUtil() {
         throw new AssertionError("HkidCardUtil cannot be instantiated");
+    }
+
+    /**
+     * Tests whether any supplied fields form a suspicious combination according to
+     * {@link #findSuspicions(HkidCard)}.
+     *
+     * <p>Missing fields and unavailable prefix metadata do not count as suspicious.
+     * A {@code false} result means that no supported check found a suspicion; it
+     * does not establish completeness or authenticity.</p>
+     *
+     * @param card card whose supplied fields are checked
+     * @return {@code true} when at least one suspicion is found
+     * @throws IllegalArgumentException if {@code card} is null
+     */
+    public static boolean isSuspicious(HkidCard card) {
+        return !findSuspicions(card).isEmpty();
+    }
+
+    /**
+     * Finds potentially inconsistent combinations of supplied card fields using
+     * the bundled, non-authoritative prefix metadata.
+     *
+     * <p>Each check runs only when its required fields and metadata are present.
+     * An empty card therefore has no suspicions. Results are advisory and do not
+     * prevent construction of a card.</p>
+     *
+     * <p>For Hong Kong birth-registration prefixes, a birth on or after the
+     * period's exclusive end is suspicious, as is an explicitly non-Hong-Kong
+     * birthplace symbol. Births before a period starts are allowed because birth
+     * registration may occur later; no maximum delay is assumed. The
+     * {@link HkidSymbol#BIRTH_DETAILS_CHANGED} symbol suppresses both birth checks.</p>
+     *
+     * <p>For first-issue prefixes, the first-registration month must overlap the
+     * known period. The current card's registration date is not used. Prefix
+     * {@link DefinedPrefix#L} is excluded because the bundled period omits its
+     * historical reserve use. Birth-detail changes do not suppress this check.</p>
+     *
+     * @param card card whose supplied fields are checked
+     * @return an unmodifiable list of distinct reasons in {@link HkidSuspicion}
+     *         declaration order, empty when no suspicion is found
+     * @throws IllegalArgumentException if {@code card} is null
+     */
+    public static List<HkidSuspicion> findSuspicions(HkidCard card) {
+        if (card == null) {
+            throw new IllegalArgumentException("Card cannot be null");
+        }
+        if (card.getHkidNumber() == null) {
+            return Collections.emptyList();
+        }
+        DefinedPrefix prefix = card.getHkidNumber().getDefinedPrefix().orElse(null);
+        if (prefix == null) {
+            return Collections.emptyList();
+        }
+
+        List<HkidSuspicion> suspicions = new ArrayList<>();
+        HkidSymbols symbols = card.getSymbols();
+        if (prefix.hasHongKongBirthRegistrationPeriod()
+                && !symbols.contains(HkidSymbol.BIRTH_DETAILS_CHANGED)) {
+            LocalDate birthRegistrationEnd = prefix
+                    .getHongKongBirthRegistrationEndDateExclusive().orElse(null);
+            LocalDate dateOfBirth = card.getDateOfBirth();
+            if (dateOfBirth != null && birthRegistrationEnd != null
+                    && !dateOfBirth.isBefore(birthRegistrationEnd)) {
+                suspicions.add(HkidSuspicion.PREFIX_BIRTH_DATE_MISMATCH);
+            }
+            if (!symbols.getByCategory(HkidSymbolCategory.REPORTED_PLACE_OF_BIRTH).isEmpty()
+                    && !symbols.contains(HkidSymbol.BORN_IN_HONG_KONG)) {
+                suspicions.add(HkidSuspicion.PREFIX_BIRTH_PLACE_MISMATCH);
+            }
+        }
+
+        YearMonth firstRegistrationMonth = card.getFirstRegistrationYearMonth();
+        if (firstRegistrationMonth != null && prefix != DefinedPrefix.L
+                && prefix.hasFirstIssuePeriod()
+                && !prefix.supportsFirstIssueMonth(firstRegistrationMonth)) {
+            suspicions.add(HkidSuspicion.PREFIX_FIRST_REGISTRATION_MISMATCH);
+        }
+        return Collections.unmodifiableList(suspicions);
     }
 
     /**
