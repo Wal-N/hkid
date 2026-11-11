@@ -148,12 +148,6 @@ returns an empty string. Names, Chinese Commercial Codes, exact birth dates,
 HKID numbers and registration dates are excluded. Age-specific and
 stay-restriction symbols retain their meaning at registration.
 
-Calling `card.describeHolder()` or passing a `null` locale uses
-`Locale.getDefault()` on each call.
-Chinese locales produce Traditional Chinese; all other locales produce English.
-Age is calculated using the current date in `Asia/Hong_Kong`, unless an explicit
-`referenceDate` is passed to either the card or utility API.
-
 ## For AI agents
 
 Use the [Java library](java/) and Maven dependency above for validation and
