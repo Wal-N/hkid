@@ -43,7 +43,6 @@ Add to your `pom.xml` for Maven dependencies:
 
 ```java
 import io.github.wal_n.hkid.card.HkidCard;
-import io.github.wal_n.hkid.card.HkidCardUtil;
 import io.github.wal_n.hkid.card.HkidSymbolsUtil;
 import io.github.wal_n.hkid.name.ChineseNameUtil;
 import io.github.wal_n.hkid.name.EnglishNameUtil;
@@ -51,7 +50,6 @@ import io.github.wal_n.hkid.number.HkidNumber;
 import io.github.wal_n.hkid.number.HkidNumberUtil;
 
 import java.time.LocalDate;
-import java.util.Locale;
 
 public final class ValidationExample {
   public static void main(String[] args) {
@@ -75,11 +73,6 @@ public final class ValidationExample {
     card.isSuspicious(); // true
     card.findSuspicions();
     // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
-
-    // Holder summaries
-    card.describeHolder(); // JVM default locale
-    card.describeHolder(Locale.TRADITIONAL_CHINESE);
-    HkidCardUtil.describeHolder(card, Locale.ENGLISH, LocalDate.of(2026, 11, 11));
   }
 }
 ```
@@ -91,17 +84,6 @@ for invalid input.
 Card construction additionally validates date order and age-specific symbols.
 Call `validateAsOf(referenceDate)` to reject future-dated fields.
 Suspicion checks skip missing fields; `findSuspicions` returns the reasons found.
-
-Holder summaries include available age, sex, reported birthplace and symbol
-meanings. Missing information is omitted; a card with nothing to describe
-returns an empty string. Names, Chinese Commercial Codes, exact birth dates,
-HKID numbers and registration dates are excluded. Age-specific and
-stay-restriction symbols retain their meaning at registration.
-
-Omitting the locale or passing `null` uses `Locale.getDefault()` on each call.
-Chinese locales produce Traditional Chinese; all other locales produce English.
-Age is calculated using the current date in `Asia/Hong_Kong`, unless an explicit
-`referenceDate` is passed to either the card or utility API.
 
 ### Generated data
 
@@ -130,6 +112,47 @@ public final class GeneratedDataExample {
 
 Name seeds include sex-associated and unisex entries; these guide generation
 and do not restrict validation of real names.
+
+### Holder summaries
+
+```java
+import io.github.wal_n.hkid.card.HkidCard;
+import io.github.wal_n.hkid.card.HkidCardUtil;
+import io.github.wal_n.hkid.card.Sex;
+
+import java.time.LocalDate;
+import java.util.Locale;
+
+public final class HolderSummaryExample {
+  public static void main(String[] args) {
+    HkidCard card = HkidCard.builder()
+      .dateOfBirth(LocalDate.of(1975, 7, 21))
+      .sex(Sex.FEMALE)
+      .symbolCodes("***AZ")
+      .build();
+    LocalDate referenceDate = LocalDate.of(2026, 7, 21);
+
+    System.out.println(card.describeHolder(Locale.TRADITIONAL_CHINESE, referenceDate));
+    // 持有人為51歲女性，於香港出生。持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
+    System.out.println(HkidCardUtil.describeHolder(card, Locale.ENGLISH, referenceDate));
+    // The holder is female, aged 51, and was born in Hong Kong. The holder has 
+    // the right of abode in Hong Kong and, at registration, was aged 18 or over and
+    // eligible for a Re-entry Permit.
+  }
+}
+```
+
+Holder summaries include available age, sex, reported birthplace and symbol
+meanings. Missing information is omitted; a card with nothing to describe
+returns an empty string. Names, Chinese Commercial Codes, exact birth dates,
+HKID numbers and registration dates are excluded. Age-specific and
+stay-restriction symbols retain their meaning at registration.
+
+Calling `card.describeHolder()` or passing a `null` locale uses
+`Locale.getDefault()` on each call.
+Chinese locales produce Traditional Chinese; all other locales produce English.
+Age is calculated using the current date in `Asia/Hong_Kong`, unless an explicit
+`referenceDate` is passed to either the card or utility API.
 
 ## For AI agents
 
