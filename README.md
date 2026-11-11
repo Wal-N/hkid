@@ -42,23 +42,37 @@ Add to your `pom.xml` for Maven dependencies:
 ### Validation and formatting
 
 ```java
+import io.github.wal_n.hkid.card.HkidCard;
 import io.github.wal_n.hkid.card.HkidSymbolsUtil;
 import io.github.wal_n.hkid.name.ChineseNameUtil;
 import io.github.wal_n.hkid.name.EnglishNameUtil;
 import io.github.wal_n.hkid.number.HkidNumber;
 import io.github.wal_n.hkid.number.HkidNumberUtil;
 
+import java.time.LocalDate;
+
 public final class ValidationExample {
   public static void main(String[] args) {
+    // Formatting
     HkidNumber number = new HkidNumber("A123456");
-
     System.out.println(number);                  // A123456(3)
     System.out.println(number.toMaskedString()); // ****456(*)
 
-    System.out.println(HkidNumberUtil.isValid("A123456(3)"));
-    System.out.println(ChineseNameUtil.isValid("陳", "大文"));
-    System.out.println(EnglishNameUtil.isValid("Chan", "Tai Man"));
-    System.out.println(HkidSymbolsUtil.isValid("***AZ"));
+    // Field validation
+    HkidNumberUtil.isValid("Z123456(1)");       // true
+    ChineseNameUtil.isValid("陳", "大文");       // true
+    EnglishNameUtil.isValid("Chan", "Tai Man"); // true
+    HkidSymbolsUtil.isValid("***AZ");           // true
+
+    // Suspicious field combinations
+    HkidCard card = HkidCard.builder()
+      .hkidNumber(new HkidNumber("Z123456"))
+      .dateOfBirth(LocalDate.of(2000, 1, 1))
+      .symbolCodes("X")
+      .build();
+    card.isSuspicious(); // true
+    card.findSuspicions();
+    // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
   }
 }
 ```
@@ -69,6 +83,7 @@ for invalid input.
 
 Card construction additionally validates date order and age-specific symbols.
 Call `validateAsOf(referenceDate)` to reject future-dated fields.
+Suspicion checks skip missing fields; `findSuspicions` returns the reasons found.
 
 ### Generated data
 

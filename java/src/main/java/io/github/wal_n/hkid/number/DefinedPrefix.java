@@ -109,6 +109,34 @@ public enum DefinedPrefix {
     }
 
     /**
+     * Returns whether the bundled metadata supplies a Hong Kong birth-registration period.
+     *
+     * @return {@code true} when a birth-registration period is available
+     */
+    public boolean hasHongKongBirthRegistrationPeriod() {
+        return metadata().hongKongBirthRegistrationStartDate != null;
+    }
+
+    /**
+     * Returns the exclusive end of the bundled Hong Kong birth-registration period.
+     *
+     * @return the exclusive end, or empty when the period is open-ended or unavailable
+     */
+    public Optional<LocalDate> getHongKongBirthRegistrationEndDateExclusive() {
+        return Optional.ofNullable(metadata().hongKongBirthRegistrationEndDateExclusive);
+    }
+
+    /**
+     * Returns whether the bundled metadata supplies a first-issue period.
+     * This does not guarantee that every historical use of the prefix is covered.
+     *
+     * @return {@code true} when a first-issue period is available
+     */
+    public boolean hasFirstIssuePeriod() {
+        return metadata().firstIssueStartDate != null;
+    }
+
+    /**
      * Returns whether this prefix has an exact Hong Kong birth-registration period
      * containing the supplied date. Approximate historical birth ranges are not
      * treated as exact metadata by this method.
