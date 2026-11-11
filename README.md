@@ -113,6 +113,41 @@ public final class GeneratedDataExample {
 Name seeds include sex-associated and unisex entries; these guide generation
 and do not restrict validation of real names.
 
+### Holder summaries
+
+```java
+import io.github.wal_n.hkid.card.HkidCard;
+import io.github.wal_n.hkid.card.HkidCardUtil;
+import io.github.wal_n.hkid.card.Sex;
+
+import java.time.LocalDate;
+import java.util.Locale;
+
+public final class HolderSummaryExample {
+  public static void main(String[] args) {
+    HkidCard card = HkidCard.builder()
+      .dateOfBirth(LocalDate.of(1975, 7, 21))
+      .sex(Sex.FEMALE)
+      .symbolCodes("***AZ")
+      .build();
+    LocalDate referenceDate = LocalDate.of(2026, 7, 21);
+
+    System.out.println(card.describeHolder(Locale.TRADITIONAL_CHINESE, referenceDate));
+    // 持有人為51歲女性，於香港出生。持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
+    System.out.println(HkidCardUtil.describeHolder(card, Locale.ENGLISH, referenceDate));
+    // The holder is female, aged 51, and was born in Hong Kong. The holder has 
+    // the right of abode in Hong Kong and, at registration, was aged 18 or over and
+    // eligible for a Re-entry Permit.
+  }
+}
+```
+
+Holder summaries include available age, sex, reported birthplace and symbol
+meanings. Missing information is omitted; a card with nothing to describe
+returns an empty string. Names, Chinese Commercial Codes, exact birth dates,
+HKID numbers and registration dates are excluded. Age-specific and
+stay-restriction symbols retain their meaning at registration.
+
 ## For AI agents
 
 Use the [Java library](java/) and Maven dependency above for validation and
