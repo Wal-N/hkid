@@ -16,10 +16,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -108,6 +110,42 @@ class NameAndCardTest {
         assertFalse(ChineseNameUtil.isValidChineseCommercialCodes(Collections.nCopies(7, code)));
         assertFalse(ChineseNameUtil.isValidChineseCommercialCodes(Collections.singletonList(null)));
         assertTrue(new ChineseName("陳", "大文", null).getCommercialCodes().isEmpty());
+    }
+
+    @Test
+    void namesAndCardsPreserveCommercialCodeExtensionsWithoutChangingDisplay() {
+        List<ChineseCommercialCode> codes = new ArrayList<>(Arrays.asList(
+                new ChineseCommercialCode("7115"),
+                new ChineseCommercialCode("2479"),
+                new ChineseCommercialCode("2479", "2")));
+        ChineseName name = new ChineseName("陳", "旻旼", codes);
+        HkidCard card = HkidCard.builder()
+                .chineseSurname("陳")
+                .chinesePersonalName("旻旼")
+                .chineseCommercialCodes(codes)
+                .build();
+        codes.clear();
+
+        HkidCard copiedCard = card.toBuilder().build();
+        HkidCard cardFromName = HkidCard.builder().chineseName(name).build();
+        assertTrue(ChineseNameUtil.isValid("陳", "旻旼", name.getCommercialCodes()));
+        assertEquals(Optional.empty(), name.getCommercialCodes().get(1).getExtensionNumber());
+        assertEquals(Optional.of("2"), name.getCommercialCodes().get(2).getExtensionNumber());
+        assertEquals(name, card.getChineseName());
+        for (HkidCard preservedCard : Arrays.asList(card, copiedCard, cardFromName)) {
+            assertEquals(Optional.of("2"), preservedCard.getChineseCommercialCodes().get(2).getExtensionNumber());
+            assertEquals(card, preservedCard);
+            assertEquals(card.hashCode(), preservedCard.hashCode());
+            assertEquals("陳旻旼", preservedCard.getChineseNameString());
+            assertEquals("[7115, 2479, 2479]", preservedCard.getChineseCommercialCodes().toString());
+        }
+
+        ChineseName withoutExtension = new ChineseName("陳", "旻旼", commercialCodes("7115", "2479", "2479"));
+        HkidCard cardWithoutExtension = card.toBuilder().chineseName(withoutExtension).build();
+        assertNotEquals(withoutExtension, name);
+        assertNotEquals(cardWithoutExtension, card);
+        assertEquals(withoutExtension.toString(), name.toString());
+        assertEquals(cardWithoutExtension.toString(), card.toString());
     }
 
     @Test
