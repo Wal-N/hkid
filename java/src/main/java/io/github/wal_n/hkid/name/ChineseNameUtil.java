@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
  *
  * <p>Chinese commercial-code validation is structural only. This library does
  * not bundle the complete Chinese Commercial Code table, so it does not verify
- * that a supplied four-digit code corresponds to a particular Chinese
- * character.</p>
+ * that a supplied code and optional extension correspond to a particular
+ * Chinese character.</p>
  */
 public final class ChineseNameUtil {
     private static final Pattern COMMERCIAL_CODE_PATTERN = Pattern.compile("[0-9]{4}");
@@ -64,7 +64,8 @@ public final class ChineseNameUtil {
      *
      * @param surname Chinese surname, or {@code null} for an empty surname
      * @param personalName Chinese personal name, or {@code null} for an empty personal name
-     * @param commercialCodes four-digit codes in printed-name order, or {@code null} for none
+     * @param commercialCodes codes with optional extensions in printed-name order,
+     *         or {@code null} for none
      * @return {@code true} when the name is valid and any supplied commercial-code
      *         count matches the name length
      */

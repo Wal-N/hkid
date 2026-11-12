@@ -46,7 +46,8 @@ public final class ChineseName {
      *
      * @param surname Chinese surname, or {@code null} for an empty surname
      * @param personalName Chinese personal name, or {@code null} for an empty personal name
-     * @param commercialCodes four-digit codes in printed-name order, or {@code null} for none
+     * @param commercialCodes codes with optional extensions in printed-name order,
+     *         or {@code null} for none
      * @throws IllegalArgumentException if a name part contains a non-Chinese character,
      *         the combined name exceeds {@link #MAX_LENGTH} Unicode code points,
      *         a code entry is null, or a non-empty code list has the wrong size
@@ -96,7 +97,7 @@ public final class ChineseName {
     /**
      * Returns the Chinese commercial codes in printed-name order.
      *
-     * @return an unmodifiable list of four-digit commercial codes
+     * @return an unmodifiable list of commercial codes, retaining any extensions
      */
     public List<ChineseCommercialCode> getCommercialCodes() {
         return commercialCodes;
