@@ -4,6 +4,7 @@ import io.github.wal_n.hkid.card.Sex;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -120,7 +121,7 @@ public final class ChineseNameEntry {
     }
 
     private static String normaliseRomanisation(String romanisation) {
-        String value = romanisation.trim().toLowerCase();
-        return value.substring(0, 1).toUpperCase() + value.substring(1);
+        String value = romanisation.trim().toLowerCase(Locale.ROOT);
+        return value.substring(0, 1).toUpperCase(Locale.ROOT) + value.substring(1);
     }
 }
