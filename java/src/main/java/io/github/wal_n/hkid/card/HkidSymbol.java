@@ -3,6 +3,8 @@ package io.github.wal_n.hkid.card;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.wal_n.hkid.internal.FullwidthAscii;
+import io.github.wal_n.hkid.internal.ParsingWhitespace;
 import io.github.wal_n.hkid.internal.ResourceJson;
 
 import java.util.Collections;
@@ -85,8 +87,13 @@ public enum HkidSymbol {
     }
 
     /**
-     * Parses one current smart-HKID symbol code, ignoring surrounding whitespace
-     * and letter case.
+     * Parses one current smart-HKID symbol code, ignoring letter case.
+     * Leading and trailing U+0009, U+000A, U+000D, U+0020, U+00A0 and U+3000
+     * are removed. The symbol code must remain intact, including all three
+     * asterisks of {@code ***}; internal whitespace is rejected.
+     * Fullwidth Latin letters (U+FF21 through U+FF3A and U+FF41 through U+FF5A)
+     * are converted to ASCII. Fullwidth asterisks and other unsupported codes
+     * are rejected.
      *
      * @param code printed symbol code to parse
      * @return the matching symbol
@@ -97,7 +104,8 @@ public enum HkidSymbol {
             throw new IllegalArgumentException("HKID symbol code cannot be null");
         }
 
-        String normalizedCode = code.trim().toUpperCase(Locale.ROOT);
+        String normalizedCode = FullwidthAscii.toAscii(
+                ParsingWhitespace.trimOuter(code)).toUpperCase(Locale.ROOT);
         for (HkidSymbol symbol : values()) {
             if (symbol.getCode().equals(normalizedCode)) {
                 return symbol;

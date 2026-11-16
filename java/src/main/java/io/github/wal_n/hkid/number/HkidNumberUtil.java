@@ -1,5 +1,8 @@
 package io.github.wal_n.hkid.number;
 
+import io.github.wal_n.hkid.internal.FullwidthAscii;
+import io.github.wal_n.hkid.internal.ParsingWhitespace;
+
 import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -10,13 +13,15 @@ import java.util.regex.Pattern;
  * Utility methods for working with HKID numbers.
  */
 public final class HkidNumberUtil {
+    private static final String SEPARATORS = ParsingWhitespace.COMPONENT_SEPARATOR_REGEX + "*";
     private static final Pattern HKID_NUMBER_PATTERN =
-            Pattern.compile("^([A-Za-z]{1,2})(\\d{6})(?:([\\dAa])|\\(([\\dAa])\\))?$");
-    private static final Pattern PREFIX_PATTERN = Pattern.compile("^[A-Za-z]{1,2}$");
-    private static final Pattern NUMERALS_PATTERN = Pattern.compile("^\\d{6}$");
-    private static final Pattern CHECK_DIGIT_PATTERN = Pattern.compile("^[\\dA]$");
+            Pattern.compile("([A-Za-z]{1,2})" + SEPARATORS + "([0-9]{6})(?:"
+                    + SEPARATORS + "(?:([0-9Aa])|\\(([0-9Aa])\\)|\uFF08([0-9Aa])\uFF09))?");
+    private static final Pattern PREFIX_PATTERN = Pattern.compile("[A-Za-z]{1,2}");
+    private static final Pattern NUMERALS_PATTERN = Pattern.compile("[0-9]{6}");
+    private static final Pattern CHECK_DIGIT_PATTERN = Pattern.compile("[0-9A]");
     private static final Pattern WITHOUT_CHECK_DIGIT_PATTERN =
-            Pattern.compile("^([A-Za-z]{1,2})(\\d{6})$");
+            Pattern.compile("([A-Za-z]{1,2})" + SEPARATORS + "([0-9]{6})");
 
     private static final String INVALID_HKID_NUMBER_FORMAT_MESSAGE =
             "Invalid format for HKID number.";
@@ -49,10 +54,17 @@ public final class HkidNumberUtil {
 
     /**
      * Checks a supplied check digit against an HKID prefix and six numerals.
-     * Both inputs are trimmed using {@link String#trim()}, and letter case is ignored.
+     * Both inputs have leading and trailing U+0009, U+000A, U+000D, U+0020,
+     * U+00A0 and U+3000 removed. Zero or more U+0020, U+00A0 or U+3000 may
+     * separate the prefix from the six numerals. Letter case is ignored.
+     * Fullwidth digits (U+FF10 through U+FF19) and Latin letters (U+FF21 through
+     * U+FF3A and U+FF41 through U+FF5A) are converted to ASCII in both inputs.
+     * Other Unicode letters, digits and punctuation are not converted.
      *
-     * @param hkidNumberWithoutCheckDigit one or two ASCII letters followed by six ASCII digits
-     * @param checkDigit one ASCII digit or {@code A}/{@code a}, without parentheses
+     * @param hkidNumberWithoutCheckDigit one or two Latin letters followed by six digits,
+     *                                   in ASCII, fullwidth or a mixture of both
+     * @param checkDigit one ASCII digit or {@code A}/{@code a}, or its fullwidth form,
+     *                   without parentheses
      * @return {@code true} when the check digit matches; {@code false} for null or invalid inputs
      */
     public static boolean isValidCheckDigit(
@@ -61,13 +73,15 @@ public final class HkidNumberUtil {
             return false;
         }
 
-        Matcher matcher =
-                WITHOUT_CHECK_DIGIT_PATTERN.matcher(hkidNumberWithoutCheckDigit.trim());
+        String normalizedBody = FullwidthAscii.toAscii(
+                ParsingWhitespace.trimOuter(hkidNumberWithoutCheckDigit));
+        Matcher matcher = WITHOUT_CHECK_DIGIT_PATTERN.matcher(normalizedBody);
         if (!matcher.matches()) {
             return false;
         }
 
-        String normalizedCheckDigit = checkDigit.trim().toUpperCase(Locale.ROOT);
+        String normalizedCheckDigit = FullwidthAscii.toAscii(
+                ParsingWhitespace.trimOuter(checkDigit)).toUpperCase(Locale.ROOT);
         return CHECK_DIGIT_PATTERN.matcher(normalizedCheckDigit).matches()
                 && normalizedCheckDigit.equals(String.valueOf(calculateCheckDigit(
                         matcher.group(1).toUpperCase(Locale.ROOT), matcher.group(2))));
@@ -163,7 +177,8 @@ public final class HkidNumberUtil {
                     "HKID number cannot be null or empty.");
         }
 
-        Matcher matcher = HKID_NUMBER_PATTERN.matcher(hkidNumber.trim());
+        String normalizedInput = FullwidthAscii.toAscii(ParsingWhitespace.trimOuter(hkidNumber));
+        Matcher matcher = HKID_NUMBER_PATTERN.matcher(normalizedInput);
         if (!matcher.matches()) {
             throw new HkidNumber.InvalidHkidNumberFormatException(
                     INVALID_HKID_NUMBER_FORMAT_MESSAGE);
@@ -172,6 +187,9 @@ public final class HkidNumberUtil {
         String prefix = normalizePrefix(matcher.group(1));
         String numerals = validateNumerals(matcher.group(2));
         String checkDigit = matcher.group(3) != null ? matcher.group(3) : matcher.group(4);
+        if (checkDigit == null) {
+            checkDigit = matcher.group(5);
+        }
         validateOptionalCheckDigit(prefix, numerals, checkDigit);
         return new String[]{prefix, numerals};
     }

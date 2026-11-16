@@ -9,7 +9,8 @@ public final class HkidSymbolsUtil {
     }
 
     /**
-     * Tests whether a concatenated current smart-HKID symbol string can be parsed.
+     * Tests whether a current smart-HKID symbol string can be parsed using
+     * the whitespace and separator rules of {@link HkidSymbols#parse(String)}.
      *
      * @param value printed symbol string to test
      * @return {@code true} when the string contains only supported, non-duplicate,

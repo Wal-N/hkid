@@ -2,6 +2,58 @@
   "schemaVersion": 1,
   "parseCases": [
     {
+      "id": "fullwidth-check-digit-parentheses",
+      "input": "A123456\uff083\uff09",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "fullwidth-parentheses-letter-a-check-digit",
+      "input": "A000002\uff08A\uff09",
+      "expect": {
+        "prefix": "A",
+        "numerals": "000002",
+        "checkDigit": "A",
+        "withoutCheckDigit": "A000002",
+        "withoutParentheses": "A000002A",
+        "complete": "A000002(A)",
+        "masked": "****002(*)"
+      }
+    },
+    {
+      "id": "fullwidth-parentheses-normalize-lowercase",
+      "input": "a 000002 \uff08a\uff09",
+      "expect": {
+        "prefix": "A",
+        "numerals": "000002",
+        "checkDigit": "A",
+        "withoutCheckDigit": "A000002",
+        "withoutParentheses": "A000002A",
+        "complete": "A000002(A)",
+        "masked": "****002(*)"
+      }
+    },
+    {
+      "id": "fullwidth-parentheses-with-outer-and-component-whitespace",
+      "input": "\t\r\n\u3000ab\u00a0123456 \u3000\uff089\uff09\u00a0\n",
+      "expect": {
+        "prefix": "AB",
+        "numerals": "123456",
+        "checkDigit": "9",
+        "withoutCheckDigit": "AB123456",
+        "withoutParentheses": "AB1234569",
+        "complete": "AB123456(9)",
+        "masked": "*****456(*)"
+      }
+    },
+    {
       "id": "single-prefix-without-check-digit",
       "input": "A100000",
       "expect": {
@@ -91,9 +143,404 @@
         "complete": "A123456(3)",
         "masked": "****456(*)"
       }
+    },
+    {
+      "id": "space-between-prefix-and-numerals",
+      "input": "A 123456(3)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "space-before-parenthesized-check-digit",
+      "input": "A123456 (3)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "spaces-between-double-prefix-components",
+      "input": "AB 123456 (9)",
+      "expect": {
+        "prefix": "AB",
+        "numerals": "123456",
+        "checkDigit": "9",
+        "withoutCheckDigit": "AB123456",
+        "withoutParentheses": "AB1234569",
+        "complete": "AB123456(9)",
+        "masked": "*****456(*)"
+      }
+    },
+    {
+      "id": "space-before-bare-check-digit",
+      "input": "A123456 3",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "separator-without-check-digit",
+      "input": "A 123456",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "outer-tabs",
+      "input": "\ta123456(3)\t",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "outer-line-feeds",
+      "input": "\nA123456(3)\n",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "outer-carriage-returns",
+      "input": "\rA123456(3)\r",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "outer-non-breaking-spaces",
+      "input": "\u00a0A123456(3)\u00a0",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "outer-ideographic-spaces",
+      "input": "\u3000A123456(3)\u3000",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "non-breaking-component-separators",
+      "input": "A\u00a0123456\u00a0(3)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "ideographic-component-separators",
+      "input": "a\u3000000002\u3000(a)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "000002",
+        "checkDigit": "A",
+        "withoutCheckDigit": "A000002",
+        "withoutParentheses": "A000002A",
+        "complete": "A000002(A)",
+        "masked": "****002(*)"
+      }
+    },
+    {
+      "id": "mixed-outer-and-repeated-component-spaces",
+      "input": "\t\r\n \u00a0\u3000ab \u00a0\u3000123456\u3000  \u00a09\u3000\u00a0 \n\r\t",
+      "expect": {
+        "prefix": "AB",
+        "numerals": "123456",
+        "checkDigit": "9",
+        "withoutCheckDigit": "AB123456",
+        "withoutParentheses": "AB1234569",
+        "complete": "AB123456(9)",
+        "masked": "*****456(*)"
+      }
+    },
+    {
+      "id": "fullwidth-digit-inside-fullwidth-parentheses",
+      "input": "A123456\uff08\uff13\uff09",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "fullwidth-letter-inside-fullwidth-parentheses",
+      "input": "A000002\uff08\uff21\uff09",
+      "expect": {
+        "prefix": "A",
+        "numerals": "000002",
+        "checkDigit": "A",
+        "withoutCheckDigit": "A000002",
+        "withoutParentheses": "A000002A",
+        "complete": "A000002(A)",
+        "masked": "****002(*)"
+      }
+    },
+    {
+      "id": "fullwidth-numerals",
+      "input": "A\uff11\uff12\uff13\uff14\uff15\uff16(3)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "fullwidth-check-digit",
+      "input": "A123456(\uff13)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "fullwidth-prefix",
+      "input": "\uff21123456(3)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "all-fullwidth-number",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16\uff08\uff13\uff09",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "mixed-width-number",
+      "input": "\uff2112\uff13456(\uff13)",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "fullwidth-lowercase-prefix-and-check-digit",
+      "input": "\uff41\uff10\uff10\uff10\uff10\uff10\uff12\uff08\uff41\uff09",
+      "expect": {
+        "prefix": "A",
+        "numerals": "000002",
+        "checkDigit": "A",
+        "withoutCheckDigit": "A000002",
+        "withoutParentheses": "A000002A",
+        "complete": "A000002(A)",
+        "masked": "****002(*)"
+      }
+    },
+    {
+      "id": "fullwidth-number-with-approved-whitespace",
+      "input": "\t\uff21\uff22\u3000\uff11\uff12\uff13\uff14\uff15\uff16\u00a0\uff08\uff19\uff09\r\n",
+      "expect": {
+        "prefix": "AB",
+        "numerals": "123456",
+        "checkDigit": "9",
+        "withoutCheckDigit": "AB123456",
+        "withoutParentheses": "AB1234569",
+        "complete": "AB123456(9)",
+        "masked": "*****456(*)"
+      }
+    },
+    {
+      "id": "fullwidth-number-without-check-digit",
+      "input": "\uff5a\uff19\uff19\uff19\uff19\uff19\uff19",
+      "expect": {
+        "prefix": "Z",
+        "numerals": "999999",
+        "checkDigit": "0",
+        "withoutCheckDigit": "Z999999",
+        "withoutParentheses": "Z9999990",
+        "complete": "Z999999(0)",
+        "masked": "****999(*)"
+      }
+    },
+    {
+      "id": "fullwidth-bare-numeric-check-digit",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16\uff13",
+      "expect": {
+        "prefix": "A",
+        "numerals": "123456",
+        "checkDigit": "3",
+        "withoutCheckDigit": "A123456",
+        "withoutParentheses": "A1234563",
+        "complete": "A123456(3)",
+        "masked": "****456(*)"
+      }
+    },
+    {
+      "id": "fullwidth-bare-letter-check-digit",
+      "input": "\uff21\uff10\uff10\uff10\uff10\uff10\uff12\uff21",
+      "expect": {
+        "prefix": "A",
+        "numerals": "000002",
+        "checkDigit": "A",
+        "withoutCheckDigit": "A000002",
+        "withoutParentheses": "A000002A",
+        "complete": "A000002(A)",
+        "masked": "****002(*)"
+      }
     }
   ],
   "invalidParseCases": [
+    {
+      "id": "fullwidth-opening-ascii-closing-parenthesis",
+      "input": "A123456\uff083)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "ascii-opening-fullwidth-closing-parenthesis",
+      "input": "A123456(3\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "space-after-fullwidth-opening-parenthesis",
+      "input": "A123456\uff08 3\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "space-before-fullwidth-closing-parenthesis",
+      "input": "A123456\uff083\u3000\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "tab-inside-fullwidth-parentheses",
+      "input": "A123456\uff08\t3\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "line-feed-inside-fullwidth-parentheses",
+      "input": "A123456\uff083\n\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "fullwidth-parentheses-wrong-check-digit",
+      "input": "A 123456 \uff087\uff09",
+      "expectError": "INVALID_CHECK_DIGIT"
+    },
+    {
+      "id": "missing-fullwidth-opening-parenthesis",
+      "input": "A1234563\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "missing-fullwidth-closing-parenthesis",
+      "input": "A123456\uff083",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "extra-fullwidth-closing-parenthesis",
+      "input": "A123456\uff083\uff09\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "nested-fullwidth-and-ascii-parentheses",
+      "input": "A123456\uff08(3)\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "arabic-indic-digit-inside-fullwidth-parentheses",
+      "input": "A123456\uff08\u0663\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "small-parentheses-are-not-normalized",
+      "input": "A123456\ufe593\ufe5a",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "null-input",
+      "input": null,
+      "expectError": "INVALID_FORMAT"
+    },
     {
       "id": "empty-input",
       "input": "",
@@ -163,9 +610,208 @@
       "id": "parse-wrong-check-digit",
       "input": "A123456(7)",
       "expectError": "INVALID_CHECK_DIGIT"
+    },
+    {
+      "id": "only-approved-outer-whitespace",
+      "input": "\t\r\n \u00a0\u3000",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "split-prefix",
+      "input": "A B123456(9)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "split-numerals",
+      "input": "A12 3456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "split-numerals-with-non-breaking-space",
+      "input": "A12\u00a03456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "split-numerals-with-ideographic-space",
+      "input": "A12\u30003456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "space-after-opening-parenthesis",
+      "input": "A123456( 3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "space-before-closing-parenthesis",
+      "input": "A123456(3 )",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "internal-tab-after-prefix",
+      "input": "A\t123456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "internal-line-feed-before-check-digit",
+      "input": "A123456\n(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "internal-carriage-return-after-prefix",
+      "input": "A\r123456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "internal-line-feed-in-numerals",
+      "input": "A12\n3456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "leading-nul",
+      "input": "\u0000A123456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "trailing-vertical-tab",
+      "input": "A123456(3)\u000b",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "leading-form-feed",
+      "input": "\fA123456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "trailing-unit-separator",
+      "input": "A123456(3)\u001f",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "outer-en-space",
+      "input": "\u2002A123456(3)\u2002",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "outer-narrow-non-breaking-space",
+      "input": "\u202fA123456(3)\u202f",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "outer-zero-width-space",
+      "input": "\u200bA123456(3)\u200b",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "outer-byte-order-mark",
+      "input": "\ufeffA123456(3)\ufeff",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "internal-zero-width-space",
+      "input": "A\u200b123456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "arabic-indic-numerals",
+      "input": "A\u0661\u0662\u0663\u0664\u0665\u0666(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "arabic-indic-check-digit",
+      "input": "A123456\u0663",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "separated-wrong-check-digit",
+      "input": "A 123456 (7)",
+      "expectError": "INVALID_CHECK_DIGIT"
+    },
+    {
+      "id": "fullwidth-data-mixed-opening-parenthesis",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16\uff08\uff13)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "fullwidth-data-mixed-closing-parenthesis",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16(\uff13\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "fullwidth-data-wrong-check-digit",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16\uff08\uff17\uff09",
+      "expectError": "INVALID_CHECK_DIGIT"
+    },
+    {
+      "id": "fullwidth-data-split-prefix",
+      "input": "\uff21 \uff22\uff11\uff12\uff13\uff14\uff15\uff16\uff08\uff19\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "fullwidth-data-split-numerals",
+      "input": "\uff21\uff11\uff12 \uff13\uff14\uff15\uff16\uff08\uff13\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "fullwidth-data-space-inside-parentheses",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16\uff08 \uff13\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "fullwidth-data-tab-between-components",
+      "input": "\uff21\t\uff11\uff12\uff13\uff14\uff15\uff16\uff08\uff13\uff09",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "circled-prefix-is-not-normalized",
+      "input": "\u24b6123456(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "circled-numerals-are-not-normalized",
+      "input": "A\u2460\u2461\u2462\u2463\u2464\u2465(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "superscript-numerals-are-not-normalized",
+      "input": "A\u00b9\u00b2\u00b3\u2074\u2075\u2076(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "mathematical-numerals-are-not-normalized",
+      "input": "A\ud835\udfd9\ud835\udfda\ud835\udfdb\ud835\udfdc\ud835\udfdd\ud835\udfde(3)",
+      "expectError": "INVALID_FORMAT"
+    },
+    {
+      "id": "fullwidth-unsupported-check-letter",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16\uff08\uff22\uff09",
+      "expectError": "INVALID_FORMAT"
     }
   ],
   "checkDigitValidationCases": [
+    {
+      "id": "fullwidth-parenthesized-separate-check-digit",
+      "input": "A123456",
+      "checkDigit": "\uff083\uff09",
+      "expectValid": false
+    },
+    {
+      "id": "input-has-fullwidth-parenthesized-check-digit",
+      "input": "A123456\uff083\uff09",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "null-body",
+      "input": null,
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "null-check-digit",
+      "input": "A123456",
+      "checkDigit": null,
+      "expectValid": false
+    },
     {
       "id": "valid-single-prefix",
       "input": "A123456",
@@ -200,6 +846,198 @@
       "id": "input-has-parenthesized-check-digit",
       "input": "A123456(3)",
       "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "body-prefix-space",
+      "input": "A 123456",
+      "checkDigit": "3",
+      "expectValid": true
+    },
+    {
+      "id": "body-prefix-non-breaking-space",
+      "input": "A\u00a0123456",
+      "checkDigit": "3",
+      "expectValid": true
+    },
+    {
+      "id": "body-prefix-ideographic-space",
+      "input": "A\u3000123456",
+      "checkDigit": "3",
+      "expectValid": true
+    },
+    {
+      "id": "body-separated-double-prefix",
+      "input": "AB 123456",
+      "checkDigit": "9",
+      "expectValid": true
+    },
+    {
+      "id": "both-inputs-with-approved-outer-whitespace",
+      "input": "\t\r\n \u00a0\u3000a \u00a0\u3000000002\u3000\u00a0 \n\r\t",
+      "checkDigit": "\t\r\n \u00a0\u3000a\u3000\u00a0 \n\r\t",
+      "expectValid": true
+    },
+    {
+      "id": "whitespace-only-body",
+      "input": "\t\r\n \u00a0\u3000",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "whitespace-only-check-digit",
+      "input": "A123456",
+      "checkDigit": "\t\r\n \u00a0\u3000",
+      "expectValid": false
+    },
+    {
+      "id": "parenthesized-separate-check-digit",
+      "input": "A123456",
+      "checkDigit": "(3)",
+      "expectValid": false
+    },
+    {
+      "id": "split-prefix-in-body",
+      "input": "A B123456",
+      "checkDigit": "9",
+      "expectValid": false
+    },
+    {
+      "id": "split-numerals-in-body",
+      "input": "A12 3456",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "internal-tab-in-body",
+      "input": "A\t123456",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "internal-line-feed-in-body",
+      "input": "A\n123456",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "internal-carriage-return-in-body",
+      "input": "A\r123456",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "nul-in-body",
+      "input": "\u0000A123456",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "vertical-tab-around-check-digit",
+      "input": "A123456",
+      "checkDigit": "\u000b3\u000b",
+      "expectValid": false
+    },
+    {
+      "id": "form-feed-in-body",
+      "input": "A123456\f",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "unit-separator-around-check-digit",
+      "input": "A123456",
+      "checkDigit": "\u001f3\u001f",
+      "expectValid": false
+    },
+    {
+      "id": "unsupported-space-around-body",
+      "input": "\u2002A123456\u2002",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "zero-width-space-around-check-digit",
+      "input": "A123456",
+      "checkDigit": "\u200b3\u200b",
+      "expectValid": false
+    },
+    {
+      "id": "fullwidth-numerals-in-body",
+      "input": "A\uff11\uff12\uff13\uff14\uff15\uff16",
+      "checkDigit": "3",
+      "expectValid": true
+    },
+    {
+      "id": "arabic-indic-numerals-in-body",
+      "input": "A\u0661\u0662\u0663\u0664\u0665\u0666",
+      "checkDigit": "3",
+      "expectValid": false
+    },
+    {
+      "id": "fullwidth-separate-check-digit",
+      "input": "A123456",
+      "checkDigit": "\uff13",
+      "expectValid": true
+    },
+    {
+      "id": "arabic-indic-separate-check-digit",
+      "input": "A123456",
+      "checkDigit": "\u0663",
+      "expectValid": false
+    },
+    {
+      "id": "multiple-separate-check-digits",
+      "input": "A123456",
+      "checkDigit": "3 3",
+      "expectValid": false
+    },
+    {
+      "id": "separated-body-wrong-check-digit",
+      "input": "A 123456",
+      "checkDigit": "7",
+      "expectValid": false
+    },
+    {
+      "id": "fullwidth-body-and-check-digit",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16",
+      "checkDigit": "\uff13",
+      "expectValid": true
+    },
+    {
+      "id": "fullwidth-lowercase-body-and-letter-check-digit",
+      "input": "\uff41\uff10\uff10\uff10\uff10\uff10\uff12",
+      "checkDigit": "\uff41",
+      "expectValid": true
+    },
+    {
+      "id": "mixed-width-body-and-check-digit",
+      "input": "\uff21b 12\uff13\uff1456",
+      "checkDigit": "\uff19",
+      "expectValid": true
+    },
+    {
+      "id": "fullwidth-check-digit-inputs-with-outer-whitespace",
+      "input": "\t\uff21\u3000\uff11\uff12\uff13\uff14\uff15\uff16\n",
+      "checkDigit": "\u00a0\uff13\r",
+      "expectValid": true
+    },
+    {
+      "id": "fullwidth-body-wrong-check-digit",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16",
+      "checkDigit": "\uff17",
+      "expectValid": false
+    },
+    {
+      "id": "circled-separate-check-digit-is-not-normalized",
+      "input": "A123456",
+      "checkDigit": "\u2462",
+      "expectValid": false
+    },
+    {
+      "id": "fullwidth-body-with-mixed-parentheses",
+      "input": "\uff21\uff11\uff12\uff13\uff14\uff15\uff16\uff08\uff13)",
+      "checkDigit": "\uff13",
       "expectValid": false
     }
   ],
@@ -259,52 +1097,82 @@
     {
       "id": "overlapping-month-returns-all-matches",
       "month": "1960-01",
-      "expectPrefixes": ["A", "B", "C", "D", "E"]
+      "expectPrefixes": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ]
     },
     {
       "id": "k-lower-boundary-month",
       "month": "1983-03",
-      "expectPrefixes": ["C", "D", "G", "H", "K"]
+      "expectPrefixes": [
+        "C",
+        "D",
+        "G",
+        "H",
+        "K"
+      ]
     },
     {
       "id": "k-upper-boundary-month",
       "month": "1990-07",
-      "expectPrefixes": ["K"]
+      "expectPrefixes": [
+        "K"
+      ]
     },
     {
       "id": "k-to-p-transition-month",
       "month": "1990-08",
-      "expectPrefixes": ["P"]
+      "expectPrefixes": [
+        "P"
+      ]
     },
     {
       "id": "r-lower-boundary-month",
       "month": "2004-11",
-      "expectPrefixes": ["R"]
+      "expectPrefixes": [
+        "R"
+      ]
     },
     {
       "id": "m-to-f-transition-month-overlaps-both",
       "month": "2020-02",
-      "expectPrefixes": ["F", "M"]
+      "expectPrefixes": [
+        "F",
+        "M"
+      ]
     },
     {
       "id": "f-before-l-transition-month",
       "month": "2026-06",
-      "expectPrefixes": ["F"]
+      "expectPrefixes": [
+        "F"
+      ]
     },
     {
       "id": "f-to-l-transition-month-overlaps-both",
       "month": "2026-07",
-      "expectPrefixes": ["F", "L"]
+      "expectPrefixes": [
+        "F",
+        "L"
+      ]
     },
     {
       "id": "l-after-f-transition-month",
       "month": "2026-08",
-      "expectPrefixes": ["L"]
+      "expectPrefixes": [
+        "L"
+      ]
     },
     {
       "id": "l-open-ended-range",
       "month": "2030-01",
-      "expectPrefixes": ["L"]
+      "expectPrefixes": [
+        "L"
+      ]
     }
   ]
 }

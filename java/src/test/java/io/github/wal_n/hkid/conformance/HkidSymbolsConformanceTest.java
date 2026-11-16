@@ -2,15 +2,19 @@ package io.github.wal_n.hkid.conformance;
 
 import com.google.gson.JsonObject;
 import io.github.wal_n.hkid.card.HkidSymbols;
+import io.github.wal_n.hkid.card.HkidSymbolsUtil;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
 import java.time.LocalDate;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HkidSymbolsConformanceTest {
     private static final String FIXTURE = "hkid-symbols.json";
@@ -20,9 +24,13 @@ class HkidSymbolsConformanceTest {
         return ConformanceFixtures.cases(FIXTURE, "parseCases")
                 .map(testCase -> DynamicTest.dynamicTest(
                         testCase.get("id").getAsString(),
-                        () -> assertEquals(
-                                testCase.get("expectCanonical").getAsString(),
-                                HkidSymbols.parse(testCase.get("input").getAsString()).toString())));
+                        () -> {
+                            String input = ConformanceFixtures.requireNullableString(testCase, "input");
+                            assertAll(
+                                    () -> assertEquals(testCase.get("expectCanonical").getAsString(),
+                                            HkidSymbols.parse(input).toString()),
+                                    () -> assertTrue(HkidSymbolsUtil.isValid(input)));
+                        }));
     }
 
     @TestFactory
@@ -30,9 +38,13 @@ class HkidSymbolsConformanceTest {
         return ConformanceFixtures.cases(FIXTURE, "invalidParseCases")
                 .map(testCase -> DynamicTest.dynamicTest(
                         testCase.get("id").getAsString(),
-                        () -> assertThrows(
-                                IllegalArgumentException.class,
-                                () -> HkidSymbols.parse(testCase.get("input").getAsString()))));
+                        () -> {
+                            String input = ConformanceFixtures.requireNullableString(testCase, "input");
+                            assertAll(
+                                    () -> assertThrows(IllegalArgumentException.class,
+                                            () -> HkidSymbols.parse(input)),
+                                    () -> assertFalse(HkidSymbolsUtil.isValid(input)));
+                        }));
     }
 
     @TestFactory

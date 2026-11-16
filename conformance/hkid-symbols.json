@@ -20,9 +20,83 @@
       "id": "independent-other-information-symbols",
       "input": "NB",
       "expectCanonical": "BN"
+    },
+    {
+      "id": "zero-length-symbol-string",
+      "input": "",
+      "expectCanonical": ""
+    },
+    {
+      "id": "outer-tabs",
+      "input": "\t***AZ\t",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "outer-line-feeds",
+      "input": "\n***AZ\n",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "outer-carriage-returns",
+      "input": "\r***AZ\r",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "outer-non-breaking-spaces",
+      "input": "\u00a0***AZ\u00a0",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "outer-ideographic-spaces",
+      "input": "\u3000***AZ\u3000",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "only-approved-outer-whitespace",
+      "input": "\t\r\n \u00a0\u3000",
+      "expectCanonical": ""
+    },
+    {
+      "id": "space-separated-symbols",
+      "input": "*** A Z",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "non-breaking-space-separated-symbols",
+      "input": "***\u00a0A\u00a0Z",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "ideographic-space-separated-symbols",
+      "input": "***\u3000a\u3000z",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "mixed-outer-and-repeated-component-spaces",
+      "input": "\t\r\n \u00a0\u3000n \u00a0\u3000b z***a\u3000\u00a0 \n\r\t",
+      "expectCanonical": "***AZBN"
+    },
+    {
+      "id": "fullwidth-symbol-letter",
+      "input": "***\uff21Z",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "fullwidth-symbol-letters",
+      "input": "***\uff21\uff3a",
+      "expectCanonical": "***AZ"
+    },
+    {
+      "id": "mixed-width-lowercase-symbols",
+      "input": "\t\uff4e \uff22 \uff5a***a\u3000",
+      "expectCanonical": "***AZBN"
     }
   ],
   "invalidParseCases": [
+    {
+      "id": "null-input",
+      "input": null
+    },
     {
       "id": "legacy-symbol",
       "input": "Y"
@@ -46,6 +120,110 @@
     {
       "id": "conflicting-age-symbols",
       "input": "****"
+    },
+    {
+      "id": "space-separated-single-stars",
+      "input": "* * *"
+    },
+    {
+      "id": "partially-separated-stars",
+      "input": "* **"
+    },
+    {
+      "id": "separated-conflicting-age-symbols",
+      "input": "*** *"
+    },
+    {
+      "id": "separated-duplicate-symbol",
+      "input": "A A"
+    },
+    {
+      "id": "separated-conflicting-residential-status",
+      "input": "A C"
+    },
+    {
+      "id": "separated-conflicting-place-of-birth",
+      "input": "Z X"
+    },
+    {
+      "id": "internal-tab",
+      "input": "***\tAZ"
+    },
+    {
+      "id": "internal-line-feed",
+      "input": "***A\nZ"
+    },
+    {
+      "id": "internal-carriage-return",
+      "input": "***\rAZ"
+    },
+    {
+      "id": "leading-nul",
+      "input": "\u0000***AZ"
+    },
+    {
+      "id": "trailing-vertical-tab",
+      "input": "***AZ\u000b"
+    },
+    {
+      "id": "leading-form-feed",
+      "input": "\f***AZ"
+    },
+    {
+      "id": "trailing-unit-separator",
+      "input": "***AZ\u001f"
+    },
+    {
+      "id": "outer-en-space",
+      "input": "\u2002***AZ\u2002"
+    },
+    {
+      "id": "outer-narrow-non-breaking-space",
+      "input": "\u202f***AZ\u202f"
+    },
+    {
+      "id": "outer-zero-width-space",
+      "input": "\u200b***AZ\u200b"
+    },
+    {
+      "id": "outer-byte-order-mark",
+      "input": "\ufeff***AZ\ufeff"
+    },
+    {
+      "id": "internal-zero-width-space",
+      "input": "***\u200bAZ"
+    },
+    {
+      "id": "fullwidth-asterisks",
+      "input": "\uff0a\uff0a\uff0aAZ"
+    },
+    {
+      "id": "fullwidth-digit",
+      "input": "***A\uff11"
+    },
+    {
+      "id": "arabic-indic-digit",
+      "input": "***A\u0661"
+    },
+    {
+      "id": "mixed-width-duplicate-symbol",
+      "input": "A\uff21"
+    },
+    {
+      "id": "fullwidth-conflicting-symbols",
+      "input": "\uff21\uff23"
+    },
+    {
+      "id": "fullwidth-symbols-with-internal-tab",
+      "input": "***\uff21\t\uff3a"
+    },
+    {
+      "id": "circled-symbol-letter-is-not-normalized",
+      "input": "***\u24b6Z"
+    },
+    {
+      "id": "mathematical-symbol-letter-is-not-normalized",
+      "input": "***\ud835\udc00Z"
     }
   ],
   "ageValidationCases": [
