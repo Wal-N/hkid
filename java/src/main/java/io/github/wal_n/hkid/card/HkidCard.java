@@ -694,7 +694,8 @@ public final class HkidCard {
         }
 
         /**
-         * Parses and sets concatenated current smart-HKID symbol codes.
+         * Parses and sets current smart-HKID symbol codes using
+         * the whitespace and separator rules of {@link HkidSymbols#parse(String)}.
          *
          * @param symbolCodes symbol-code string to parse
          * @return this builder

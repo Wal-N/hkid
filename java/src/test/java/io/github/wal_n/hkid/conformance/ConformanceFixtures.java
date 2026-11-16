@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.github.wal_n.hkid.internal.ResourceJson;
 import io.github.wal_n.hkid.name.ChineseCommercialCode;
 
 import java.io.InputStream;
@@ -120,6 +121,10 @@ final class ConformanceFixtures {
     static String nullableString(JsonObject object, String memberName) {
         JsonElement value = object.get(memberName);
         return value == null || value.isJsonNull() ? null : value.getAsString();
+    }
+
+    static String requireNullableString(JsonObject object, String memberName) {
+        return ResourceJson.requireNullableString(object, memberName, "conformance fixture");
     }
 
     private static JsonObject readObject(String resourceName) {

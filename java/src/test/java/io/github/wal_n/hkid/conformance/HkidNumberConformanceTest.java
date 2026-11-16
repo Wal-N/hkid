@@ -16,7 +16,9 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HkidNumberConformanceTest {
     private static final String FIXTURE = "hkid-number.json";
@@ -42,11 +44,16 @@ class HkidNumberConformanceTest {
         return ConformanceFixtures.cases(FIXTURE, "checkDigitValidationCases")
                 .map(testCase -> DynamicTest.dynamicTest(
                         testCase.get("id").getAsString(),
-                        () -> assertEquals(
-                                testCase.get("expectValid").getAsBoolean(),
-                                HkidNumberUtil.isValidCheckDigit(
-                                        testCase.get("input").getAsString(),
-                                        testCase.get("checkDigit").getAsString()))));
+                        () -> {
+                            String input = ConformanceFixtures.requireNullableString(testCase, "input");
+                            String checkDigit = ConformanceFixtures.requireNullableString(testCase, "checkDigit");
+                            boolean expectValid = testCase.get("expectValid").getAsBoolean();
+                            assertAll(
+                                    () -> assertEquals(expectValid,
+                                            HkidNumberUtil.isValidCheckDigit(input, checkDigit)),
+                                    () -> assertEquals(expectValid,
+                                            HkidNumber.isValidCheckDigit(input, checkDigit)));
+                        }));
     }
 
     @TestFactory
@@ -80,10 +87,12 @@ class HkidNumberConformanceTest {
     }
 
     private static void assertParsedNumber(JsonObject testCase) {
-        HkidNumber number = new HkidNumber(testCase.get("input").getAsString());
+        String input = ConformanceFixtures.requireNullableString(testCase, "input");
+        HkidNumber number = new HkidNumber(input);
         JsonObject expected = testCase.getAsJsonObject("expect");
 
         assertAll(
+                () -> assertTrue(HkidNumberUtil.isValid(input)),
                 () -> assertEquals(expected.get("prefix").getAsString(), number.getPrefix()),
                 () -> assertEquals(expected.get("numerals").getAsString(), number.getNumerals()),
                 () -> assertEquals(expected.get("checkDigit").getAsString(), number.getCheckDigit()),
@@ -101,8 +110,10 @@ class HkidNumberConformanceTest {
     }
 
     private static void assertInvalidNumber(JsonObject testCase) {
-        String input = testCase.get("input").getAsString();
+        String input = ConformanceFixtures.requireNullableString(testCase, "input");
         String expectedError = testCase.get("expectError").getAsString();
+
+        assertFalse(HkidNumberUtil.isValid(input));
 
         if ("INVALID_CHECK_DIGIT".equals(expectedError)) {
             assertThrows(HkidNumber.InvalidCheckDigitException.class,

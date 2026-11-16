@@ -78,8 +78,19 @@ public final class ValidationExample {
 ```
 
 Accepts one- or two-letter prefixes and an optional bare or parenthesised
-check digit. Supplied check digits are validated; `isValid` returns `false`
-for invalid input.
+check digit. Parentheses may be a matching ASCII `()` or fullwidth `（）` pair;
+formatted output uses ASCII parentheses. Mixed pairs are rejected. Supplied
+check digits are validated; `isValid` returns `false` for invalid input.
+
+Number and symbol text parsers convert fullwidth Latin letters and digits to
+ASCII, accepting mixtures such as `Ａ12３456(３)` and formatting numbers as
+`A123456(3)`. Other Unicode letters, digits and punctuation are not converted.
+
+Number and symbol text inputs accept specified outer whitespace and spaces
+between complete components, such as `A 123456 (3)` and `*** A Z`. See the
+[shared parsing rules](conformance/README.md#number-and-symbol-text-parsing)
+for the exact character sets. Constructors taking separate number components
+require ASCII input and do not trim or normalize character width.
 
 Card construction additionally validates date order and age-specific symbols.
 Call `validateAsOf(referenceDate)` to reject future-dated fields.

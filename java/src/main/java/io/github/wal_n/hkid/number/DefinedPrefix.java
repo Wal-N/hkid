@@ -3,6 +3,8 @@ package io.github.wal_n.hkid.number;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.github.wal_n.hkid.internal.FullwidthAscii;
+import io.github.wal_n.hkid.internal.ParsingWhitespace;
 import io.github.wal_n.hkid.internal.ResourceJson;
 
 import java.time.LocalDate;
@@ -238,9 +240,12 @@ public enum DefinedPrefix {
 
     /**
      * Looks up predefined metadata for a prefix.
-     * Input is trimmed using {@link String#trim()}, and letter case is ignored.
+     * Leading and trailing U+0009, U+000A, U+000D, U+0020, U+00A0 and U+3000
+     * are removed, and ASCII letter case is ignored. Internal whitespace is rejected.
+     * Fullwidth Latin letters (U+FF21 through U+FF3A and U+FF41 through U+FF5A)
+     * are converted to ASCII; other Unicode letters are rejected.
      *
-     * @param prefix one or two ASCII letters
+     * @param prefix one or two ASCII or fullwidth Latin letters
      * @return the matching predefined prefix, or an empty optional for null, invalid input,
      *         or a prefix without predefined metadata
      */
@@ -249,7 +254,7 @@ public enum DefinedPrefix {
             return Optional.empty();
         }
 
-        String trimmedPrefix = prefix.trim();
+        String trimmedPrefix = FullwidthAscii.toAscii(ParsingWhitespace.trimOuter(prefix));
         if (!HkidNumberUtil.isValidPrefix(trimmedPrefix)) {
             return Optional.empty();
         }

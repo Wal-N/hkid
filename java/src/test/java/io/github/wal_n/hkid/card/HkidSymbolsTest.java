@@ -1,6 +1,9 @@
 package io.github.wal_n.hkid.card;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
 
@@ -31,6 +34,55 @@ class HkidSymbolsTest {
         assertEquals(Arrays.asList(HkidSymbol.BIRTH_DETAILS_CHANGED, HkidSymbol.NAME_CHANGED),
                 symbols.getByCategory(HkidSymbolCategory.OTHER_INFORMATION));
         assertEquals(HkidSymbol.RIGHT_OF_ABODE, HkidSymbol.fromCode("a"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {" ", "\t", "\n", "\r", "\u00a0", "\u3000"})
+    void singleSymbolParserOnlyRemovesWhitespaceAtTheEdges(String whitespace) {
+        assertEquals(HkidSymbol.RIGHT_OF_ABODE, HkidSymbol.fromCode(whitespace + "a"));
+        assertEquals(HkidSymbol.RIGHT_OF_ABODE, HkidSymbol.fromCode(whitespace + "ａ" + whitespace));
+        assertEquals(HkidSymbol.ADULT_RE_ENTRY_PERMIT, HkidSymbol.fromCode("***" + whitespace));
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbol.fromCode("*" + whitespace + "**"));
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbol.fromCode(whitespace));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"\0", "\u000b", "\f", "\u001f", "\u0085", "\u2003", "\u200b", "\ufeff"})
+    void singleSymbolParserRejectsOtherControlsAndUnicodeWhitespace(String character) {
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbol.fromCode(character + "A"));
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbol.fromCode("A" + character));
+    }
+
+    @Test
+    void singleSymbolParserRejectsMissingInputAndMultipleTokens() {
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbol.fromCode(null));
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbol.fromCode(""));
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbol.fromCode("*** A"));
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbol.fromCode("* * *"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"Ａ, A", "ａ, A", "Ｚ, Z", "ｚ, Z", "Ｎ, N", "ｎ, N"})
+    void singleSymbolParserNormalizesFullwidthLetterCase(String input, String asciiCode) {
+        assertEquals(HkidSymbol.fromCode(asciiCode), HkidSymbol.fromCode(input));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"＊", "＊＊＊", "Ⓐ", "\ud835\udc00"})
+    void symbolParsersDoNotApplyGeneralCompatibilityNormalization(String input) {
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbol.fromCode(input));
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbols.parse(input));
+        assertFalse(HkidSymbolsUtil.isValid(input));
+    }
+
+    @Test
+    void mixedWidthSymbolsHaveTheSameValueAndCanonicalOutputAsAsciiSymbols() {
+        HkidSymbols ascii = HkidSymbols.parse("***AZBN");
+        HkidSymbols mixed = HkidSymbols.parse("ｎ b Ｚ *** ａ");
+        assertEquals(ascii, mixed);
+        assertEquals(ascii.hashCode(), mixed.hashCode());
+        assertEquals("***AZBN", mixed.toString());
+        assertTrue(HkidSymbolsUtil.isValid("ｎ b Ｚ *** ａ"));
     }
 
     @Test
@@ -71,7 +123,9 @@ class HkidSymbolsTest {
 
     @Test
     void supportsEmptySymbolsAndIndependentOtherInformation() {
+        assertTrue(HkidSymbols.parse("").isEmpty());
         assertTrue(HkidSymbols.parse(" ").isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> HkidSymbols.parse(null));
         assertEquals("BN", HkidSymbols.of(
                 HkidSymbol.BIRTH_DETAILS_CHANGED, HkidSymbol.NAME_CHANGED).toString());
     }

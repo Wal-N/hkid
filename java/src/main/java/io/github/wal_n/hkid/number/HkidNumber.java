@@ -20,11 +20,21 @@ public final class HkidNumber {
 
     /**
      * Parses a prefix and six numerals, optionally followed by a check digit.
+     * Fullwidth digits (U+FF10 through U+FF19) and Latin letters (U+FF21 through
+     * U+FF3A and U+FF41 through U+FF5A) are converted to ASCII before parsing.
+     * ASCII and fullwidth letters and digits may be mixed. Other Unicode
+     * letters, digits and punctuation are not converted.
      * The check digit may be an ASCII digit or {@code A}/{@code a}, with or without
-     * parentheses. Input is trimmed using {@link String#trim()}; internal whitespace
-     * is rejected, and lowercase ASCII prefixes are normalized to uppercase.
+     * parentheses. Leading and trailing U+0009, U+000A, U+000D, U+0020, U+00A0
+     * and U+3000 are removed. Zero or more U+0020, U+00A0 or U+3000 may separate
+     * the prefix, six numerals and check digit. Each component must remain intact,
+     * including any check-digit parentheses; internal tabs and line breaks are
+     * rejected. Lowercase ASCII letters are normalized to uppercase.
+     * Parentheses must be a matching ASCII U+0028/U+0029 pair or a matching
+     * fullwidth U+FF08/U+FF09 pair. Mixed pairs are rejected, and formatted
+     * output always uses ASCII parentheses.
      *
-     * @param hkidNumber number such as {@code A123456}, {@code AB1234569}, or {@code A123456(3)}
+     * @param hkidNumber number such as {@code A123456}, {@code AB1234569}, or {@code A 123456 (3)}
      * @throws InvalidHkidNumberFormatException if the input is null, empty after trimming,
      *         or does not match the supported format
      * @throws InvalidCheckDigitException if a supplied check digit does not match
@@ -36,7 +46,8 @@ public final class HkidNumber {
     }
 
     /**
-     * Creates a number from its prefix and numerals. Neither argument is trimmed.
+     * Creates a number from its prefix and numerals. Neither argument is trimmed
+     * or converted from fullwidth characters.
      *
      * @param prefix one or two ASCII letters, normalized to uppercase
      * @param numerals exactly six ASCII digits, including any leading zeros
@@ -47,11 +58,13 @@ public final class HkidNumber {
     }
 
     /**
-     * Creates a number and validates any supplied check digit. Arguments are not trimmed.
+     * Creates a number and validates any supplied check digit. Arguments are not
+     * trimmed or converted from fullwidth characters.
      *
      * @param prefix one or two ASCII letters, normalized to uppercase
      * @param numerals exactly six ASCII digits, including any leading zeros
-     * @param checkDigit one ASCII digit or {@code A}/{@code a}; null or empty skips check-digit validation
+     * @param checkDigit one ASCII digit or {@code A}/{@code a}, without parentheses;
+     *                   null or empty skips check-digit validation
      * @throws InvalidHkidNumberFormatException if the prefix or numerals are null or have
      *         an invalid format, or a non-empty check digit has an invalid format
      * @throws InvalidCheckDigitException if a supplied check digit does not match
@@ -64,10 +77,17 @@ public final class HkidNumber {
 
     /**
      * Checks a supplied check digit against an HKID prefix and six numerals.
-     * Both inputs are trimmed using {@link String#trim()}, and letter case is ignored.
+     * Both inputs have leading and trailing U+0009, U+000A, U+000D, U+0020,
+     * U+00A0 and U+3000 removed. Zero or more U+0020, U+00A0 or U+3000 may
+     * separate the prefix from the six numerals. Letter case is ignored.
+     * Fullwidth digits (U+FF10 through U+FF19) and Latin letters (U+FF21 through
+     * U+FF3A and U+FF41 through U+FF5A) are converted to ASCII in both inputs.
+     * Other Unicode letters, digits and punctuation are not converted.
      *
-     * @param hkidNumberWithoutCheckDigit one or two ASCII letters followed by six ASCII digits
-     * @param checkDigit one ASCII digit or {@code A}/{@code a}, without parentheses
+     * @param hkidNumberWithoutCheckDigit one or two Latin letters followed by six digits,
+     *                                   in ASCII, fullwidth or a mixture of both
+     * @param checkDigit one ASCII digit or {@code A}/{@code a}, or its fullwidth form,
+     *                   without parentheses
      * @return {@code true} when the check digit matches; {@code false} for null or invalid inputs
      */
     public static boolean isValidCheckDigit(String hkidNumberWithoutCheckDigit, String checkDigit) {
@@ -75,7 +95,7 @@ public final class HkidNumber {
     }
 
     /**
-     * Formats the number as shown on the card, including its check digit in parentheses.
+     * Formats the number as shown on the card, including its check digit in ASCII parentheses.
      *
      * @return the number in {@link Format#COMPLETE} format
      */

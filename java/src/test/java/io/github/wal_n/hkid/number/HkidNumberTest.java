@@ -3,6 +3,7 @@ package io.github.wal_n.hkid.number;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -58,14 +59,15 @@ class HkidNumberTest {
             "ſA, 9",
             "ıſ, A"
     })
-    void rejectsNonAsciiPrefixesBeforeCaseNormalization(String prefix, String checkDigit) {
+    void rejectsUnsupportedUnicodePrefixesBeforeCaseNormalization(String prefix, String checkDigit) {
         String withoutCheckDigit = prefix + "123456";
         // These digits match the ASCII prefixes produced by Unicode uppercasing.
-        // A matching checksum must not make a non-ASCII prefix valid.
+        // A matching checksum must not make an unsupported Unicode prefix valid.
         for (String input : new String[]{
                 withoutCheckDigit,
                 withoutCheckDigit + checkDigit,
-                withoutCheckDigit + "(" + checkDigit + ")"}) {
+                withoutCheckDigit + "(" + checkDigit + ")",
+                withoutCheckDigit + "\uff08" + checkDigit + "\uff09"}) {
             assertThrows(
                     HkidNumber.InvalidHkidNumberFormatException.class,
                     () -> new HkidNumber(input), input);
@@ -94,7 +96,8 @@ class HkidNumberTest {
         for (String input : new String[]{
                 withoutCheckDigit,
                 withoutCheckDigit + checkDigit,
-                withoutCheckDigit + "(" + checkDigit + ")"}) {
+                withoutCheckDigit + "(" + checkDigit + ")",
+                withoutCheckDigit + "\uff08" + checkDigit + "\uff09"}) {
             assertEquals(expectedComplete,
                     new HkidNumber(input).toString(HkidNumber.Format.COMPLETE));
             assertTrue(HkidNumberUtil.isValid(input), input);
@@ -105,6 +108,48 @@ class HkidNumberTest {
                 new HkidNumber(prefix, numerals, checkDigit).toString(HkidNumber.Format.COMPLETE));
         assertTrue(HkidNumberUtil.isValidCheckDigit(withoutCheckDigit, checkDigit));
         assertTrue(HkidNumber.isValidCheckDigit(withoutCheckDigit, checkDigit));
+    }
+
+    @Test
+    void rawNumberInputsNormalizeEveryFullwidthLatinLetter() {
+        String uppercase = "ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ";
+        String lowercase = "ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ";
+        for (int index = 0; index < uppercase.length(); index++) {
+            HkidNumber expected = new HkidNumber(String.valueOf((char) ('A' + index)), "012345");
+            for (char prefix : new char[]{uppercase.charAt(index), lowercase.charAt(index)}) {
+                String input = prefix + "012345";
+                assertEquals(expected, new HkidNumber(input), input);
+                assertEquals(expected.toString(), new HkidNumber(input).toString(), input);
+                assertTrue(HkidNumberUtil.isValid(input), input);
+                assertTrue(HkidNumberUtil.isValidCheckDigit(input, expected.getCheckDigit()), input);
+                assertTrue(HkidNumber.isValidCheckDigit(input, expected.getCheckDigit()), input);
+            }
+        }
+    }
+
+    @Test
+    void rawNumberInputsNormalizeFullwidthNumeralsAndCheckDigits() {
+        String digits = "０１２３４５６７８９";
+        for (int index = 0; index < digits.length(); index++) {
+            HkidNumber expected = new HkidNumber("A", "00000" + index);
+            String body = "Ａ00000" + digits.charAt(index);
+            String checkDigit = expected.getCheckDigit();
+            String fullwidthCheckDigit = checkDigit.equals("A")
+                    ? "Ａ" : String.valueOf(digits.charAt(checkDigit.charAt(0) - '0'));
+            assertEquals(expected, new HkidNumber(body + "（" + fullwidthCheckDigit + "）"));
+            assertTrue(HkidNumberUtil.isValid(body + fullwidthCheckDigit));
+            assertTrue(HkidNumberUtil.isValidCheckDigit(body, fullwidthCheckDigit));
+            assertTrue(HkidNumber.isValidCheckDigit(body, fullwidthCheckDigit));
+        }
+        assertTrue(HkidNumberUtil.isValidCheckDigit("ａ０００００２", "ａ"));
+        assertTrue(HkidNumber.isValidCheckDigit("ａ０００００２", "ａ"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"＠123456", "［123456", "｀123456", "｛123456", "A12345／", "A12345："})
+    void rejectsPunctuationAdjacentToFullwidthAlphanumericRanges(String input) {
+        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class, () -> new HkidNumber(input));
+        assertFalse(HkidNumberUtil.isValid(input));
     }
 
     @Test
@@ -127,6 +172,74 @@ class HkidNumberTest {
         assertThrows(HkidNumber.InvalidHkidNumberFormatException.class, () -> new HkidNumber("A", "123456", "33"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {" ", "\t", "\n", "\r", "\u00a0", "\u3000"})
+    void splitConstructorsDoNotTrimAnyParameter(String whitespace) {
+        for (String prefix : new String[]{whitespace + "A", "A" + whitespace}) {
+            assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                    () -> new HkidNumber(prefix, "123456"));
+            assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                    () -> new HkidNumber(prefix, "123456", "3"));
+        }
+        for (String numerals : new String[]{whitespace + "123456", "123456" + whitespace}) {
+            assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                    () -> new HkidNumber("A", numerals));
+            assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                    () -> new HkidNumber("A", numerals, "3"));
+        }
+        for (String checkDigit : new String[]{whitespace + "3", "3" + whitespace, whitespace}) {
+            assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                    () -> new HkidNumber("A", "123456", checkDigit));
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"\uff11\uff12\uff13\uff14\uff15\uff16", "\u0661\u0662\u0663\u0664\u0665\u0666"})
+    void splitConstructorsRejectNonAsciiNumerals(String numerals) {
+        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> new HkidNumber("A", numerals));
+        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> new HkidNumber("A", numerals, "3"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Ａ", "ａ", "AＢ", "Ａb"})
+    void splitConstructorsRejectFullwidthPrefixes(String prefix) {
+        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> new HkidNumber(prefix, "123456"));
+        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> new HkidNumber(prefix, "123456", "3"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"\uff13", "\u0663"})
+    void splitConstructorRejectsNonAsciiCheckDigits(String checkDigit) {
+        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> new HkidNumber("A", "123456", checkDigit));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Ａ", "ａ"})
+    void splitConstructorRejectsFullwidthLetterCheckDigits(String checkDigit) {
+        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> new HkidNumber("A", "000002", checkDigit));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"(3)", "\uff083\uff09", "(3\uff09", "\uff083)"})
+    void separateCheckDigitParametersRejectParenthesesOfEitherWidth(String checkDigit) {
+        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> new HkidNumber("A", "123456", checkDigit));
+        assertFalse(HkidNumberUtil.isValidCheckDigit("A123456", checkDigit));
+        assertFalse(HkidNumber.isValidCheckDigit("A123456", checkDigit));
+    }
+
+    @Test
+    void splitConstructorStillAllowsAbsentCheckDigit() {
+        assertEquals("A123456(3)", new HkidNumber("A", "123456", null).toString());
+        assertEquals("A123456(3)", new HkidNumber("A", "123456", "").toString());
+    }
+
     @Test
     void isAnImmutableValueObject() {
         assertTrue(Modifier.isFinal(HkidNumber.class.getModifiers()));
@@ -134,9 +247,23 @@ class HkidNumberTest {
             assertTrue(Modifier.isFinal(field.getModifiers()), field.getName());
         }
         assertEquals(new HkidNumber("A123456"), new HkidNumber("A123456(3)"));
+        assertEquals(new HkidNumber("A123456(3)"), new HkidNumber("A123456\uff083\uff09"));
         assertEquals(
                 new HkidNumber("A123456").hashCode(),
                 new HkidNumber("A123456(3)").hashCode());
+        assertEquals(
+                new HkidNumber("A123456(3)").hashCode(),
+                new HkidNumber("A123456\uff083\uff09").hashCode());
+    }
+
+    @Test
+    void fullwidthInputHasTheSameValueAndCanonicalOutputAsAsciiInput() {
+        HkidNumber ascii = new HkidNumber("AB123456(9)");
+        HkidNumber fullwidth = new HkidNumber(" ａＢ　１2３４5６ （９） ");
+        assertEquals(ascii, fullwidth);
+        assertEquals(ascii.hashCode(), fullwidth.hashCode());
+        assertEquals("AB123456(9)", fullwidth.toString());
+        assertEquals("*****456(*)", fullwidth.toMaskedString());
     }
 
     @Test
@@ -173,6 +300,16 @@ class HkidNumberTest {
     }
 
     @Test
+    void checkDigitValidationRejectsMissingAndBlankInputs() {
+        for (String input : new String[]{null, "", "\t\n\r \u00a0\u3000"}) {
+            assertFalse(HkidNumberUtil.isValidCheckDigit(input, "3"));
+            assertFalse(HkidNumber.isValidCheckDigit(input, "3"));
+            assertFalse(HkidNumberUtil.isValidCheckDigit("A123456", input));
+            assertFalse(HkidNumber.isValidCheckDigit("A123456", input));
+        }
+    }
+
+    @Test
     void validatesWholeNumberWithoutConstructingValueObject() {
         assertTrue(HkidNumberUtil.isValid("A123456"));
         assertTrue(HkidNumberUtil.isValid(" a123456(3) "));
@@ -197,6 +334,34 @@ class HkidNumberTest {
     void definedPrefixLookupPreservesAsciiCaseAndWhitespaceSupport() {
         assertEquals(DefinedPrefix.S, DefinedPrefix.fromPrefix(" s ").orElse(null));
         assertEquals(DefinedPrefix.WX, DefinedPrefix.fromPrefix(" wX ").orElse(null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ＷＸ", "ｗｘ", "wＸ", "Ｗx", "\tｗＸ\u3000"})
+    void definedPrefixLookupNormalizesFullwidthAndMixedWidthLetters(String prefix) {
+        assertEquals(DefinedPrefix.WX, DefinedPrefix.fromPrefix(prefix).orElse(null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {" ", "\t", "\n", "\r", "\u00a0", "\u3000"})
+    void definedPrefixLookupOnlyRemovesWhitespaceAtTheEdges(String whitespace) {
+        assertEquals(DefinedPrefix.WX, DefinedPrefix.fromPrefix(whitespace + "wX").orElse(null));
+        assertEquals(DefinedPrefix.WX, DefinedPrefix.fromPrefix("wX" + whitespace).orElse(null));
+        assertFalse(DefinedPrefix.fromPrefix("W" + whitespace + "X").isPresent());
+        assertFalse(DefinedPrefix.fromPrefix(whitespace).isPresent());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"\0", "\u000b", "\f", "\u001f", "\u0085", "\u2003", "\u200b", "\ufeff"})
+    void definedPrefixLookupRejectsOtherControlsAndUnicodeWhitespace(String character) {
+        assertFalse(DefinedPrefix.fromPrefix(character + "WX").isPresent());
+        assertFalse(DefinedPrefix.fromPrefix("WX" + character).isPresent());
+    }
+
+    @Test
+    void definedPrefixLookupRejectsNullAndEmptyInput() {
+        assertFalse(DefinedPrefix.fromPrefix(null).isPresent());
+        assertFalse(DefinedPrefix.fromPrefix("").isPresent());
     }
 
     @Test

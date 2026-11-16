@@ -1,5 +1,7 @@
 package io.github.wal_n.hkid.card;
 
+import io.github.wal_n.hkid.internal.ParsingWhitespace;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,9 +89,16 @@ public final class HkidSymbols {
     }
 
     /**
-     * Parses concatenated current smart-HKID symbol codes, ignoring letter case.
+     * Parses current smart-HKID symbol codes, ignoring letter case.
+     * Leading and trailing U+0009, U+000A, U+000D, U+0020, U+00A0 and U+3000
+     * are removed. Complete codes may be concatenated or separated by U+0020,
+     * U+00A0 or U+3000. Internal tabs and line breaks are rejected, and separated
+     * asterisks are never joined into {@code ***}.
+     * ASCII and fullwidth Latin letters may be mixed; fullwidth letters
+     * (U+FF21 through U+FF3A and U+FF41 through U+FF5A) are converted to ASCII.
+     * Fullwidth asterisks and other unsupported codes are rejected.
      *
-     * @param value printed symbol string, trimmed with {@link String#trim()}
+     * @param value printed symbol string, such as {@code *** A Z}
      * @return the parsed immutable symbol collection, empty if the trimmed string
      *         is empty
      * @throws IllegalArgumentException if the value is null, contains an unsupported
@@ -100,7 +109,7 @@ public final class HkidSymbols {
             throw new IllegalArgumentException("HKID symbol string cannot be null");
         }
 
-        String normalizedValue = value.trim();
+        String normalizedValue = ParsingWhitespace.trimOuter(value);
         if (normalizedValue.isEmpty()) {
             return EMPTY;
         }
@@ -108,7 +117,9 @@ public final class HkidSymbols {
         List<HkidSymbol> parsedSymbols = new ArrayList<>();
         int index = 0;
         while (index < normalizedValue.length()) {
-            if (normalizedValue.startsWith(HkidSymbol.ADULT_RE_ENTRY_PERMIT.getCode(), index)) {
+            if (ParsingWhitespace.isComponentSeparator(normalizedValue.charAt(index))) {
+                index++;
+            } else if (normalizedValue.startsWith(HkidSymbol.ADULT_RE_ENTRY_PERMIT.getCode(), index)) {
                 parsedSymbols.add(HkidSymbol.ADULT_RE_ENTRY_PERMIT);
                 index += HkidSymbol.ADULT_RE_ENTRY_PERMIT.getCode().length();
             } else if (normalizedValue.charAt(index) == '*') {
