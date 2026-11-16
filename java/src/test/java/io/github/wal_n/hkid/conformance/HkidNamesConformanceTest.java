@@ -1,5 +1,6 @@
 package io.github.wal_n.hkid.conformance;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import io.github.wal_n.hkid.name.ChineseCommercialCode;
 import io.github.wal_n.hkid.name.ChineseName;
@@ -8,7 +9,7 @@ import io.github.wal_n.hkid.name.EnglishNameUtil;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
-import java.util.stream.Collectors;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -35,12 +36,7 @@ class HkidNamesConformanceTest {
                                     () -> assertEquals(
                                             testCase.get("personalName").getAsString(),
                                             name.getPersonalName()),
-                                    () -> assertEquals(
-                                            ConformanceFixtures.strings(
-                                                    testCase, "commercialCodes"),
-                                            name.getCommercialCodes().stream()
-                                                    .map(ChineseCommercialCode::getCode)
-                                                    .collect(Collectors.toList())));
+                                    () -> assertCommercialCodes(testCase, name.getCommercialCodes()));
                         }));
     }
 
@@ -94,6 +90,24 @@ class HkidNamesConformanceTest {
                         () -> assertThrows(
                                 IllegalArgumentException.class,
                                 () -> buildEnglishName(testCase))));
+    }
+
+    private static void assertCommercialCodes(
+            JsonObject testCase, List<ChineseCommercialCode> actual) {
+        JsonArray expected = testCase.getAsJsonArray(
+                testCase.has("expectCommercialCodes") ? "expectCommercialCodes" : "commercialCodes");
+        assertEquals(expected.size(), actual.size());
+        for (int i = 0; i < expected.size(); i++) {
+            JsonObject value = expected.get(i).getAsJsonObject();
+            String code = value.get("code").getAsString();
+            String extension = ConformanceFixtures.nullableString(value, "extensionNumber");
+            String display = value.has("display") ? value.get("display").getAsString() : code;
+            ChineseCommercialCode actualCode = actual.get(i);
+            assertAll(
+                    () -> assertEquals(code, actualCode.getCode()),
+                    () -> assertEquals(extension, actualCode.getExtensionNumber().orElse(null)),
+                    () -> assertEquals(display, actualCode.toString()));
+        }
     }
 
     private static ChineseName buildChineseName(JsonObject testCase) {

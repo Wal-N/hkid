@@ -7,7 +7,11 @@
         "hkidNumber": "R123456(A)",
         "chineseSurname": "\u9673",
         "chinesePersonalName": "\u5927\u6587",
-        "chineseCommercialCodes": ["7115", "1129", "2429"],
+        "chineseCommercialCodes": [
+          {"code": "7115", "extensionNumber": null},
+          {"code": "1129", "extensionNumber": null},
+          {"code": "2429", "extensionNumber": null}
+        ],
         "englishSurname": "Chan",
         "englishPersonalName": "Tai Man",
         "sex": "M",
@@ -24,6 +28,45 @@
         "chineseName": "\u9673\u5927\u6587",
         "englishName": "Chan, Tai Man",
         "sexPrintedValue": "\u7537 M",
+        "dateOfBirth": "15-01-1990",
+        "symbols": "***AZ",
+        "firstRegistrationYearMonth": "06-01",
+        "dateOfRegistration": "01-06-20",
+        "age": 36
+      }
+    },
+    {
+      "id": "complete-card-retains-commercial-code-extensions",
+      "input": {
+        "hkidNumber": "R123456(A)",
+        "chineseSurname": "陳",
+        "chinesePersonalName": "大文",
+        "chineseCommercialCodes": [
+          {"code": "7115", "extensionNumber": null},
+          {"code": "1129", "extensionNumber": "0"},
+          {"code": "2429", "extensionNumber": "7"}
+        ],
+        "englishSurname": "Chan",
+        "englishPersonalName": "Tai Man",
+        "sex": "M",
+        "dateOfBirth": "1990-01-15",
+        "symbols": "***AZ",
+        "firstRegistrationYearMonth": "2001-06",
+        "dateOfRegistration": "2020-06-01"
+      },
+      "referenceDate": "2026-07-21",
+      "expect": {
+        "hkidWithoutCheckDigit": "R123456",
+        "hkidComplete": "R123456(A)",
+        "hkidMasked": "****456(*)",
+        "chineseName": "陳大文",
+        "chineseCommercialCodes": [
+          {"code": "7115", "extensionNumber": null, "display": "7115"},
+          {"code": "1129", "extensionNumber": "0", "display": "1129"},
+          {"code": "2429", "extensionNumber": "7", "display": "2429"}
+        ],
+        "englishName": "Chan, Tai Man",
+        "sexPrintedValue": "男 M",
         "dateOfBirth": "15-01-1990",
         "symbols": "***AZ",
         "firstRegistrationYearMonth": "06-01",
@@ -60,6 +103,336 @@
         "dateOfRegistration": "01-06-20",
         "age": 17
       }
+    }
+  ],
+  "suspicionCases": [
+    {
+      "id": "empty-card-has-no-suspicions",
+      "input": {},
+      "expectReasons": []
+    },
+    {
+      "id": "explicit-null-optional-fields-have-no-suspicions",
+      "input": {
+        "hkidNumber": null,
+        "chineseSurname": null,
+        "chinesePersonalName": null,
+        "chineseCommercialCodes": null,
+        "englishSurname": null,
+        "englishPersonalName": null,
+        "sex": null,
+        "dateOfBirth": null,
+        "symbols": null,
+        "firstRegistrationYearMonth": null,
+        "dateOfRegistration": null
+      },
+      "expectReasons": []
+    },
+    {
+      "id": "missing-number-skips-prefix-checks",
+      "input": {
+        "dateOfBirth": "2010-01-01",
+        "symbols": "X",
+        "firstRegistrationYearMonth": "2024-01",
+        "dateOfRegistration": "2025-01-01"
+      },
+      "expectReasons": []
+    },
+    {
+      "id": "prefix-without-other-fields-has-no-suspicions",
+      "input": {"hkidNumber": "Y123456"},
+      "expectReasons": []
+    },
+    {
+      "id": "missing-birth-date-still-checks-birthplace",
+      "input": {"hkidNumber": "Y123456", "symbols": "X"},
+      "expectReasons": ["PREFIX_BIRTH_PLACE_MISMATCH"]
+    },
+    {
+      "id": "missing-birthplace-still-checks-birth-date",
+      "input": {"hkidNumber": "Y123456", "dateOfBirth": "2010-01-01"},
+      "expectReasons": ["PREFIX_BIRTH_DATE_MISMATCH"]
+    },
+    {
+      "id": "multiple-reasons-use-stable-order-despite-name-change",
+      "input": {
+        "hkidNumber": "Y123456",
+        "dateOfBirth": "2010-01-01",
+        "symbols": "ON"
+      },
+      "expectReasons": ["PREFIX_BIRTH_DATE_MISMATCH", "PREFIX_BIRTH_PLACE_MISMATCH"]
+    },
+    {
+      "id": "birth-details-change-suppresses-both-birth-reasons",
+      "input": {
+        "hkidNumber": "Y123456",
+        "dateOfBirth": "2010-01-01",
+        "symbols": "OB"
+      },
+      "expectReasons": []
+    },
+    {
+      "id": "birth-details-change-keeps-first-registration-check",
+      "input": {
+        "hkidNumber": "M123456",
+        "symbols": "B",
+        "firstRegistrationYearMonth": "2024-01"
+      },
+      "expectReasons": ["PREFIX_FIRST_REGISTRATION_MISMATCH"]
+    },
+    {
+      "id": "birth-before-exclusive-prefix-end-is-accepted",
+      "input": {"hkidNumber": "Y123456", "dateOfBirth": "2005-03-31"},
+      "expectReasons": []
+    },
+    {
+      "id": "birth-on-exclusive-prefix-end-is-suspicious",
+      "input": {"hkidNumber": "Y123456", "dateOfBirth": "2005-04-01"},
+      "expectReasons": ["PREFIX_BIRTH_DATE_MISMATCH"]
+    },
+    {
+      "id": "birth-before-prefix-introduction-is-accepted",
+      "input": {"hkidNumber": "Y123456", "dateOfBirth": "1960-01-01"},
+      "expectReasons": []
+    },
+    {
+      "id": "open-ended-birth-prefix-has-no-upper-bound",
+      "input": {"hkidNumber": "N123456", "dateOfBirth": "2099-12-31"},
+      "expectReasons": []
+    },
+    {
+      "id": "first-registration-month-overlaps-prefix-start",
+      "input": {"hkidNumber": "M123456", "firstRegistrationYearMonth": "2011-08"},
+      "expectReasons": []
+    },
+    {
+      "id": "first-registration-month-overlaps-prefix-end",
+      "input": {"hkidNumber": "M123456", "firstRegistrationYearMonth": "2020-02"},
+      "expectReasons": []
+    },
+    {
+      "id": "first-registration-before-prefix-period-without-birth-fields",
+      "input": {"hkidNumber": "M123456", "firstRegistrationYearMonth": "2011-07"},
+      "expectReasons": ["PREFIX_FIRST_REGISTRATION_MISMATCH"]
+    },
+    {
+      "id": "first-registration-after-prefix-period-without-birth-fields",
+      "input": {"hkidNumber": "M123456", "firstRegistrationYearMonth": "2020-03"},
+      "expectReasons": ["PREFIX_FIRST_REGISTRATION_MISMATCH"]
+    },
+    {
+      "id": "current-registration-does-not-replace-missing-first-registration",
+      "input": {"hkidNumber": "F123456", "dateOfRegistration": "2026-08-01"},
+      "expectReasons": []
+    },
+    {
+      "id": "current-registration-does-not-override-first-registration",
+      "input": {
+        "hkidNumber": "M123456",
+        "firstRegistrationYearMonth": "2015-01",
+        "dateOfRegistration": "2026-08-01"
+      },
+      "expectReasons": []
+    },
+    {
+      "id": "birth-prefix-does-not-check-first-hkid-registration-month",
+      "input": {
+        "hkidNumber": "Y123456",
+        "dateOfBirth": "2000-01-01",
+        "symbols": "Z",
+        "firstRegistrationYearMonth": "2024-01"
+      },
+      "expectReasons": []
+    },
+    {
+      "id": "unknown-prefix-metadata-is-skipped",
+      "input": {
+        "hkidNumber": "AA123456",
+        "dateOfBirth": "2020-01-01",
+        "symbols": "O",
+        "firstRegistrationYearMonth": "2024-01"
+      },
+      "expectReasons": []
+    },
+    {
+      "id": "incompletely-modelled-l-reserve-prefix-is-skipped",
+      "input": {"hkidNumber": "L123456", "firstRegistrationYearMonth": "1990-01"},
+      "expectReasons": []
+    }
+  ],
+  "holderDescriptionCases": [
+    {
+      "id": "complete-description-traditional-chinese-and-sentence-order",
+      "input": {"sex": "F", "dateOfBirth": "2008-07-21", "symbols": "NBZ***A"},
+      "referenceDate": "2026-07-21",
+      "locale": "zh-HK",
+      "expectDescription": "持有人為18歲女性，於香港出生。持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。持有人的出生日期或出生地曾更改，姓名亦曾更改。"
+    },
+    {
+      "id": "complete-description-english-and-sentence-order",
+      "input": {"sex": "F", "dateOfBirth": "2008-07-21", "symbols": "NBZ***A"},
+      "referenceDate": "2026-07-21",
+      "locale": "en",
+      "expectDescription": "The holder is female, aged 18, and was born in Hong Kong. The holder has the right of abode in Hong Kong and, at registration, was aged 18 or over and eligible for a Re-entry Permit. The holder's date or place of birth has been amended, as has their name."
+    },
+    {
+      "id": "empty-card-description-chinese",
+      "input": {},
+      "referenceDate": "2026-07-21",
+      "locale": "zh",
+      "expectDescription": ""
+    },
+    {
+      "id": "empty-card-description-english",
+      "input": {},
+      "referenceDate": "2026-07-21",
+      "locale": "en",
+      "expectDescription": ""
+    },
+    {
+      "id": "age-only-description-uses-singular-year",
+      "input": {"dateOfBirth": "2025-07-21"},
+      "referenceDate": "2026-07-21",
+      "locale": "en",
+      "expectDescription": "The holder is 1 year old."
+    },
+    {
+      "id": "birthplace-only-description-does-not-infer-demographics",
+      "input": {"symbols": "X"},
+      "referenceDate": "2026-07-21",
+      "locale": "zh-Hant",
+      "expectDescription": "持有人於內地出生。"
+    },
+    {
+      "id": "historical-minor-without-stay-restriction-now-adult-chinese",
+      "input": {
+        "dateOfBirth": "2008-01-01",
+        "dateOfRegistration": "2020-06-01",
+        "symbols": "*UN"
+      },
+      "referenceDate": "2026-07-21",
+      "locale": "zh-HK",
+      "expectDescription": "持有人現年18歲。持有人於領證登記時沒有逗留限制，年齡為11至17歲，並符合回港證申領資格。持有人的姓名曾更改。"
+    },
+    {
+      "id": "historical-minor-without-stay-restriction-now-adult-english",
+      "input": {
+        "dateOfBirth": "2008-01-01",
+        "dateOfRegistration": "2020-06-01",
+        "symbols": "*UN"
+      },
+      "referenceDate": "2026-07-21",
+      "locale": "en",
+      "expectDescription": "The holder is 18 years old. At registration, the holder had no stay restriction and was aged 11 to 17 and eligible for a Re-entry Permit. The holder's name has been amended."
+    },
+    {
+      "id": "stay-restriction-and-adult-eligibility-are-historical-chinese",
+      "input": {"symbols": "***C"},
+      "referenceDate": "2026-07-21",
+      "locale": "zh-HK",
+      "expectDescription": "持有人於領證登記時有逗留限制，年滿18歲，並符合回港證申領資格。"
+    },
+    {
+      "id": "stay-restriction-and-adult-eligibility-are-historical-english",
+      "input": {"symbols": "***C"},
+      "referenceDate": "2026-07-21",
+      "locale": "en",
+      "expectDescription": "At registration, the holder had a stay restriction and was aged 18 or over and eligible for a Re-entry Permit."
+    },
+    {
+      "id": "right-to-land-retains-present-tense",
+      "input": {"symbols": "***R"},
+      "referenceDate": "2026-07-21",
+      "locale": "en",
+      "expectDescription": "The holder has the right to land in Hong Kong and, at registration, was aged 18 or over and eligible for a Re-entry Permit."
+    },
+    {
+      "id": "zh-cn-still-produces-traditional-chinese",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "locale": "zh-CN",
+      "expectDescription": "持有人為女性。"
+    },
+    {
+      "id": "zh-hans-still-produces-traditional-chinese",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "locale": "zh-Hans",
+      "expectDescription": "持有人為女性。"
+    },
+    {
+      "id": "regional-english-locale-produces-english",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "locale": "en-GB",
+      "expectDescription": "The holder is female."
+    },
+    {
+      "id": "unsupported-language-falls-back-to-english",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "locale": "fr",
+      "expectDescription": "The holder is female."
+    },
+    {
+      "id": "undetermined-language-falls-back-to-english",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "locale": "und",
+      "expectDescription": "The holder is female."
+    },
+    {
+      "id": "null-locale-uses-explicit-chinese-default",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "locale": null,
+      "defaultLocale": "zh-HK",
+      "expectDescription": "持有人為女性。"
+    },
+    {
+      "id": "omitted-locale-uses-explicit-english-default",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "defaultLocale": "en",
+      "expectDescription": "The holder is female."
+    },
+    {
+      "id": "unsupported-default-language-falls-back-to-english",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "locale": null,
+      "defaultLocale": "fr",
+      "expectDescription": "The holder is female."
+    },
+    {
+      "id": "explicit-english-overrides-chinese-default",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "locale": "en",
+      "defaultLocale": "zh-HK",
+      "expectDescription": "The holder is female."
+    },
+    {
+      "id": "explicit-chinese-overrides-english-default",
+      "input": {"sex": "F"},
+      "referenceDate": "2026-07-21",
+      "locale": "zh-TW",
+      "defaultLocale": "en",
+      "expectDescription": "持有人為女性。"
+    },
+    {
+      "id": "identity-and-future-registration-fields-do-not-add-description",
+      "input": {
+        "hkidNumber": "Z123456",
+        "chineseSurname": "陳",
+        "chineseCommercialCodes": [{"code": "7115", "extensionNumber": "0"}],
+        "englishSurname": "Chan",
+        "firstRegistrationYearMonth": "2030-01",
+        "dateOfRegistration": "2030-06-01"
+      },
+      "referenceDate": "2026-07-21",
+      "locale": "en",
+      "expectDescription": ""
     }
   ],
   "ageCases": [
