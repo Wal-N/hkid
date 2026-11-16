@@ -1,5 +1,95 @@
 {
   "schemaVersion": 1,
+  "commercialCodeCases": [
+    {
+      "id": "code-preserves-multiple-leading-zeroes",
+      "input": {"code": "0001", "extensionNumber": null},
+      "expect": {"code": "0001", "extensionNumber": null, "display": "0001"}
+    },
+    {
+      "id": "object-code-with-omitted-extension",
+      "input": {"code": "0123"},
+      "expect": {"code": "0123", "extensionNumber": null, "display": "0123"}
+    },
+    {
+      "id": "object-code-with-null-extension",
+      "input": {"code": "0123", "extensionNumber": null},
+      "expect": {"code": "0123", "extensionNumber": null, "display": "0123"}
+    },
+    {
+      "id": "zero-extension-is-retained-but-not-displayed",
+      "input": {"code": "0123", "extensionNumber": "0"},
+      "expect": {"code": "0123", "extensionNumber": "0", "display": "0123"}
+    },
+    {
+      "id": "nonzero-extension-is-retained-but-not-displayed",
+      "input": {"code": "0123", "extensionNumber": "2"},
+      "expect": {"code": "0123", "extensionNumber": "2", "display": "0123"}
+    },
+    {
+      "id": "maximum-digit-extension",
+      "input": {"code": "9999", "extensionNumber": "9"},
+      "expect": {"code": "9999", "extensionNumber": "9", "display": "9999"}
+    },
+    {
+      "id": "all-zero-code",
+      "input": {"code": "0000", "extensionNumber": null},
+      "expect": {"code": "0000", "extensionNumber": null, "display": "0000"}
+    }
+  ],
+  "invalidCommercialCodeCases": [
+    {"id": "null-main-code", "input": {"code": null, "extensionNumber": "2"}},
+    {"id": "short-main-code", "input": {"code": "123", "extensionNumber": null}},
+    {"id": "long-main-code-with-extension", "input": {"code": "12345", "extensionNumber": "2"}},
+    {"id": "non-ascii-main-code", "input": {"code": "\uFF11\uFF12\uFF13\uFF14", "extensionNumber": null}},
+    {"id": "empty-extension", "input": {"code": "0123", "extensionNumber": ""}},
+    {"id": "multiple-digit-extension", "input": {"code": "0123", "extensionNumber": "22"}},
+    {"id": "whitespace-extension", "input": {"code": "0123", "extensionNumber": " "}},
+    {"id": "padded-extension", "input": {"code": "0123", "extensionNumber": "2 "}},
+    {"id": "newline-extension", "input": {"code": "0123", "extensionNumber": "2\n"}},
+    {"id": "signed-extension", "input": {"code": "0123", "extensionNumber": "+2"}},
+    {"id": "alphabetic-extension", "input": {"code": "0123", "extensionNumber": "A"}},
+    {"id": "fullwidth-extension", "input": {"code": "0123", "extensionNumber": "\uFF12"}},
+    {"id": "arabic-indic-extension", "input": {"code": "0123", "extensionNumber": "\u0662"}}
+  ],
+  "commercialCodeComparisonCases": [
+    {
+      "id": "matching-codes-without-extension-have-same-value",
+      "left": {"code": "0123", "extensionNumber": null},
+      "right": {"code": "0123", "extensionNumber": null},
+      "expectSameValue": true
+    },
+    {
+      "id": "omitted-and-null-extensions-have-same-value",
+      "left": {"code": "0123"},
+      "right": {"code": "0123", "extensionNumber": null},
+      "expectSameValue": true
+    },
+    {
+      "id": "no-extension-differs-from-zero-extension",
+      "left": {"code": "0123", "extensionNumber": null},
+      "right": {"code": "0123", "extensionNumber": "0"},
+      "expectSameValue": false
+    },
+    {
+      "id": "different-extensions-have-different-values",
+      "left": {"code": "0123", "extensionNumber": "0"},
+      "right": {"code": "0123", "extensionNumber": "2"},
+      "expectSameValue": false
+    },
+    {
+      "id": "matching-code-and-extension-have-same-value",
+      "left": {"code": "0123", "extensionNumber": "2"},
+      "right": {"code": "0123", "extensionNumber": "2"},
+      "expectSameValue": true
+    },
+    {
+      "id": "different-main-codes-have-different-values",
+      "left": {"code": "0123", "extensionNumber": "2"},
+      "right": {"code": "0124", "extensionNumber": "2"},
+      "expectSameValue": false
+    }
+  ],
   "chineseNameCases": [
     {
       "id": "empty-chinese-name",
@@ -12,8 +102,28 @@
       "id": "complete-chinese-name",
       "surname": "\u9673",
       "personalName": "\u5927\u6587",
-      "commercialCodes": ["7115", "1129", "2429"],
+      "commercialCodes": [
+        {"code": "7115", "extensionNumber": null},
+        {"code": "1129", "extensionNumber": null},
+        {"code": "2429", "extensionNumber": null}
+      ],
       "expectFullName": "\u9673\u5927\u6587"
+    },
+    {
+      "id": "name-retains-commercial-code-extensions-in-order",
+      "surname": "\u9673",
+      "personalName": "\u65FB\u65FC",
+      "commercialCodes": [
+        {"code": "7115", "extensionNumber": null},
+        {"code": "2479", "extensionNumber": "0"},
+        {"code": "2479", "extensionNumber": "2"}
+      ],
+      "expectFullName": "\u9673\u65FB\u65FC",
+      "expectCommercialCodes": [
+        {"code": "7115", "extensionNumber": null, "display": "7115"},
+        {"code": "2479", "extensionNumber": "0", "display": "2479"},
+        {"code": "2479", "extensionNumber": "2", "display": "2479"}
+      ]
     },
     {
       "id": "commercial-codes-are-optional",
@@ -26,28 +136,35 @@
       "id": "extension-a-han-letter",
       "surname": "\u3400",
       "personalName": "",
-      "commercialCodes": ["0001"],
+      "commercialCodes": [{"code": "0001", "extensionNumber": null}],
       "expectFullName": "\u3400"
     },
     {
       "id": "compatibility-han-letter",
       "surname": "\uFA0E",
       "personalName": "",
-      "commercialCodes": ["0001"],
+      "commercialCodes": [{"code": "0001", "extensionNumber": null}],
       "expectFullName": "\uFA0E"
     },
     {
       "id": "supplementary-han-counts-as-one-code-point",
       "surname": "\uD840\uDC00",
       "personalName": "\u4E00\u4E01\u4E02\u4E03\u4E04",
-      "commercialCodes": ["0001", "0002", "0003", "0004", "0005", "0006"],
+      "commercialCodes": [
+        {"code": "0001", "extensionNumber": null},
+        {"code": "0002", "extensionNumber": null},
+        {"code": "0003", "extensionNumber": null},
+        {"code": "0004", "extensionNumber": null},
+        {"code": "0005", "extensionNumber": null},
+        {"code": "0006", "extensionNumber": null}
+      ],
       "expectFullName": "\uD840\uDC00\u4E00\u4E01\u4E02\u4E03\u4E04"
     },
     {
       "id": "supplementary-compatibility-han-letter",
       "surname": "\uD87E\uDC00",
       "personalName": "",
-      "commercialCodes": ["0001"],
+      "commercialCodes": [{"code": "0001", "extensionNumber": null}],
       "expectFullName": "\uD87E\uDC00"
     }
   ],
@@ -68,19 +185,26 @@
       "id": "commercial-code-count-mismatch",
       "surname": "\u9673",
       "personalName": "\u5927\u6587",
-      "commercialCodes": ["7115", "1129"]
+      "commercialCodes": [
+        {"code": "7115", "extensionNumber": null},
+        {"code": "1129", "extensionNumber": null}
+      ]
     },
     {
       "id": "commercial-code-without-chinese-name",
       "surname": "",
       "personalName": "",
-      "commercialCodes": ["7115"]
+      "commercialCodes": [{"code": "7115", "extensionNumber": null}]
     },
     {
       "id": "invalid-commercial-code-format",
       "surname": "\u9673",
       "personalName": "\u5927\u6587",
-      "commercialCodes": ["7115", "1129", "ABC"]
+      "commercialCodes": [
+        {"code": "7115", "extensionNumber": null},
+        {"code": "1129", "extensionNumber": null},
+        {"code": "ABC", "extensionNumber": null}
+      ]
     },
     {
       "id": "kangxi-radical-is-not-a-han-letter",

@@ -14,7 +14,9 @@ The fixtures cover:
 - check-digit calculation and validation;
 - canonical smart-card symbol ordering and age rules;
 - Chinese and English name validation and formatting;
-- complete-card formatting and consistency rules.
+- Chinese Commercial Code extensions, value distinctions, and display;
+- complete-card formatting and consistency rules;
+- ordered suspicion reasons and localized holder descriptions.
 
 ## Normative behaviour details
 
@@ -25,6 +27,13 @@ The fixtures cover:
   Unicode code points, not UTF-8 bytes, UTF-16 code units, or grapheme
   clusters. A supplementary-plane Han letter therefore counts as one
   character.
+- Commercial codes use objects such as `{"code":"0123","extensionNumber":null}`.
+  Both components are strings. An omitted or null extension means no extension,
+  which is distinct from `"0"`. Value comparisons include the extension;
+  display text contains only the four-digit code.
+- Compare `expectReasons` in order and `expectDescription` as exact text.
+  Holder descriptions use the case's `referenceDate`; a missing or null
+  `locale` uses its `defaultLocale`.
 - Age calculation follows section 5 of Hong Kong's
   [Age of Majority (Related Provisions) Ordinance (Cap. 410)](https://www.elegislation.gov.hk/hk/cap410!en/s5).
   A 29 February birthday has its relevant anniversary on 1 March in a

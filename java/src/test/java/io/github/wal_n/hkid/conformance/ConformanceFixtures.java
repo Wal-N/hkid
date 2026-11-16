@@ -12,7 +12,6 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -75,9 +74,47 @@ final class ConformanceFixtures {
     }
 
     static List<ChineseCommercialCode> commercialCodes(JsonObject object, String memberName) {
-        return strings(object, memberName).stream()
-                .map(ChineseCommercialCode::new)
-                .collect(Collectors.toList());
+        JsonArray values = object.getAsJsonArray(memberName);
+        if (values == null) {
+            throw new IllegalStateException("Missing fixture array " + memberName);
+        }
+
+        List<ChineseCommercialCode> result = new ArrayList<>();
+        for (JsonElement value : values) {
+            result.add(commercialCode(value));
+        }
+        return result;
+    }
+
+    static ChineseCommercialCode commercialCode(JsonElement value) {
+        if (value == null || !value.isJsonObject()) {
+            throw new IllegalStateException("Commercial code fixture must be an object");
+        }
+
+        JsonObject object = value.getAsJsonObject();
+        if (!object.has("code")) {
+            throw new IllegalStateException("Missing commercial code fixture field code");
+        }
+        for (String field : object.keySet()) {
+            if (!"code".equals(field) && !"extensionNumber".equals(field)) {
+                throw new IllegalStateException("Unknown commercial code fixture field " + field);
+            }
+        }
+        return new ChineseCommercialCode(
+                commercialCodeString(object, "code"),
+                commercialCodeString(object, "extensionNumber"));
+    }
+
+    private static String commercialCodeString(JsonObject object, String memberName) {
+        JsonElement value = object.get(memberName);
+        if (value == null || value.isJsonNull()) {
+            return null;
+        }
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
+            throw new IllegalStateException(
+                    "Commercial code fixture field " + memberName + " must be a string or null");
+        }
+        return value.getAsString();
     }
 
     static String nullableString(JsonObject object, String memberName) {
