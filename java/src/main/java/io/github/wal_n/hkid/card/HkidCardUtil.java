@@ -7,7 +7,6 @@ import io.github.wal_n.hkid.number.HkidNumberUtil;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,15 +25,14 @@ public final class HkidCardUtil {
     private static final int RECENT_CARD_YEARS = 10;
     private static final int HONG_KONG_BIRTH_REGISTRATION_DAYS = 42;
     private static final YearMonth FIRST_HKID_ISSUE_MONTH = YearMonth.of(1949, 1);
-    private static final ZoneId HONG_KONG_ZONE = ZoneId.of("Asia/Hong_Kong");
 
     private HkidCardUtil() {
         throw new AssertionError("HkidCardUtil cannot be instantiated");
     }
 
     /**
-     * Describes a holder using today's date in Hong Kong and the JVM's current
-     * default locale. The default locale is read on every call.
+     * Describes a holder using the current system date and the JVM's current
+     * default locale. The default time zone and locale are read on every call.
      *
      * @param card card whose holder is described
      * @return the summary, or an empty string when no describable information is present
@@ -46,7 +44,8 @@ public final class HkidCardUtil {
     }
 
     /**
-     * Describes a holder using today's date in Hong Kong.
+     * Describes a holder using the current date in the JVM's default time zone,
+     * resolved on every call.
      *
      * @param card card whose holder is described
      * @param locale output locale; {@code null} uses {@link Locale#getDefault()} on this call
@@ -56,7 +55,7 @@ public final class HkidCardUtil {
      * @see #describeHolder(HkidCard, Locale, LocalDate)
      */
     public static String describeHolder(HkidCard card, Locale locale) {
-        return describeHolder(card, locale, LocalDate.now(HONG_KONG_ZONE));
+        return describeHolder(card, locale, LocalDate.now());
     }
 
     /**
@@ -315,7 +314,7 @@ public final class HkidCardUtil {
 
     /**
      * Generates a sample HKID card using the current system date and a
-     * thread-local random generator.
+     * thread-local random generator. The JVM's default time zone is read on every call.
      *
      * @return a randomly generated card valid as of the current system date
      */
@@ -325,7 +324,8 @@ public final class HkidCardUtil {
 
     /**
      * Generates a sample HKID card with the requested sex using the current
-     * system date and a thread-local random generator.
+     * system date and a thread-local random generator. The JVM's default time
+     * zone is read on every call.
      *
      * @param sex requested card sex and generated-name association
      * @return a randomly generated card with {@code sex}, valid as of the current system date
@@ -460,11 +460,12 @@ public final class HkidCardUtil {
 
     /**
      * Generates a random date from {@code startDate} (inclusive) to the current
-     * system date (exclusive).
+     * system date (exclusive). The JVM's default time zone is read on every call.
      *
      * @param startDate inclusive start of the range
      * @return a random date before the current system date
-     * @throws IllegalArgumentException if the start date is null or is not before today
+     * @throws IllegalArgumentException if the start date is null or is not before
+     *         the current system date
      */
     public static LocalDate generateRandomDateInRange(LocalDate startDate) {
         return generateRandomDateInRange(startDate, LocalDate.now());

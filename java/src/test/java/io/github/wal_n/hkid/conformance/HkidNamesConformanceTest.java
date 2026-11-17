@@ -74,10 +74,10 @@ class HkidNamesConformanceTest {
                                             testCase.get("expectFullName").getAsString(),
                                             name.getFullNameString()),
                                     () -> assertEquals(
-                                            testCase.get("surname").getAsString(),
+                                            expectedNamePart(testCase, "surname", "expectSurname"),
                                             name.getSurname()),
                                     () -> assertEquals(
-                                            testCase.get("personalName").getAsString(),
+                                            expectedNamePart(testCase, "personalName", "expectPersonalName"),
                                             name.getPersonalName()));
                         }));
     }
@@ -119,7 +119,11 @@ class HkidNamesConformanceTest {
 
     private static EnglishName buildEnglishName(JsonObject testCase) {
         return new EnglishName(
-                testCase.get("surname").getAsString(),
-                testCase.get("personalName").getAsString());
+                ConformanceFixtures.requireNullableString(testCase, "surname"),
+                ConformanceFixtures.requireNullableString(testCase, "personalName"));
+    }
+
+    private static String expectedNamePart(JsonObject testCase, String inputField, String expectedField) {
+        return testCase.get(testCase.has(expectedField) ? expectedField : inputField).getAsString();
     }
 }

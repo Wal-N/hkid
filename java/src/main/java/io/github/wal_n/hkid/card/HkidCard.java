@@ -19,7 +19,7 @@ import java.util.Optional;
  *
  * <p>Use {@link #builder()} to assemble a card. Age calculation and date validation
  * require an explicit reference date. Holder summaries also offer convenience
- * overloads using today's date in Hong Kong; supply a reference date when a
+ * overloads using the current system date; supply a reference date when a
  * reproducible summary is required.</p>
  *
  * <p>Getters return domain values or their components. Methods named
@@ -370,8 +370,8 @@ public final class HkidCard {
     }
 
     /**
-     * Describes the holder using today's date in Hong Kong and the JVM's current
-     * default locale, read on every call.
+     * Describes the holder using the current system date and the JVM's current
+     * default locale. The default time zone and locale are read on every call.
      *
      * @return the summary, or an empty string when no describable information is present
      * @throws IllegalArgumentException if the birth date is in the future
@@ -382,7 +382,8 @@ public final class HkidCard {
     }
 
     /**
-     * Describes the holder using today's date in Hong Kong.
+     * Describes the holder using the current date in the JVM's default time zone,
+     * resolved on every call.
      *
      * @param locale output locale; {@code null} uses {@link Locale#getDefault()} on this call
      * @return the summary in Traditional Chinese for {@code zh} locales, or English otherwise;
