@@ -373,6 +373,30 @@
       "expectFullName": ""
     },
     {
+      "id": "null-surname-normalizes-to-empty",
+      "surname": null,
+      "personalName": "Tai Man",
+      "expectSurname": "",
+      "expectPersonalName": "Tai Man",
+      "expectFullName": "Tai Man"
+    },
+    {
+      "id": "null-personal-name-normalizes-to-empty",
+      "surname": "Chan",
+      "personalName": null,
+      "expectSurname": "Chan",
+      "expectPersonalName": "",
+      "expectFullName": "Chan"
+    },
+    {
+      "id": "null-name-parts-normalize-to-empty",
+      "surname": null,
+      "personalName": null,
+      "expectSurname": "",
+      "expectPersonalName": "",
+      "expectFullName": ""
+    },
+    {
       "id": "period-separator",
       "surname": "St.John",
       "personalName": "Tai Man",

@@ -13,7 +13,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ResourceLock("java.util.Locale.default")
 class HkidHolderSummaryTest {
     private static final LocalDate REFERENCE_DATE = LocalDate.of(2026, 7, 21);
-    private static final ZoneId HONG_KONG = ZoneId.of("Asia/Hong_Kong");
 
     @Test
     void describesCompleteCardInBothLanguagesAndStableSentenceOrder() {
@@ -350,44 +349,62 @@ class HkidHolderSummaryTest {
 
     @Test
     @ResourceLock("java.util.TimeZone.default")
-    void convenienceApisUseTodaysDateInHongKongRegardlessOfJvmTimeZone() {
+    void convenienceApisReadTodaysDateInTheCurrentJvmTimeZoneOnEveryCall() {
         TimeZone original = TimeZone.getDefault();
         Locale originalLocale = Locale.getDefault();
         Locale originalDisplay = Locale.getDefault(Locale.Category.DISPLAY);
         Locale originalFormat = Locale.getDefault(Locale.Category.FORMAT);
         try {
-            LocalDate hongKongDate = LocalDate.now(HONG_KONG);
-            TimeZone.setDefault(TimeZone.getTimeZone("GMT-12:00"));
-            if (LocalDate.now().equals(hongKongDate)) {
-                TimeZone.setDefault(TimeZone.getTimeZone("GMT+14:00"));
-            }
             Locale.setDefault(Locale.ENGLISH);
-            LocalDate birthday = LocalDate.now().isBefore(hongKongDate)
-                    ? hongKongDate : hongKongDate.plusDays(1);
+            // These zones are 36 hours apart. Place the birthday between their
+            // dates so choosing the reference date changes the reported age.
+            LocalDate birthday = LocalDate.now(ZoneOffset.ofHours(-18)).plusDays(1);
             HkidCard card = HkidCard.builder()
-                    .dateOfBirth(birthday.minusYears(20))
+                    .dateOfBirth(birthday.withYear(2000))
                     .build();
 
-            LocalDate before = LocalDate.now(HONG_KONG);
-            String[] summaries = {
-                    card.describeHolder(),
-                    card.describeHolder(Locale.ENGLISH),
-                    card.describeHolder(null),
-                    HkidCardUtil.describeHolder(card),
-                    HkidCardUtil.describeHolder(card, Locale.ENGLISH),
-                    HkidCardUtil.describeHolder(card, null)
-            };
-            LocalDate after = LocalDate.now(HONG_KONG);
-            String expectedBefore = card.describeHolder(Locale.ENGLISH, before);
-            String expectedAfter = card.describeHolder(Locale.ENGLISH, after);
-            for (String summary : summaries) {
-                assertTrue(summary.equals(expectedBefore) || summary.equals(expectedAfter), summary);
+            for (String zone : Arrays.asList("GMT-18:00", "GMT+18:00", "GMT-18:00")) {
+                TimeZone.setDefault(TimeZone.getTimeZone(zone));
+                LocalDate before = LocalDate.now();
+                String[] summaries = {
+                        card.describeHolder(),
+                        card.describeHolder(Locale.ENGLISH),
+                        card.describeHolder(null),
+                        HkidCardUtil.describeHolder(card),
+                        HkidCardUtil.describeHolder(card, Locale.ENGLISH),
+                        HkidCardUtil.describeHolder(card, null)
+                };
+                LocalDate after = LocalDate.now();
+                String expectedBefore = card.describeHolder(Locale.ENGLISH, before);
+                String expectedAfter = card.describeHolder(Locale.ENGLISH, after);
+                for (String summary : summaries) {
+                    assertTrue(summary.equals(expectedBefore) || summary.equals(expectedAfter),
+                            zone + ": " + summary);
+                }
             }
         } finally {
             TimeZone.setDefault(original);
             Locale.setDefault(originalLocale);
             Locale.setDefault(Locale.Category.DISPLAY, originalDisplay);
             Locale.setDefault(Locale.Category.FORMAT, originalFormat);
+        }
+    }
+
+    @Test
+    @ResourceLock("java.util.TimeZone.default")
+    void explicitReferenceDateIsIndependentOfTheJvmTimeZone() {
+        TimeZone original = TimeZone.getDefault();
+        HkidCard card = HkidCard.builder()
+                .dateOfBirth(LocalDate.of(2008, 7, 21))
+                .build();
+        try {
+            for (String zone : Arrays.asList("GMT-18:00", "GMT+18:00")) {
+                TimeZone.setDefault(TimeZone.getTimeZone(zone));
+                assertSummary(card, REFERENCE_DATE,
+                        "持有人現年18歲。", "The holder is 18 years old.");
+            }
+        } finally {
+            TimeZone.setDefault(original);
         }
     }
 

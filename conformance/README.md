@@ -27,6 +27,36 @@ The fixtures cover:
 
 ## Normative behaviour details
 
+These rules define operations and observable results, not API shapes. A language
+may use constructors, functions, optional values, or result types to expose them.
+Accepting partial card data and validating a complete field are separate
+operations; acceptance does not imply that every validation predicate is true.
+
+### Missing, null, and empty values
+
+There is no global rule equating a missing JSON field, `null`, and `""`.
+Required fixture fields must be present even when the domain input is null.
+In `englishNameCases` and `invalidEnglishNameCases`, `surname` and `personalName`
+are required strings or explicit nulls. Optional `expectSurname` and
+`expectPersonalName` give normalized results; when absent, the corresponding
+input string is the expected result. A null input part needs an explicit
+expected string.
+
+| Context | Meaning |
+| --- | --- |
+| Number text or separate body/check-digit validation | Null or empty after the specified outer removal is invalid. |
+| Symbol text parsing | Null is invalid; empty after outer removal is an empty collection. |
+| Chinese or English name representation | A null part becomes `""`; empty and partial names are allowed subject to syntax and length rules below. |
+| Optional fields in a card fixture's `input` | Missing or null number, sex, or date means absent; missing or null name parts mean `""`; missing or null symbols or commercial codes mean an empty collection. Explicit empty number, sex, or date strings are invalid. |
+| Commercial-code `extensionNumber` | Missing or null means no extension; `""` is invalid; `"0"` is a present extension. |
+| Holder-description `locale` | Missing or null selects the case's `defaultLocale`; at least one must be supplied. |
+
+Card fixture defaults are applied before calling the language-specific API.
+They do not require a direct symbol parser to accept null. Absent card number,
+sex, and dates have null formatted results; empty names and symbols format as
+`""`. An absent birth date yields no age, not zero. Explicit reference-date
+arguments must be non-null; null does not request today's date.
+
 ### Number and symbol text parsing
 
 Number and symbol text parsers use the following explicit character sets.
@@ -109,14 +139,54 @@ letters such as `ß`. Existing whitespace rules still apply after mapping.
   Null inputs are invalid for number and symbol parsing and check-digit
   validation.
 
-Java's constructors that take separate `prefix`, `numerals`, and optional
-`checkDigit` arguments accept only ASCII letters and digits
-in their respective fields, do not map fullwidth characters, and do not remove
-outer characters or accept separators. A supplied check digit must be
-unparenthesized. These are already separated components, not raw number text.
+When accepting already separated `prefix`, `numerals`, and optional
+`checkDigit` components, require ASCII letters and digits without trimming,
+width mapping, or separators. Normalize lowercase letters to uppercase.
+A null or empty optional check digit means derive it; a non-empty one must be
+unparenthesized and match. This differs from the separate body/check-digit
+validation operation, which requires both values.
 
-### Other domain rules
+### Check digits, errors, and number output
 
+Map letters `A` through `Z` to 10 through 35. For a one-letter prefix, prepend
+a padding value of 36. The resulting two prefix values followed by the six
+numeral values have weights `9, 8, 7, 6, 5, 4, 3, 2`. Let `S` be their weighted
+sum and `d = (11 - (S mod 11)) mod 11`. Render 10 as `A`, otherwise render the
+digit `0` through `9`. For example, `A123456` gives `S = 481` and check digit
+`3`; `AB123456` gives `S = 255` and check digit `9`. Leading numeral zeros
+are preserved. An omitted check digit is derived; any supplied one is checked.
+
+Number parse failures have two shared categories:
+
+- `INVALID_FORMAT`: null, empty, or syntactically invalid number text, including
+  an unsupported check-digit character or malformed parentheses.
+- `INVALID_CHECK_DIGIT`: the complete syntax is accepted, but the supplied
+  check digit does not match the calculation.
+
+Boolean number/symbol validators return false for invalid domain input.
+Other invalid fixture cases require rejection without prescribing an exception
+class or message. Malformed fixtures are adapter errors, not domain results.
+
+Number formats are `prefix + numerals`, `prefix + numerals + checkDigit`, or
+`prefix + numerals + "(" + checkDigit + ")"` (the default). Masking replaces
+each prefix letter, the first three numerals, and the check digit with `*`,
+preserving the last three numerals and parentheses: `A123456(3)` becomes
+`****456(*)`, and `AB123456(9)` becomes `*****456(*)`.
+
+### Names and commercial codes
+
+- Name parts are not trimmed, case-folded, or width-normalized.
+- A non-empty English name part consists of ASCII letter groups separated by
+  exactly one ASCII space, period, apostrophe, or hyphen. Leading, trailing,
+  or adjacent separators are invalid. Syntax-only name-part validation rejects
+  null and empty input and does not impose a length limit.
+- An English name representation accepts either or both parts empty, including
+  null normalized to empty. Format two non-empty parts as `surname, personalName`;
+  otherwise use the one non-empty part or `""`. The formatted length, including
+  the comma and space, must be at most 40 characters.
+- Complete English-name validation additionally requires a non-empty surname.
+  Thus `(null, "Tai Man")` is representable as `"Tai Man"` but validates false;
+  `("Chan", null)` is representable as `"Chan"` and validates true.
 - A Chinese name character is a Unicode code point whose script is Han and
   whose general category is a letter. Han-script symbols such as Kangxi and
   CJK radicals are not name characters.
@@ -124,24 +194,97 @@ unparenthesized. These are already separated components, not raw number text.
   Unicode code points, not UTF-8 bytes, UTF-16 code units, or grapheme
   clusters. A supplementary-plane Han letter therefore counts as one
   character.
+- The Han repertoire follows the implementation's Unicode character data;
+  this contract does not pin a Unicode version. Newly added Han letters may
+  therefore differ between runtimes, beyond the characters in the fixtures.
+- Chinese name representation and validation both allow empty or partial names,
+  with a maximum combined length of six code points. Format the surname followed
+  immediately by the personal name, without a separator.
 - Commercial codes use objects such as `{"code":"0123","extensionNumber":null}`.
-  Both components are strings. An omitted or null extension means no extension,
-  which is distinct from `"0"`. Value comparisons include the extension;
-  display text contains only the four-digit code.
-- Compare `expectReasons` in order and `expectDescription` as exact text.
-  Holder descriptions use the case's `referenceDate`; a missing or null
-  `locale` uses its `defaultLocale`.
+  The code is exactly four ASCII digits; a present extension is exactly one
+  ASCII digit. Preserve leading zeros. Value comparisons include the extension;
+  display text contains only the four-digit code and is not a lossless encoding.
+- Null or empty commercial-code collections mean no codes. A non-empty
+  collection must contain one non-null code per Chinese name code point, in
+  printed-name order. Validation checks structure and count, not whether a code
+  is assigned to the corresponding character.
+
+### Symbols and output ordering
+
+- Canonical symbol order is `***`, `*`, `A`, `C`, `R`, `U`, `Z`, `X`, `W`, `O`,
+  `B`, `N`, independent of input order. Emit only present symbols without
+  separators. Duplicates are invalid. At most one member of each group
+  `{***, *}`, `{A, C, R, U}`, and `{Z, X, W, O}` may be present; `B` and `N`
+  may coexist.
+- `***` requires age 18 or above; `*` requires age 11 through 17, inclusive.
+  Neither symbol is required merely because a holder is in one of those ranges.
+- Suspicion reasons are distinct and ordered as `PREFIX_BIRTH_DATE_MISMATCH`,
+  `PREFIX_BIRTH_PLACE_MISMATCH`, `PREFIX_FIRST_REGISTRATION_MISMATCH`. They are
+  advisory and do not prevent accepting a card. Skip a check when its required
+  fields or prefix metadata are absent. A card with no applicable checks has
+  no suspicion reasons.
+- For Hong Kong birth-registration prefixes, a birth on or after the period's
+  exclusive end triggers `PREFIX_BIRTH_DATE_MISMATCH`; an explicit `X`, `W`, or
+  `O` birthplace triggers `PREFIX_BIRTH_PLACE_MISMATCH`. Birth before the period
+  starts is allowed because no maximum birth-registration delay is assumed.
+  Symbol `B` suppresses both birth checks.
+- `PREFIX_FIRST_REGISTRATION_MISMATCH` means the first-registration month does
+  not overlap a known first-issue period. Ignore the current-card registration
+  date for this check. Prefix `L` is exempt because its metadata omits historical
+  reserve use; symbol `B` does not suppress this check.
+- Commercial-code collections retain printed-name order; do not sort them.
+  Compare all expected ordered collections in order and formatted strings,
+  including `expectDescription`, as exact text.
+
+### Dates, card consistency, and holder descriptions
+
+- Dates are calendar dates, not instants. Fixture dates use `YYYY-MM-DD` and
+  first-registration months use `YYYY-MM`. An explicit reference date controls
+  the operation without consulting today's date or the host time zone.
+- Convenience operations that omit a reference date use the current system
+  date in the runtime's default time zone, resolved on each call. This applies
+  to holder summaries, random-card generation (with or without a requested sex),
+  and the default end of random-date generation. Changing the default time zone
+  may change the date and result. Callers needing a specific business date,
+  including Hong Kong's date, must supply it explicitly. Shared deterministic
+  cases provide dates explicitly; test default-date behavior within each
+  implementation.
+- Random-date ranges include their start and exclude their end; the default
+  end is the current system date. Equal or reversed endpoints are invalid.
+  Random-card generation may include its reference date as the registration
+  date and must produce a card valid as of that date.
 - Age calculation follows section 5 of Hong Kong's
   [Age of Majority (Related Provisions) Ordinance (Cap. 410)](https://www.elegislation.gov.hk/hk/cap410!en/s5).
   A 29 February birthday has its relevant anniversary on 1 March in a
   non-leap year.
+- Age is completed years on the reference date; a reference date before birth
+  is invalid. Card construction permits missing fields, but present dates must
+  be consistent: current-card registration is on or after `2018-11-26` and not
+  before birth; the first-registration month is not before the birth month or
+  after the current-card registration month.
 - Age-specific symbols describe the holder's age when the card was registered.
-  They are not reinterpreted using a later `validateAsOf` reference date.
+  Card construction checks them only when both birth and current-card
+  registration dates are present; standalone symbol-age validation requires
+  both dates. They are not reinterpreted using a later `validateAsOf` reference date.
 - Prefix periods use an inclusive start and an exclusive end. A first-issue
   month matches a prefix when at least one day in that month overlaps the
   prefix period.
 - `validateAsOf` checks each dated field that is present independently; a card
   does not need every optional date field in order to validate the others.
+  Birth and current-card registration must not be after the reference date;
+  the first-registration month must not be after its calendar month.
+- Printed birth dates use `DD-MM-YYYY`, first-registration months `MM-YY`, and
+  current-card registration dates `DD-MM-YY`, with zero-padded components.
+  Sex markers format as `男 M` or `女 F`.
+- Holder descriptions include only available age, sex, reported birthplace,
+  and symbol meanings. Omit missing information; return `""` if nothing can be
+  described. Do not infer facts from a prefix or absent symbols. Names, codes,
+  exact birth dates, numbers, and registration dates are excluded. A locale
+  whose language is `zh` selects Traditional Chinese; all other languages select
+  English. Default locale is resolved on each call. Exact wording is specified
+  by the holder-description fixtures.
+
+### Language-specific APIs and random generation
 
 Language-specific API design is deliberately outside this contract. Java
 constructors, exception class names, builders, equality implementations, and
