@@ -19,6 +19,7 @@ public final class HkidNumberUtil {
                     + SEPARATORS + "(?:([0-9Aa])|\\(([0-9Aa])\\)|\uFF08([0-9Aa])\uFF09))?");
     private static final Pattern PREFIX_PATTERN = Pattern.compile("[A-Za-z]{1,2}");
     private static final Pattern NUMERALS_PATTERN = Pattern.compile("[0-9]{6}");
+    private static final Pattern ASCII_NUMBER_CHARACTERS = Pattern.compile("[A-Za-z0-9()]+");
     private static final Pattern CHECK_DIGIT_PATTERN = Pattern.compile("[0-9A]");
     private static final Pattern WITHOUT_CHECK_DIGIT_PATTERN =
             Pattern.compile("([A-Za-z]{1,2})" + SEPARATORS + "([0-9]{6})");
@@ -50,6 +51,20 @@ public final class HkidNumberUtil {
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /**
+     * Validates an HKID number whose input contains only ASCII letters, digits and parentheses.
+     * Letter case, format and optional check-digit rules follow {@link #isValid(String)}.
+     *
+     * @param hkidNumber original input to validate, including any surrounding characters
+     * @return {@code true} if the number is valid, or {@code false} for null, whitespace
+     *         anywhere in the input, non-ASCII characters or an invalid number
+     */
+    public static boolean isValidAsciiWithoutWhitespace(String hkidNumber) {
+        return hkidNumber != null
+                && ASCII_NUMBER_CHARACTERS.matcher(hkidNumber).matches()
+                && isValid(hkidNumber);
     }
 
     /**
