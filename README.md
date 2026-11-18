@@ -27,9 +27,11 @@ rules and edge cases so you don't have to implement them from scratch.
 
 ## Quick start
 
-Currently available for Java 8+. Support for more languages is planned.
+Java is available now. A Rust implementation is planned.
 
-Add to your `pom.xml` for Maven dependencies:
+### Java 8+
+
+Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
 
 ```xml
 <dependency>
@@ -39,10 +41,11 @@ Add to your `pom.xml` for Maven dependencies:
 </dependency>
 ```
 
-### Validation and formatting
+### Example
 
 ```java
 import io.github.wal_n.hkid.card.HkidCard;
+import io.github.wal_n.hkid.card.HkidCardUtil;
 import io.github.wal_n.hkid.card.HkidSymbolsUtil;
 import io.github.wal_n.hkid.name.ChineseNameUtil;
 import io.github.wal_n.hkid.name.EnglishNameUtil;
@@ -50,37 +53,69 @@ import io.github.wal_n.hkid.number.HkidNumber;
 import io.github.wal_n.hkid.number.HkidNumberUtil;
 
 import java.time.LocalDate;
+import java.util.Locale;
+import java.util.Random;
 
-public final class ValidationExample {
+public final class HkidExample {
   public static void main(String[] args) {
+    // Validation
+    HkidNumberUtil.isValid("A123456(3)");       // true
+    HkidNumberUtil.isValid("A123456(4)");       // false (expected check digit 3)
+    ChineseNameUtil.isValid("陳", "大文");       // true
+    EnglishNameUtil.isValid("Chan", "Tai Man"); // true
+    HkidSymbolsUtil.isValid("***AZ");           // true
+
     // Formatting
     HkidNumber number = new HkidNumber("A123456");
     System.out.println(number);                  // A123456(3)
     System.out.println(number.toMaskedString()); // ****456(*)
 
-    // Field validation
-    HkidNumberUtil.isValid("Z123456(1)");       // true
-    ChineseNameUtil.isValid("陳", "大文");       // true
-    EnglishNameUtil.isValid("Chan", "Tai Man"); // true
-    HkidSymbolsUtil.isValid("***AZ");           // true
-
-    // Suspicious field combinations
-    HkidCard card = HkidCard.builder()
+    // Cross-field checks
+    // The Z prefix was used for Hong Kong birth registrations from 1980 to 1988.
+    HkidCard cardToCheck = HkidCard.builder()
       .hkidNumber(new HkidNumber("Z123456"))
       .dateOfBirth(LocalDate.of(2000, 1, 1))
-      .symbolCodes("X")
+      .symbolCodes("X") // Reported birthplace is mainland China.
       .build();
-    card.isSuspicious(); // true
-    card.findSuspicions();
+    System.out.println(cardToCheck.isSuspicious()); // true
+    System.out.println(cardToCheck.findSuspicions());
     // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
+
+    // Generate data
+    LocalDate referenceDate = LocalDate.of(2026, 7, 21);
+    HkidCard sample = HkidCardUtil.generateRandomCard(new Random(42), referenceDate);
+    System.out.println(sample.getChineseName());            // 李妍
+    System.out.println(sample.getChineseCommercialCodes()); // [2621, 1177]
+    System.out.println(sample.getEnglishName());            // Lee, Yin
+    System.out.println(sample.getSex());                    // 女 F
+    System.out.println(sample.getHkidNumber());             // K977182(4)
+    System.out.println(sample.getSymbols());                // ***AZ
+
+    // Holder summaries
+    System.out.println(sample.describeHolder(Locale.TRADITIONAL_CHINESE, referenceDate));
+    // 持有人為91歲女性，於香港出生。持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
+    System.out.println(sample.describeHolder(Locale.ENGLISH, referenceDate));
+    // The holder is female, aged 91, and was born in Hong Kong. The holder has
+    // the right of abode in Hong Kong and, at registration, was aged 18 or over
+    // and eligible for a Re-entry Permit.
   }
 }
 ```
 
-Accepts one- or two-letter prefixes and an optional bare or parenthesised
-check digit. Parentheses may be a matching ASCII `()` or fullwidth `（）` pair;
-formatted output uses ASCII parentheses. Mixed pairs are rejected. Supplied
-check digits are validated; `isValid` returns `false` for invalid input.
+> [!CAUTION]
+> Generated HKID numbers may coincide with real people's numbers. Use them only
+> in isolated test datasets and environments. A valid checksum does not guarantee
+> a fictional identity.
+
+## Usage notes
+
+### Validation and formatting
+
+An HKID number has a one- or two-letter prefix followed by six digits.
+You can omit the check digit, append it directly or enclose it in matching
+ASCII `()` or fullwidth `（）` parentheses. `HkidNumber` calculates a missing
+check digit and formats it with ASCII parentheses. If the format or supplied
+check digit is invalid, `HkidNumberUtil.isValid` returns `false`.
 
 Number and symbol text parsers convert fullwidth Latin letters and digits to
 ASCII, accepting mixtures such as `Ａ12３456(３)` and formatting numbers as
@@ -92,72 +127,25 @@ between complete components, such as `A 123456 (3)` and `*** A Z`. See the
 for the exact character sets. Constructors taking separate number components
 require ASCII input and do not trim or normalize character width.
 
-Card construction additionally validates date order and age-specific symbols.
+Building a card checks date order and age-specific symbols.
 Call `validateAsOf(referenceDate)` to reject future-dated fields.
-Suspicion checks skip missing fields; `findSuspicions` returns the reasons found.
+`findSuspicions()` lists inconsistencies between the available fields.
 
 ### Generated data
 
-```java
-import io.github.wal_n.hkid.card.HkidCard;
-import io.github.wal_n.hkid.card.HkidCardUtil;
-
-public final class GeneratedDataExample {
-  public static void main(String[] args) {
-    HkidCard card = HkidCardUtil.generateRandomCard();
-
-    System.out.println(card.getChineseName());              // e.g. 樂永晴
-    System.out.println(card.getChineseCommercialCodes());   // e.g. [2867, 3057, 2532]
-    System.out.println(card.getEnglishName());              // e.g. LOK, Wing Ching
-    System.out.println(card.getSex());                      // e.g. 女 F
-    System.out.println(card.getHkidNumber());               // e.g. Z683365(A)
-    System.out.println(card.getSymbols());                  // e.g. ***AZ
-  }
-}
-```
-
-> [!CAUTION]
-> Generated HKID numbers may coincide with real people's numbers. Use only in
-> isolated test datasets and environments; never mix with production or customer
-> data. A valid checksum does not guarantee a fictional identity.
-
-Name seeds include sex-associated and unisex entries; these guide generation
-and do not restrict validation of real names.
+Call `HkidCardUtil.generateRandomCard()` for a sample as of today. To reproduce
+the example above, use the same library version, random seed and reference date.
+The name generator uses sex-associated and unisex entries. Name validation
+accepts names independently of those associations.
 
 ### Holder summaries
 
-```java
-import io.github.wal_n.hkid.card.HkidCard;
-import io.github.wal_n.hkid.card.HkidCardUtil;
-import io.github.wal_n.hkid.card.Sex;
-
-import java.time.LocalDate;
-import java.util.Locale;
-
-public final class HolderSummaryExample {
-  public static void main(String[] args) {
-    HkidCard card = HkidCard.builder()
-      .dateOfBirth(LocalDate.of(1975, 7, 21))
-      .sex(Sex.FEMALE)
-      .symbolCodes("***AZ")
-      .build();
-    LocalDate referenceDate = LocalDate.of(2026, 7, 21);
-
-    System.out.println(card.describeHolder(Locale.TRADITIONAL_CHINESE, referenceDate));
-    // 持有人為51歲女性，於香港出生。持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
-    System.out.println(HkidCardUtil.describeHolder(card, Locale.ENGLISH, referenceDate));
-    // The holder is female, aged 51, and was born in Hong Kong. The holder has 
-    // the right of abode in Hong Kong and, at registration, was aged 18 or over and
-    // eligible for a Re-entry Permit.
-  }
-}
-```
-
-Holder summaries include available age, sex, reported birthplace and symbol
-meanings. Missing information is omitted; a card with nothing to describe
-returns an empty string. Names, Chinese Commercial Codes, exact birth dates,
-HKID numbers and registration dates are excluded. Age-specific and
-stay-restriction symbols retain their meaning at registration.
+`describeHolder(locale, referenceDate)` reports age on the reference date,
+sex, reported birthplace and symbol meanings when those fields are available.
+Age-specific and stay-restriction symbols describe the holder at registration.
+The summary omits names, Chinese Commercial Codes, exact birth dates, HKID
+numbers and registration dates. It returns an empty string for a card with
+nothing to describe.
 
 ## For AI agents
 
