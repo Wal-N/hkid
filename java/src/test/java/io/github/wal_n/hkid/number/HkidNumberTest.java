@@ -321,6 +321,33 @@ class HkidNumberTest {
     }
 
     @Test
+    void validatesAsciiNumberFormatAndOptionalCheckDigit() {
+        assertTrue(HkidNumberUtil.isValidAsciiWithoutWhitespace("A123456"));
+        assertTrue(HkidNumberUtil.isValidAsciiWithoutWhitespace("ab1234569"));
+        assertTrue(HkidNumberUtil.isValidAsciiWithoutWhitespace("a000002(a)"));
+        assertFalse(HkidNumberUtil.isValidAsciiWithoutWhitespace(null));
+        assertFalse(HkidNumberUtil.isValidAsciiWithoutWhitespace(""));
+        assertFalse(HkidNumberUtil.isValidAsciiWithoutWhitespace("A12345"));
+        assertFalse(HkidNumberUtil.isValidAsciiWithoutWhitespace("A123456(4)"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {" ", "\t", "\r", "\n", "\u000b", "\f", "\u00a0", "\u3000"})
+    void asciiValidationRejectsWhitespaceAnywhere(String whitespace) {
+        assertFalse(HkidNumberUtil.isValidAsciiWithoutWhitespace(whitespace + "A123456(3)"));
+        assertFalse(HkidNumberUtil.isValidAsciiWithoutWhitespace("A" + whitespace + "123456(3)"));
+        assertFalse(HkidNumberUtil.isValidAsciiWithoutWhitespace("A123456" + whitespace + "(3)"));
+        assertFalse(HkidNumberUtil.isValidAsciiWithoutWhitespace("A123456(3)" + whitespace));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Ａ123456(3)", "A12３456(3)", "A123456(３)", "A123456（3）"})
+    void asciiValidationRejectsFullwidthCharactersAcceptedByDefault(String input) {
+        assertTrue(HkidNumberUtil.isValid(input));
+        assertFalse(HkidNumberUtil.isValidAsciiWithoutWhitespace(input));
+    }
+
+    @Test
     void exposesDefinedPrefixDescriptionsInBothLanguages() {
         HkidNumber hkidNumber = new HkidNumber("A123456");
 
