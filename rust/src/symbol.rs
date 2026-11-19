@@ -1,6 +1,6 @@
 //! Printed codes, categories and descriptions for current smart HKID card symbols.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::fmt;
 use std::sync::LazyLock;
 
@@ -159,17 +159,21 @@ fn load_symbols(input: &str) -> Result<BTreeMap<HkidSymbol, Entry>, String> {
         ));
     }
     let mut by_symbol = BTreeMap::new();
-    let mut codes = HashSet::new();
     for Object(entry) in table.symbols {
         let symbol = entry.id;
-        if entry.code.is_empty()
-            || entry.descriptions.en.is_empty()
-            || entry.descriptions.zh_hant.is_empty()
-        {
-            return Err(format!("empty code or description for symbol {symbol:?}"));
+        let valid_code = match symbol {
+            HkidSymbol::AdultReEntryPermit => entry.code == "***",
+            HkidSymbol::MinorReEntryPermit => entry.code == "*",
+            _ => !entry.code.is_empty() && entry.code.bytes().all(|byte| byte.is_ascii_uppercase()),
+        };
+        if !valid_code {
+            return Err(format!(
+                "invalid printed code {:?} for {symbol:?}",
+                entry.code
+            ));
         }
-        if !codes.insert(entry.code.clone()) {
-            return Err(format!("duplicate symbol code {:?}", entry.code));
+        if entry.descriptions.en.is_empty() || entry.descriptions.zh_hant.is_empty() {
+            return Err(format!("empty description for symbol {symbol:?}"));
         }
         if by_symbol.insert(symbol, entry).is_some() {
             return Err(format!("duplicate symbol {symbol:?}"));
@@ -178,6 +182,22 @@ fn load_symbols(input: &str) -> Result<BTreeMap<HkidSymbol, Entry>, String> {
     for symbol in HkidSymbol::all() {
         if !by_symbol.contains_key(symbol) {
             return Err(format!("missing symbol {symbol:?}"));
+        }
+    }
+    // In sorted order, a code immediately precedes at least one of its extensions.
+    // The reserved star codes have their own longest-match rule.
+    let mut letters: Vec<_> = by_symbol
+        .values()
+        .map(|entry| entry.code.as_str())
+        .filter(|code| !code.starts_with('*'))
+        .collect();
+    letters.sort_unstable();
+    for &[first, next] in letters.array_windows() {
+        if first == next {
+            return Err(format!("duplicate symbol code {first:?}"));
+        }
+        if next.starts_with(first) {
+            return Err(format!("symbol code {first:?} is a prefix of {next:?}"));
         }
     }
     Ok(by_symbol)
@@ -227,13 +247,80 @@ mod tests {
     }
 
     #[test]
-    fn table_rejects_unknown_missing_or_duplicate_symbols_and_codes() {
+    fn every_printed_code_looks_up_its_own_symbol() {
+        for &symbol in HkidSymbol::all() {
+            assert_eq!(HkidSymbol::lookup(symbol.code()), Some(symbol));
+        }
+    }
+
+    fn set_code(data: &mut Value, id: &str, code: &str) {
+        let row = data["symbols"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|row| row["id"] == id)
+            .unwrap();
+        row["code"] = json!(code);
+    }
+
+    #[test]
+    fn ambiguous_letter_code_is_rejected_in_either_row_order() {
+        let mut data: Value = serde_json::from_str(SYMBOL_DATA).unwrap();
+        set_code(&mut data, "BORN_ELSEWHERE", "AZ");
+        for _ in 0..2 {
+            let error = load_symbols(&data.to_string()).unwrap_err();
+            assert!(
+                error.contains("\"A\"") && error.contains("\"AZ\""),
+                "{error}"
+            );
+            data["symbols"].as_array_mut().unwrap().reverse();
+        }
+    }
+
+    #[test]
+    fn duplicate_letter_codes_are_rejected() {
+        let mut data: Value = serde_json::from_str(SYMBOL_DATA).unwrap();
+        set_code(&mut data, "BORN_ELSEWHERE", "Z");
+        assert_eq!(
+            load_symbols(&data.to_string()).unwrap_err(),
+            "duplicate symbol code \"Z\""
+        );
+    }
+
+    #[test]
+    fn custom_letter_codes_must_use_canonical_uppercase_ascii() {
+        let mut data: Value = serde_json::from_str(SYMBOL_DATA).unwrap();
+        for code in ["q", "Ｑ", "Q Z", "1", "*"] {
+            set_code(&mut data, "BORN_ELSEWHERE", code);
+            let error = load_symbols(&data.to_string()).expect_err(code);
+            assert!(error.contains(code), "{error}");
+        }
+        for code in ["Q", "QR"] {
+            set_code(&mut data, "BORN_ELSEWHERE", code);
+            let metadata = load_symbols(&data.to_string()).unwrap();
+            assert_eq!(metadata[&HkidSymbol::BornElsewhere].code, code);
+        }
+        set_code(&mut data, "NAME_CHANGED", "QS");
+        assert!(load_symbols(&data.to_string()).is_ok());
+    }
+
+    #[test]
+    fn age_symbols_keep_their_reserved_star_codes() {
+        for (id, code) in [
+            ("ADULT_RE_ENTRY_PERMIT", "Q"),
+            ("MINOR_RE_ENTRY_PERMIT", "**"),
+        ] {
+            let mut data: Value = serde_json::from_str(SYMBOL_DATA).unwrap();
+            set_code(&mut data, id, code);
+            assert!(load_symbols(&data.to_string()).is_err(), "{id} {code}");
+        }
+    }
+
+    #[test]
+    fn table_rejects_invalid_shapes_and_invalid_symbol_ids() {
         let data: Value = serde_json::from_str(SYMBOL_DATA).unwrap();
-        let first = &data["symbols"][0];
         for (key, value) in [
             ("id", json!("UNKNOWN")),
-            ("id", first["id"].clone()),
-            ("code", first["code"].clone()),
             ("code", json!("")),
             ("category", json!("UNKNOWN")),
             ("id", json!({"RIGHT_OF_ABODE": null})),
@@ -246,6 +333,13 @@ mod tests {
             invalid["symbols"][1][key] = value;
             assert!(load_symbols(&invalid.to_string()).is_err(), "{key}");
         }
+        let mut duplicate = data.clone();
+        duplicate["symbols"]
+            .as_array_mut()
+            .unwrap()
+            .push(data["symbols"][0].clone());
+        let error = load_symbols(&duplicate.to_string()).unwrap_err();
+        assert!(error.starts_with("duplicate symbol "), "{error}");
         let mut missing = data.clone();
         missing["symbols"].as_array_mut().unwrap().pop();
         assert!(load_symbols(&missing.to_string()).is_err());

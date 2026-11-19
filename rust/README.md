@@ -30,7 +30,6 @@ an omitted check digit and checks any supplied digit. Use
 ## Smart-card symbols
 
 ```rust
-use chrono::NaiveDate;
 use hkid_utils::{HkidSymbol, HkidSymbols};
 
 let symbols: HkidSymbols = "ｚ *** Ａ".parse().unwrap();
@@ -39,14 +38,20 @@ assert!(symbols.contains(HkidSymbol::RightOfAbode));
 assert!(HkidSymbols::is_valid("BN"));
 assert!(!HkidSymbols::is_valid("AC"));
 
-let birth = NaiveDate::from_ymd_opt(2004, 2, 29).unwrap();
-let registration = NaiveDate::from_ymd_opt(2022, 3, 1).unwrap();
+let birth = "2004-02-29".parse().unwrap();
+let registration = "2022-03-01".parse().unwrap();
 assert!(symbols.validate_age(birth, registration).is_ok());
 ```
 
 Parsing checks for duplicates and conflicting symbols and returns them in
 card order. Use the registration date to check age eligibility. Someone born
 on 29 February reaches the next age on 1 March in a non-leap year.
+
+When editing `data/hkid-symbols.json`, keep `***` for the adult permit symbol
+and `*` for the minor permit symbol. Other printed codes use uppercase ASCII
+letters. Each must be unique, and no letter code may start with another code
+in the table. For example, defining both `A` and `AZ` would make adjacent
+symbols ambiguous. Use one letter per code for compatibility with the Java parser.
 
 ## Build and test
 
