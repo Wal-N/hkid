@@ -27,7 +27,8 @@ rules and edge cases so you don't have to implement them from scratch.
 
 ## Quick start
 
-Java is available now. A Rust implementation is planned.
+Java is available now. The [Rust crate](rust/README.md) supports
+HKID numbers and defined prefixes and can be built from this repository.
 
 ### Java 8+
 
