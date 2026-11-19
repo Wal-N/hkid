@@ -1,12 +1,9 @@
-use std::collections::HashSet;
+mod common;
 
-use chrono::{Datelike, NaiveDate};
+use chrono::Datelike;
+use common::{Object, check_case_ids, check_schema_version, fixture_date};
 use hkid_utils::{DefinedPrefix, HkidNumber, ParseNumberError};
 use serde::Deserialize;
-
-#[path = "../src/json_object.rs"]
-mod json_object;
-use json_object::Object;
 
 const NUMBER_FIXTURES: &str = include_str!("../../conformance/hkid-number.json");
 
@@ -80,30 +77,10 @@ struct FirstIssueCase {
     expect_prefixes: Vec<String>,
 }
 
-fn check_case_ids<T>(
-    group: &str,
-    cases: &[Object<T>],
-    case_id: impl Fn(&T) -> &str,
-) -> Result<(), String> {
-    let mut seen = HashSet::new();
-    for case in cases {
-        let id = case_id(case);
-        if !seen.insert(id) {
-            return Err(format!("duplicate case ID {id:?} in {group}"));
-        }
-    }
-    Ok(())
-}
-
 fn load_fixtures(input: &str) -> Result<Fixtures, String> {
     let Object(fixtures): Object<Fixtures> =
         serde_json::from_str(input).map_err(|error| error.to_string())?;
-    if fixtures.schema_version != 1 {
-        return Err(format!(
-            "unsupported fixture version {}",
-            fixtures.schema_version
-        ));
-    }
+    check_schema_version(fixtures.schema_version)?;
     check_case_ids("parseCases", &fixtures.parse_cases, |case| &case.id)?;
     check_case_ids("invalidParseCases", &fixtures.invalid_parse_cases, |case| {
         &case.id
@@ -197,16 +174,6 @@ fn validates_separate_check_digits() {
     }
 }
 
-fn fixture_date(id: &str, text: &str) -> NaiveDate {
-    let date: NaiveDate = text.parse().unwrap_or_else(|err| panic!("{id}: {err}"));
-    assert_eq!(
-        date.to_string(),
-        text,
-        "{id}: expected an ISO calendar date"
-    );
-    date
-}
-
 #[test]
 fn resolves_birth_registration_prefixes() {
     let cases = fixtures().birth_registration_prefix_cases;
@@ -267,34 +234,10 @@ fn requires_json_objects_for_the_document_cases_and_expectations() {
 
 #[test]
 fn rejects_duplicate_ids_within_each_case_group() {
-    let fixture: serde_json::Value = serde_json::from_str(NUMBER_FIXTURES).unwrap();
-    for (group, value) in fixture.as_object().unwrap() {
-        let Some(cases) = value.as_array() else {
-            continue;
-        };
-        let id = cases[0]["id"].as_str().unwrap();
-        let mut extra_case = cases.last().unwrap().clone();
-        extra_case["id"] = serde_json::json!(id);
-        let mut duplicate = fixture.clone();
-        duplicate[group].as_array_mut().unwrap().push(extra_case);
-        assert_eq!(
-            load_fixtures(&duplicate.to_string()).err(),
-            Some(format!("duplicate case ID {id:?} in {group}"))
-        );
-    }
+    common::assert_duplicate_ids_rejected(NUMBER_FIXTURES, load_fixtures);
 }
 
 #[test]
 fn accepts_the_same_id_in_different_case_groups() {
-    let mut fixture: serde_json::Value = serde_json::from_str(NUMBER_FIXTURES).unwrap();
-    for cases in fixture
-        .as_object_mut()
-        .unwrap()
-        .values_mut()
-        .filter_map(serde_json::Value::as_array_mut)
-    {
-        cases.truncate(1);
-        cases[0]["id"] = serde_json::json!("shared-case-id");
-    }
-    load_fixtures(&fixture.to_string()).expect("case IDs are scoped to their group");
+    common::assert_cross_group_ids_accepted(NUMBER_FIXTURES, load_fixtures);
 }

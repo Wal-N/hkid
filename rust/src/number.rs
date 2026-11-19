@@ -3,6 +3,7 @@
 use std::{error::Error, fmt, str::FromStr};
 
 use crate::prefix::DefinedPrefix;
+use crate::text::{fold_fullwidth, is_separator, trim_outer};
 
 /// The reason a number could not be parsed.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -213,23 +214,6 @@ fn single_char(input: &str) -> Result<char, ParseNumberError> {
     match (chars.next(), chars.next()) {
         (Some(character), None) => Ok(character),
         _ => Err(ParseNumberError::InvalidFormat),
-    }
-}
-
-fn is_separator(character: char) -> bool {
-    matches!(character, ' ' | '\u{00a0}' | '\u{3000}')
-}
-
-pub(crate) fn trim_outer(input: &str) -> &str {
-    input.trim_matches(|ch| is_separator(ch) || matches!(ch, '\t' | '\n' | '\r'))
-}
-
-pub(crate) fn fold_fullwidth(character: char) -> char {
-    match character {
-        '０'..='９' | 'Ａ'..='Ｚ' | 'ａ'..='ｚ' => {
-            char::from((u32::from(character) - 0xfee0) as u8)
-        }
-        other => other,
     }
 }
 

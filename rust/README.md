@@ -1,7 +1,9 @@
 # HKID Utilities for Rust
 
-`hkid-utils` validates and formats Hong Kong identity card numbers. It also
-looks up defined prefixes using the project's shared reference data.
+`hkid-utils` validates and formats Hong Kong identity card numbers and
+smart-card symbols. It also looks up defined prefixes and symbol descriptions.
+
+## Numbers and prefixes
 
 ```rust
 use hkid_utils::{DefinedPrefix, HkidNumber, ParseNumberError};
@@ -25,9 +27,32 @@ The parser accepts a body with one or two letters and six digits. It derives
 an omitted check digit and checks any supplied digit. Use
 `HkidNumber::from_parts` for separate ASCII components.
 
+## Smart-card symbols
+
+```rust
+use chrono::NaiveDate;
+use hkid_utils::{HkidSymbol, HkidSymbols};
+
+let symbols: HkidSymbols = "ｚ *** Ａ".parse().unwrap();
+assert_eq!(symbols.to_string(), "***AZ");
+assert!(symbols.contains(HkidSymbol::RightOfAbode));
+assert!(HkidSymbols::is_valid("BN"));
+assert!(!HkidSymbols::is_valid("AC"));
+
+let birth = NaiveDate::from_ymd_opt(2004, 2, 29).unwrap();
+let registration = NaiveDate::from_ymd_opt(2022, 3, 1).unwrap();
+assert!(symbols.validate_age(birth, registration).is_ok());
+```
+
+Parsing checks for duplicates and conflicting symbols and returns them in
+card order. Use the registration date to check age eligibility. Someone born
+on 29 February reaches the next age on 1 March in a non-leap year.
+
+## Build and test
+
 Run the following commands from the repository root with Rust 1.100.0
-(2024 edition). The crate embeds `data/defined-prefixes.json`, and its
-integration test reads `conformance/hkid-number.json`.
+(2024 edition). The package includes the shared number and symbol fixtures
+and embeds the prefix and symbol tables.
 
 ```sh
 cargo fmt --check
