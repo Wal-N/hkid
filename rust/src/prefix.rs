@@ -296,6 +296,19 @@ mod tests {
     }
 
     #[test]
+    fn duplicate_prefix_ids_are_rejected_in_either_row_order() {
+        let original: Value = serde_json::from_str(PREFIX_DATA).unwrap();
+        for first_row in [0, 1] {
+            let mut data = original.clone();
+            let rows = data["prefixes"].as_array_mut().unwrap();
+            rows.swap(0, first_row);
+            let expected_error = format!("duplicate prefix {}", rows[0]["id"].as_str().unwrap());
+            rows[1]["id"] = rows[0]["id"].clone();
+            assert_eq!(load_prefixes(&data.to_string()).err(), Some(expected_error));
+        }
+    }
+
+    #[test]
     fn rejects_invalid_schema_fields_keys_and_periods() {
         let original: Value = serde_json::from_str(PREFIX_DATA).unwrap();
         let index = original["prefixes"]
@@ -328,7 +341,6 @@ mod tests {
         assert_rejected(&|data| {
             data["prefixes"].as_array_mut().unwrap().pop();
         });
-        assert_rejected(&|data| data["prefixes"][1]["id"] = json!("A"));
         assert_rejected(&|data| data["prefixes"][1]["id"] = json!("XX"));
         assert_rejected(&|data| data["prefixes"][0]["descriptions"]["zh-Hant"] = json!(""));
         assert_rejected(&|data| {
