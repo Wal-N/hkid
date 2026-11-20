@@ -28,7 +28,8 @@ rules and edge cases so you don't have to implement them from scratch.
 ## Quick start
 
 Java is available now. The [Rust crate](rust/README.md) supports
-HKID numbers, defined prefixes and smart-card symbols. It can be built from this repository.
+HKID numbers, defined prefixes, smart-card symbols, Chinese and English names,
+and Chinese Commercial Codes. It can be built from this repository.
 
 ### Java 8+
 
