@@ -7,7 +7,7 @@ use chrono::{Datelike, NaiveDate};
 use serde::Deserialize;
 
 use crate::json_object::Object;
-use crate::number::{fold_fullwidth, trim_outer};
+use crate::text::{fold_fullwidth, trim_outer};
 
 const PREFIX_DATA: &str = include_str!("../../data/defined-prefixes.json");
 // These schema keys also define the order of results when periods overlap.
