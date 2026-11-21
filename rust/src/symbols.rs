@@ -2,8 +2,9 @@
 
 use std::{error::Error, fmt, str::FromStr};
 
-use chrono::{Datelike, NaiveDate};
+use chrono::NaiveDate;
 
+use crate::card::completed_years;
 use crate::symbol::{HkidSymbol, HkidSymbolCategory};
 use crate::text::{is_separator, trim_outer};
 
@@ -117,10 +118,7 @@ impl HkidSymbols {
         if date_of_birth > reference_date {
             return Err(SymbolAgeError::BirthAfterReferenceDate);
         }
-        // Comparing month/day puts a leap-day birthday's anniversary on March 1 in a common year.
-        let before_birthday = (reference_date.month(), reference_date.day())
-            < (date_of_birth.month(), date_of_birth.day());
-        let age = reference_date.year() - date_of_birth.year() - i32::from(before_birthday);
+        let age = completed_years(date_of_birth, reference_date);
         match self
             .by_category(HkidSymbolCategory::ReEntryPermitEligibility)
             .next()

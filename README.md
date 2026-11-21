@@ -29,7 +29,8 @@ rules and edge cases so you don't have to implement them from scratch.
 
 Java is available now. The [Rust crate](rust/README.md) supports
 HKID numbers, defined prefixes, smart-card symbols, Chinese and English names,
-and Chinese Commercial Codes. It can be built from this repository.
+and Chinese Commercial Codes. It also validates complete or partial cards
+and describes the holder in English or Traditional Chinese. Build it from this repository.
 
 ### Java 8+
 
