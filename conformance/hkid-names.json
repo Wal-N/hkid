@@ -263,6 +263,11 @@
       "expectValid": false
     },
     {
+      "id": "personal-name-with-omitted-surname",
+      "personalName": "Tai Man",
+      "expectValid": false
+    },
+    {
       "id": "complete-english-name",
       "surname": "Chan",
       "personalName": "Tai Man",
@@ -278,6 +283,11 @@
       "id": "surname-only-null-personal-name",
       "surname": "Chan",
       "personalName": null,
+      "expectValid": true
+    },
+    {
+      "id": "surname-only-omitted-personal-name",
+      "surname": "Chan",
       "expectValid": true
     },
     {

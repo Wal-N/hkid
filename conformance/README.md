@@ -40,7 +40,8 @@ In `englishNameCases` and `invalidEnglishNameCases`, `surname` and `personalName
 are required strings or explicit nulls. Optional `expectSurname` and
 `expectPersonalName` give normalized results; when absent, the corresponding
 input string is the expected result. A null input part needs an explicit
-expected string.
+expected string. In `englishNameValidationCases`, either input part may be
+omitted and has the same meaning as an explicit null.
 
 | Context | Meaning |
 | --- | --- |

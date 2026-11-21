@@ -109,9 +109,7 @@ struct InvalidChineseNameCase {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct EnglishValidationCase {
     id: String,
-    #[serde(deserialize_with = "Option::deserialize")]
     surname: Option<String>,
-    #[serde(deserialize_with = "Option::deserialize")]
     personal_name: Option<String>,
     expect_valid: bool,
 }
