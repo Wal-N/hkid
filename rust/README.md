@@ -1,7 +1,8 @@
 # HKID Utilities for Rust
 
-`hkid-utils` validates and formats Hong Kong identity card numbers and
-smart-card symbols. It also looks up defined prefixes and symbol descriptions.
+`hkid-utils` validates and formats Hong Kong identity card numbers, smart-card
+symbols, Chinese and English names, and Chinese Commercial Codes. It also looks
+up defined prefixes and symbol descriptions.
 
 ## Numbers and prefixes
 
@@ -53,10 +54,42 @@ letters. Each must be unique, and no letter code may start with another code
 in the table. For example, defining both `A` and `AZ` would make adjacent
 symbols ambiguous. Use one letter per code for compatibility with the Java parser.
 
+## Names and Chinese Commercial Codes
+
+```rust
+use hkid_utils::{ChineseCommercialCode, ChineseName, EnglishName};
+
+let codes = vec![
+    ChineseCommercialCode::new("7115", None).unwrap(),
+    ChineseCommercialCode::new("2479", Some("0")).unwrap(),
+];
+let chinese = ChineseName::with_commercial_codes(Some("陳"), Some("旻"), codes).unwrap();
+assert_eq!(chinese.to_string(), "陳旻");
+let second = &chinese.commercial_codes()[1];
+assert_eq!(second.to_string(), "2479");
+assert_eq!(second.extension_number(), Some("0"));
+
+let english = EnglishName::new(Some("Chan"), Some("Tai Man")).unwrap();
+assert_eq!(english.to_string(), "Chan, Tai Man");
+assert_eq!(EnglishName::new(None, Some("Tai Man")).unwrap().to_string(), "Tai Man");
+assert!(!EnglishName::is_valid(None, Some("Tai Man")));
+```
+
+A Chinese name can contain up to six Han letters. Each letter counts once,
+including supplementary-plane characters. Use `ChineseName::new` for a name
+without codes. If you supply codes, give one per character in printed order.
+Each code has four ASCII digits and an optional single-digit extension. The
+extension is part of the value. Only the four main digits appear on display.
+
+English names retain their spelling and case. Within each part, ASCII letter
+groups may be joined by a single space, period, apostrophe or hyphen. The
+formatted name can contain up to 40 characters, including the comma and space.
+Either name part can be absent. Complete English-name validation requires a surname.
+
 ## Build and test
 
 Run the following commands from the repository root with Rust 1.100.0
-(2024 edition). The package includes the shared number and symbol fixtures
+(2024 edition). The package includes the shared number, symbol and name fixtures
 and embeds the prefix and symbol tables.
 
 ```sh

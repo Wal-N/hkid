@@ -29,6 +29,7 @@ pub(crate) fn check_case_ids<T>(
     Ok(())
 }
 
+#[allow(dead_code, reason = "some fixtures have no dates")]
 pub(crate) fn fixture_date(id: &str, text: &str) -> NaiveDate {
     let date: NaiveDate = text.parse().unwrap_or_else(|err| panic!("{id}: {err}"));
     assert_eq!(

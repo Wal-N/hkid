@@ -3,7 +3,7 @@ name = "hkid-utils"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.100"
-description = "Hong Kong identity card numbers, prefix lookup and smart-card symbol validation"
+description = "Hong Kong identity card numbers, prefixes, smart-card symbols, names and Chinese Commercial Codes"
 license = "MIT"
 repository = "https://github.com/Wal-N/hkid"
 readme = "rust/README.md"
@@ -16,6 +16,7 @@ include = [
     "/data/hkid-symbols.json",
     "/conformance/hkid-number.json",
     "/conformance/hkid-symbols.json",
+    "/conformance/hkid-names.json",
     "/LICENSE",
 ]
 
@@ -33,7 +34,13 @@ path = "rust/tests/number_conformance.rs"
 name = "symbol_conformance"
 path = "rust/tests/symbol_conformance.rs"
 
+[[test]]
+name = "name_conformance"
+path = "rust/tests/name_conformance.rs"
+
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["std"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+unicode-general-category = "1.1"
+unicode-script = "0.5"
