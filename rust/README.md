@@ -123,7 +123,9 @@ Holder summaries use the available age, sex, reported birthplace and symbol mean
 Locales whose language is `zh`, such as `zh-HK` and `zh-Hans`, select Traditional
 Chinese. Other languages use English. `describe_holder(None)` uses the local date and
 system language. Use `describe_holder_on` with an explicit locale and date for
-reproducible output.
+reproducible output. If a custom symbol table assigns a symbol on the card to an
+incompatible birthplace, residential status or re-entry permit category, the summary
+returns `CardError::UnsupportedHolderSymbol` with the symbol and its assigned category.
 
 ## Generate sample data
 

@@ -4,7 +4,10 @@ use std::{error::Error, fmt, str::FromStr};
 
 use chrono::{Datelike, NaiveDate};
 
-use crate::{ChineseName, EnglishName, HkidNumber, HkidSymbol, HkidSymbols, SymbolAgeError};
+use crate::{
+    ChineseName, EnglishName, HkidNumber, HkidSymbol, HkidSymbolCategory, HkidSymbols,
+    SymbolAgeError,
+};
 
 /// The sex marker on the card.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -96,7 +99,7 @@ impl fmt::Display for YearMonth {
     }
 }
 
-/// A field could not be parsed, or its value conflicts with another date or symbol.
+/// A card field could not be parsed, validated or described.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CardError {
     InvalidSex,
@@ -106,6 +109,11 @@ pub enum CardError {
     FirstRegistrationBeforeBirthMonth,
     FirstRegistrationAfterRegistrationMonth,
     IneligibleSymbol(HkidSymbol),
+    /// The holder summary cannot interpret this symbol in its assigned category.
+    UnsupportedHolderSymbol {
+        symbol: HkidSymbol,
+        category: HkidSymbolCategory,
+    },
     BirthAfterReferenceDate,
     RegistrationAfterReferenceDate,
     FirstRegistrationAfterReferenceMonth,
@@ -128,6 +136,12 @@ impl fmt::Display for CardError {
                 return write!(
                     f,
                     "holder's age at registration is outside the range for {symbol}"
+                );
+            }
+            Self::UnsupportedHolderSymbol { symbol, category } => {
+                return write!(
+                    f,
+                    "unsupported symbol {symbol} for {category:?} in holder summary"
                 );
             }
             Self::BirthAfterReferenceDate => "birth is after the reference date",

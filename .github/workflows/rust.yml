@@ -57,6 +57,16 @@ jobs:
           package="$RUNNER_TEMP/hkid-package"
           cp "$package/rust/tests/fixtures/weighted-name-seed.csv" "$package/data/chinese-name-seed.csv"
           cargo test --locked --offline --lib --manifest-path "$package/Cargo.toml"
+      - name: Test holder summaries with a misclassified symbol
+        run: |
+          package="$RUNNER_TEMP/hkid-package"
+          consumer="$RUNNER_TEMP/hkid-readme"
+          symbols="$package/data/hkid-symbols.json"
+          jq '(.symbols[] | select(.id == "RIGHT_OF_ABODE") | .category) = "REPORTED_PLACE_OF_BIRTH"' "$symbols" > "$symbols.tmp"
+          mv "$symbols.tmp" "$symbols"
+          mkdir -p "$consumer/tests"
+          cp "$package/rust/tests/fixtures/misclassified_holder_symbol.rs" "$consumer/tests/"
+          cargo test --locked --offline --manifest-path "$consumer/Cargo.toml" --test misclassified_holder_symbol
 
   browser:
     name: Browser WASM (Firefox)

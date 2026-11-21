@@ -86,6 +86,10 @@ impl HkidCard {
     /// Supply a BCP 47 tag such as `zh-HK` or `en`, or `None` for the current
     /// system locale. Tags whose language is `zh` select Traditional Chinese.
     /// Other languages and an unavailable system locale select English.
+    ///
+    /// Returns [`CardError::UnsupportedHolderSymbol`] if the symbol table assigns a symbol
+    /// on this card to a birthplace, residential status or re-entry permit category
+    /// that the symbol cannot describe.
     pub fn describe_holder_on(
         &self,
         locale: Option<&str>,
@@ -99,11 +103,19 @@ impl HkidCard {
         });
         let fields = self.fields();
         let symbols = &fields.symbols;
+        let in_category = |category| symbols.by_category(category).next();
         let mut sections = Vec::new();
-        if let Some(details) = language.demographics(age, fields.sex, symbols) {
+        if let Some(details) = language.demographics(
+            age,
+            fields.sex,
+            in_category(HkidSymbolCategory::ReportedPlaceOfBirth),
+        )? {
             sections.push(details);
         }
-        if let Some(status) = language.status_and_eligibility(symbols) {
+        if let Some(status) = language.status_and_eligibility(
+            in_category(HkidSymbolCategory::ResidentialStatus),
+            in_category(HkidSymbolCategory::ReEntryPermitEligibility),
+        )? {
             sections.push(status);
         }
         if let Some(amendments) = language.amendments(symbols) {
@@ -213,8 +225,8 @@ impl Language {
         self,
         age: Option<i32>,
         sex: Option<Sex>,
-        symbols: &HkidSymbols,
-    ) -> Option<String> {
+        birthplace: Option<HkidSymbol>,
+    ) -> Result<Option<String>, CardError> {
         let sex = sex.map(|value| match value {
             Sex::Male => self.text("male", "男性"),
             Sex::Female => self.text("female", "女性"),
@@ -229,20 +241,23 @@ impl Language {
             (Self::TraditionalChinese, None, Some(age)) => format!("現年{age}歲"),
             (_, None, None) => String::new(),
         };
-        let birthplace = match symbols
-            .by_category(HkidSymbolCategory::ReportedPlaceOfBirth)
-            .next()
-        {
+        let birthplace = match birthplace {
             Some(HkidSymbol::BornInHongKong) => self.text("was born in Hong Kong", "於香港出生"),
             Some(HkidSymbol::BornInMainland) => {
                 self.text("was born in the Chinese Mainland", "於內地出生")
             }
             Some(HkidSymbol::BornInMacao) => self.text("was born in Macao", "於澳門出生"),
             Some(HkidSymbol::BornElsewhere) => self.text("was born elsewhere", "於其他地區出生"),
-            _ => "",
+            None => "",
+            Some(symbol) => {
+                return Err(CardError::UnsupportedHolderSymbol {
+                    symbol,
+                    category: HkidSymbolCategory::ReportedPlaceOfBirth,
+                });
+            }
         };
         if demographics.is_empty() && birthplace.is_empty() {
-            return None;
+            return Ok(None);
         }
         let separator = if demographics.is_empty() || birthplace.is_empty() {
             ""
@@ -253,15 +268,16 @@ impl Language {
         };
         let subject = self.text("The holder ", "持有人");
         let stop = self.text(".", "。");
-        Some(format!(
+        Ok(Some(format!(
             "{subject}{demographics}{separator}{birthplace}{stop}"
-        ))
+        )))
     }
 
-    fn status_and_eligibility(self, symbols: &HkidSymbols) -> Option<String> {
-        let status = symbols
-            .by_category(HkidSymbolCategory::ResidentialStatus)
-            .next();
+    fn status_and_eligibility(
+        self,
+        status: Option<HkidSymbol>,
+        eligibility: Option<HkidSymbol>,
+    ) -> Result<Option<String>, CardError> {
         let status_clause = match status {
             Some(HkidSymbol::RightOfAbode) => {
                 self.text("has the right of abode in Hong Kong", "享有香港居留權")
@@ -273,12 +289,15 @@ impl Language {
             Some(HkidSymbol::StayNotLimited) => {
                 self.text("had no stay restriction", "沒有逗留限制")
             }
-            _ => "",
+            None => "",
+            Some(symbol) => {
+                return Err(CardError::UnsupportedHolderSymbol {
+                    symbol,
+                    category: HkidSymbolCategory::ResidentialStatus,
+                });
+            }
         };
-        let eligibility = match symbols
-            .by_category(HkidSymbolCategory::ReEntryPermitEligibility)
-            .next()
-        {
+        let eligibility = match eligibility {
             Some(HkidSymbol::AdultReEntryPermit) => self.text(
                 "was aged 18 or over and eligible for a Re-entry Permit",
                 "年滿18歲，並符合回港證申領資格",
@@ -287,10 +306,16 @@ impl Language {
                 "was aged 11 to 17 and eligible for a Re-entry Permit",
                 "年齡為11至17歲，並符合回港證申領資格",
             ),
-            _ => "",
+            None => "",
+            Some(symbol) => {
+                return Err(CardError::UnsupportedHolderSymbol {
+                    symbol,
+                    category: HkidSymbolCategory::ReEntryPermitEligibility,
+                });
+            }
         };
         if status_clause.is_empty() && eligibility.is_empty() {
-            return None;
+            return Ok(None);
         }
         let present_tense = matches!(
             status,
@@ -309,9 +334,9 @@ impl Language {
             self.text(" and ", "，")
         };
         let stop = self.text(".", "。");
-        Some(format!(
+        Ok(Some(format!(
             "{subject}{status_clause}{separator}{eligibility}{stop}"
-        ))
+        )))
     }
 
     fn amendments(self, symbols: &HkidSymbols) -> Option<&'static str> {
@@ -377,5 +402,49 @@ mod tests {
             card.describe_holder_on(Some("en"), "2026-07-21".parse().unwrap())
                 .is_err()
         );
+    }
+
+    #[test]
+    fn misclassified_birthplace_is_reported_with_or_without_other_demographics() {
+        let symbol = HkidSymbol::RightOfAbode;
+        for language in [Language::English, Language::TraditionalChinese] {
+            for (age, sex) in [(None, None), (Some(24), Some(Sex::Female))] {
+                assert_eq!(
+                    language.demographics(age, sex, Some(symbol)),
+                    Err(CardError::UnsupportedHolderSymbol {
+                        symbol,
+                        category: HkidSymbolCategory::ReportedPlaceOfBirth,
+                    })
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn misclassified_status_is_reported_before_eligibility() {
+        let symbol = HkidSymbol::BornInHongKong;
+        for eligibility in [None, Some(HkidSymbol::NameChanged)] {
+            assert_eq!(
+                Language::English.status_and_eligibility(Some(symbol), eligibility),
+                Err(CardError::UnsupportedHolderSymbol {
+                    symbol,
+                    category: HkidSymbolCategory::ResidentialStatus,
+                })
+            );
+        }
+    }
+
+    #[test]
+    fn misclassified_eligibility_is_reported_with_or_without_status() {
+        let symbol = HkidSymbol::NameChanged;
+        for status in [None, Some(HkidSymbol::RightOfAbode)] {
+            assert_eq!(
+                Language::English.status_and_eligibility(status, Some(symbol)),
+                Err(CardError::UnsupportedHolderSymbol {
+                    symbol,
+                    category: HkidSymbolCategory::ReEntryPermitEligibility,
+                })
+            );
+        }
     }
 }
