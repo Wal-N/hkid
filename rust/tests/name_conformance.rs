@@ -1,5 +1,8 @@
+#[path = "common/commercial_code.rs"]
+mod commercial_code;
 mod common;
 
+use commercial_code::CodeInput;
 use common::{Object, check_case_ids, check_schema_version};
 use hkid_utils::{ChineseCommercialCode, ChineseName, EnglishName};
 use serde::{Deserialize, Deserializer};
@@ -18,22 +21,6 @@ struct Fixtures {
     english_name_validation_cases: Vec<Object<EnglishValidationCase>>,
     english_name_cases: Vec<Object<EnglishNameCase>>,
     invalid_english_name_cases: Vec<Object<InvalidEnglishNameCase>>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct CodeInput {
-    #[serde(deserialize_with = "Option::deserialize")]
-    code: Option<String>,
-    extension_number: Option<String>,
-}
-
-impl CodeInput {
-    fn build(&self) -> Result<ChineseCommercialCode, String> {
-        let code = self.code.as_deref().ok_or("null main code")?;
-        ChineseCommercialCode::new(code, self.extension_number.as_deref())
-            .map_err(|error| error.to_string())
-    }
 }
 
 // An optional expectation can be omitted, but an explicit value must be the expected type.
