@@ -136,3 +136,11 @@ cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked
 cargo package --locked
 ```
+
+To run the browser regressions with Firefox and `wasm-pack` on Linux, use the
+test profile's `zh-HK` language preference and a time zone ahead of UTC.
+
+```sh
+TZ=Pacific/Kiritimati WASM_BINDGEN_TEST_WEBDRIVER_JSON="$PWD/rust/tests/browser-webdriver.json" \
+  wasm-pack test --headless --firefox --locked --test card_browser
+```

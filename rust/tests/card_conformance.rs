@@ -367,19 +367,56 @@ fn reports_distinct_suspicion_reasons_in_order() {
     }
 }
 
+fn check_description(case: &DescriptionCase, locale: Option<&str>) {
+    let id = &case.id;
+    let card = case.input.build().unwrap_or_else(|e| panic!("{id}: {e}"));
+    let reference = fixture_date(id, &case.reference_date);
+    let actual = card
+        .describe_holder_on(locale, reference)
+        .unwrap_or_else(|e| panic!("{id}: {e}"));
+    assert_eq!(actual, case.expect_description, "{id}");
+}
+
 #[test]
 fn describes_holders_in_the_requested_or_default_language() {
     let cases = fixtures().holder_description_cases;
     assert!(!cases.is_empty());
+
+    #[cfg(target_os = "linux")]
+    const CHILD_CASE: &str = "HKID_TEST_HOLDER_DESCRIPTION_CASE";
+    #[cfg(target_os = "linux")]
+    if let Ok(id) = std::env::var(CHILD_CASE) {
+        let case = cases.iter().find(|case| case.id == id).unwrap();
+        assert_eq!(sys_locale::get_locale(), case.default_locale, "{id}");
+        check_description(case, case.locale.as_deref());
+        return;
+    }
+
     for Object(case) in cases {
-        let id = &case.id;
-        let card = case.input.build().unwrap_or_else(|e| panic!("{id}: {e}"));
-        let reference = fixture_date(id, &case.reference_date);
-        let language = case.locale.as_deref().or(case.default_locale.as_deref());
-        let actual = card
-            .describe_holder_on(language, reference)
-            .unwrap_or_else(|e| panic!("{id}: {e}"));
-        assert_eq!(actual, case.expect_description, "{id}");
+        #[cfg(target_os = "linux")]
+        if let Some(default) = &case.default_locale {
+            // Only this child sees the fixture's system locale. The parent test
+            // harness can continue running its other tests in parallel.
+            let status = std::process::Command::new(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    stringify!(describes_holders_in_the_requested_or_default_language),
+                    "--nocapture",
+                ])
+                .env(CHILD_CASE, &case.id)
+                .env("LANGUAGE", default.replace('-', "_"))
+                .stdout(std::process::Stdio::null())
+                .status()
+                .unwrap();
+            assert!(status.success(), "{}", case.id);
+            continue;
+        }
+        let locale = case.locale.as_deref();
+        // Native Windows and Apple locale APIs do not read LANGUAGE. Still
+        // verify the fixture's expected wording on those platforms.
+        #[cfg(not(target_os = "linux"))]
+        let locale = locale.or(case.default_locale.as_deref());
+        check_description(&case, locale);
     }
 }
 

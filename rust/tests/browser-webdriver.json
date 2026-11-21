@@ -1,0 +1,13 @@
+{
+  "moz:firefoxOptions": {
+    "prefs": {
+      "intl.accept_languages": "zh-HK,en"
+    }
+  },
+  "goog:chromeOptions": {
+    "args": ["--lang=zh-HK"],
+    "prefs": {
+      "intl.accept_languages": "zh-HK,en"
+    }
+  }
+}

@@ -1,6 +1,8 @@
 //! Advisory consistency checks and localized holder descriptions.
 
 use chrono::{Local, NaiveDate};
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+use sys_locale::get_locale as system_locale;
 
 use crate::card::{CardError, HkidCard, Sex};
 use crate::{HkidNumber, HkidSymbol, HkidSymbolCategory, HkidSymbols};
@@ -91,7 +93,7 @@ impl HkidCard {
     ) -> Result<String, CardError> {
         let age = self.age_on(reference_date)?;
         let language = locale.map(Language::from_tag).unwrap_or_else(|| {
-            sys_locale::get_locale()
+            system_locale()
                 .as_deref()
                 .map_or(Language::English, Language::from_tag)
         });
@@ -111,8 +113,22 @@ impl HkidCard {
     }
 }
 
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+fn system_locale() -> Option<String> {
+    // Window and worker navigators both expose the preferred BCP 47 language.
+    // Other JavaScript hosts may have no navigator.
+    let navigator = js_sys::Reflect::get(&js_sys::global(), &"navigator".into()).ok()?;
+    js_sys::Reflect::get(&navigator, &"language".into())
+        .ok()?
+        .as_string()
+}
+
 fn local_today() -> NaiveDate {
-    #[cfg(unix)]
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    if let Some(date) = glibc_local_date() {
+        return date;
+    }
+    #[cfg(all(unix, not(all(target_os = "linux", target_env = "gnu"))))]
     {
         // Chrono caches the Unix time zone briefly. Read TZ or /etc/localtime afresh
         // so consecutive calls can observe a change across the international date line.
@@ -130,6 +146,30 @@ fn local_today() -> NaiveDate {
         }
     }
     Local::now().date_naive()
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn glibc_local_date() -> Option<NaiveDate> {
+    unsafe extern "C" {
+        fn tzset();
+    }
+    let mut local = std::mem::MaybeUninit::<libc::tm>::uninit();
+    // SAFETY: tzset and localtime_r synchronize glibc's time zone state.
+    // tzset refreshes TZ before localtime_r, which writes to our own tm and
+    // initializes it on success. time accepts null for its optional output.
+    let local = unsafe {
+        tzset();
+        let now = libc::time(std::ptr::null_mut());
+        if now == -1 || libc::localtime_r(&now, local.as_mut_ptr()).is_null() {
+            return None;
+        }
+        local.assume_init()
+    };
+    NaiveDate::from_ymd_opt(
+        local.tm_year.checked_add(1900)?,
+        (local.tm_mon + 1) as u32,
+        local.tm_mday as u32,
+    )
 }
 
 #[derive(Clone, Copy)]
