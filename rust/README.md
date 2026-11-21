@@ -4,6 +4,7 @@
 symbols, Chinese and English names, and Chinese Commercial Codes. It also looks
 up defined prefixes and symbol descriptions.
 Complete and partial cards support cross-field checks and bilingual holder summaries.
+The generator creates sample numbers, bilingual names, dates, and complete cards.
 
 ## Numbers and prefixes
 
@@ -124,11 +125,39 @@ Chinese. Other languages use English. `describe_holder(None)` uses the local dat
 system language. Use `describe_holder_on` with an explicit locale and date for
 reproducible output.
 
+## Generate sample data
+
+```rust
+use hkid_utils::{HkidGenerator, NaiveDate, Sex};
+
+let reference = NaiveDate::from_ymd_opt(2026, 7, 27).unwrap();
+let mut generator = HkidGenerator::with_seed(42);
+let card = generator.card_on(reference, Some(Sex::Female)).unwrap();
+assert_eq!(card.fields().sex, Some(Sex::Female));
+assert!(card.validate_as_of(reference).is_ok());
+assert!(!card.is_suspicious());
+
+let name = generator.name(None, Some(3)).unwrap();
+assert_eq!(name.chinese.personal_name().chars().count(), 3);
+assert_eq!(name.chinese.commercial_codes().len(), 4);
+```
+
+Use `HkidGenerator::new()` for a fresh generator. A fixed seed, explicit reference
+dates, and the same sequence of calls reproduce samples with the same build and
+reference data. `card(None)` uses today's local date and picks the sex. Generated
+cards include a checksum-valid number, matching bilingual names and codes, and
+symbols appropriate at registration.
+
+`number()` uses a defined prefix. Use `number_from_prefixes` to supply a list,
+or `number_with_any_prefix()` for arbitrary one- or two-letter prefixes.
+`date_in_range(start, Some(end))` includes the start and excludes the end.
+Passing `None` uses today's local date as the end.
+
 ## Build and test
 
 Run the following commands from the repository root with Rust 1.100.0
 (2024 edition). The package includes the shared number, symbol, name and card fixtures
-and embeds the prefix and symbol tables.
+and embeds the prefix table, symbol table, and Chinese name seed.
 
 ```sh
 cargo fmt --check

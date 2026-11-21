@@ -1,6 +1,10 @@
 use hkid_utils::{HkidCard, HkidCardFields, NaiveDate, Sex};
 
+#[path = "common/generation_defaults.rs"]
+mod generation_defaults;
+
 fn check_summary(locale: &str, local_date: impl Fn() -> NaiveDate) {
+    generation_defaults::check_generation_dates(&local_date);
     let today = local_date();
     // These birthdays catch a default date that is either a day early or a day late.
     for birthday in [today, today.succ_opt().unwrap()] {

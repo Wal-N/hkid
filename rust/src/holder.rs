@@ -123,7 +123,7 @@ fn system_locale() -> Option<String> {
         .as_string()
 }
 
-fn local_today() -> NaiveDate {
+pub(crate) fn local_today() -> NaiveDate {
     #[cfg(all(target_os = "linux", target_env = "gnu"))]
     if let Some(date) = glibc_local_date() {
         return date;

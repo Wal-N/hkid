@@ -1,10 +1,13 @@
 #![cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 
-use hkid_utils::{HkidCard, HkidCardFields, NaiveDate, Sex};
+use hkid_utils::{HkidCard, HkidCardFields, HkidGenerator, NaiveDate, Sex};
 use js_sys::Date;
 use wasm_bindgen_test::{wasm_bindgen_test, wasm_bindgen_test_configure};
 
 wasm_bindgen_test_configure!(run_in_browser);
+
+#[path = "common/generation_defaults.rs"]
+mod generation_defaults;
 
 fn browser_date() -> NaiveDate {
     let now = Date::new_0();
@@ -55,4 +58,13 @@ fn uses_the_browsers_preferred_language_unless_overridden() {
         card.describe_holder_on(Some("en"), date).unwrap(),
         "The holder is female."
     );
+}
+
+#[wasm_bindgen_test]
+fn generates_sample_cards_and_dates_in_the_browser() {
+    generation_defaults::check_generation_dates(browser_date);
+    let date = browser_date();
+    let card = HkidGenerator::new().card_on(date, None).unwrap();
+    assert!(card.validate_as_of(date).is_ok());
+    assert!(!card.is_suspicious());
 }
