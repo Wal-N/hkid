@@ -2,6 +2,7 @@
 
 pub mod card;
 pub mod commercial_code;
+pub mod generator;
 pub mod holder;
 mod json_object;
 pub mod name;
@@ -14,6 +15,7 @@ mod text;
 pub use card::{CardError, HkidCard, HkidCardFields, Sex, YearMonth};
 pub use chrono::NaiveDate;
 pub use commercial_code::{ChineseCommercialCode, CommercialCodeError};
+pub use generator::{GeneratedName, GenerationError, HkidGenerator};
 pub use holder::HkidSuspicion;
 pub use name::{ChineseName, EnglishName, NameError};
 pub use number::{HkidNumber, ParseNumberError};
