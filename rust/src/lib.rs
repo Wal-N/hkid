@@ -1,6 +1,8 @@
 #![doc = include_str!("../README.md")]
 
+pub mod card;
 pub mod commercial_code;
+pub mod holder;
 mod json_object;
 pub mod name;
 pub mod number;
@@ -9,7 +11,10 @@ pub mod symbol;
 pub mod symbols;
 mod text;
 
+pub use card::{CardError, HkidCard, HkidCardFields, Sex, YearMonth};
+pub use chrono::NaiveDate;
 pub use commercial_code::{ChineseCommercialCode, CommercialCodeError};
+pub use holder::HkidSuspicion;
 pub use name::{ChineseName, EnglishName, NameError};
 pub use number::{HkidNumber, ParseNumberError};
 pub use prefix::DefinedPrefix;

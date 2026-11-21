@@ -3,6 +3,7 @@
 `hkid-utils` validates and formats Hong Kong identity card numbers, smart-card
 symbols, Chinese and English names, and Chinese Commercial Codes. It also looks
 up defined prefixes and symbol descriptions.
+Complete and partial cards support cross-field checks and bilingual holder summaries.
 
 ## Numbers and prefixes
 
@@ -86,10 +87,47 @@ groups may be joined by a single space, period, apostrophe or hyphen. The
 formatted name can contain up to 40 characters, including the comma and space.
 Either name part can be absent. Complete English-name validation requires a surname.
 
+## Complete and partial cards
+
+```rust
+use hkid_utils::{HkidCard, HkidCardFields, HkidSuspicion, Sex};
+
+let card = HkidCard::new(HkidCardFields {
+    hkid_number: Some("Z123456".parse().unwrap()),
+    date_of_birth: Some("2000-02-29".parse().unwrap()),
+    date_of_registration: Some("2020-01-10".parse().unwrap()),
+    sex: Some(Sex::Female),
+    symbols: "X".parse().unwrap(),
+    ..Default::default()
+}).unwrap();
+
+let as_of = "2025-02-28".parse().unwrap();
+assert!(card.validate_as_of(as_of).is_ok());
+assert_eq!(card.age_on(as_of).unwrap(), Some(24));
+assert_eq!(card.printed_date_of_registration().as_deref(), Some("10-01-20"));
+assert_eq!(card.find_suspicions(), [
+    HkidSuspicion::PrefixBirthDateMismatch,
+    HkidSuspicion::PrefixBirthPlaceMismatch,
+]);
+assert_eq!(card.describe_holder_on(Some("zh-HK"), as_of).unwrap(),
+           "持有人為24歲女性，於內地出生。");
+```
+
+Construction checks the supplied dates against each other and checks age-specific
+symbols at registration. Use `validate_as_of` to check each available date against
+a reference date. `find_suspicions` reports advisory inconsistencies with the
+prefix metadata in a stable order.
+
+Holder summaries use the available age, sex, reported birthplace and symbol meanings.
+Locales whose language is `zh`, such as `zh-HK` and `zh-Hans`, select Traditional
+Chinese. Other languages use English. `describe_holder(None)` uses the local date and
+system language. Use `describe_holder_on` with an explicit locale and date for
+reproducible output.
+
 ## Build and test
 
 Run the following commands from the repository root with Rust 1.100.0
-(2024 edition). The package includes the shared number, symbol and name fixtures
+(2024 edition). The package includes the shared number, symbol, name and card fixtures
 and embeds the prefix and symbol tables.
 
 ```sh
@@ -97,4 +135,12 @@ cargo fmt --check
 cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked
 cargo package --locked
+```
+
+To run the browser regressions with Firefox and `wasm-pack` on Linux, use the
+test profile's `zh-HK` language preference and a time zone ahead of UTC.
+
+```sh
+TZ=Pacific/Kiritimati WASM_BINDGEN_TEST_WEBDRIVER_JSON="$PWD/rust/tests/browser-webdriver.json" \
+  wasm-pack test --headless --firefox --locked --test card_browser
 ```

@@ -35,8 +35,10 @@ jobs:
         run: cargo fmt --check
       - name: Run Clippy
         run: cargo clippy --locked --all-targets -- -D warnings
-      - name: Run tests
-        run: cargo test --locked
+      - name: Run tests on glibc Linux
+        run: |
+          getconf GNU_LIBC_VERSION
+          cargo test --locked
       - name: Build and test the packaged crate
         run: |
           cargo package --locked
@@ -50,3 +52,32 @@ jobs:
           cargo add --offline --manifest-path "$consumer/Cargo.toml" --path "$RUNNER_TEMP/hkid-package"
           echo '#![doc = include_str!("../../hkid-package/rust/README.md")]' > "$consumer/src/lib.rs"
           cargo test --locked --offline --doc --manifest-path "$consumer/Cargo.toml"
+
+  browser:
+    name: Browser WASM (Firefox)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install WASM target and matching test runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rustup target add wasm32-unknown-unknown
+          package=$(cargo pkgid --locked wasm-bindgen)
+          version=${package##*@}
+          bundle="wasm-bindgen-$version-x86_64-unknown-linux-musl"
+          cd "$RUNNER_TEMP"
+          gh release download "$version" --repo wasm-bindgen/wasm-bindgen \
+            --pattern "$bundle.tar.gz" --pattern "$bundle.tar.gz.sha256sum"
+          checksum=$(cut -d ' ' -f 1 "$bundle.tar.gz.sha256sum")
+          echo "$checksum  $bundle.tar.gz" | sha256sum --check
+          tar -xzf "$bundle.tar.gz" "$bundle/wasm-bindgen-test-runner"
+          echo "$RUNNER_TEMP/$bundle" >> "$GITHUB_PATH"
+      - name: Test local dates and language in headless Firefox
+        env:
+          CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER: wasm-bindgen-test-runner
+          WASM_BINDGEN_TEST_WEBDRIVER_JSON: ${{ github.workspace }}/rust/tests/browser-webdriver.json
+          TZ: Pacific/Kiritimati
+        run: |
+          firefox --version
+          GECKODRIVER="$(command -v geckodriver)" cargo test --locked --target wasm32-unknown-unknown --test card_browser

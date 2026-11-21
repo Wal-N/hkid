@@ -3,7 +3,7 @@ name = "hkid-utils"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.100"
-description = "Hong Kong identity card numbers, prefixes, smart-card symbols, names and Chinese Commercial Codes"
+description = "Hong Kong identity card validation, formatting, prefix lookup and bilingual holder summaries"
 license = "MIT"
 repository = "https://github.com/Wal-N/hkid"
 readme = "rust/README.md"
@@ -17,6 +17,7 @@ include = [
     "/conformance/hkid-number.json",
     "/conformance/hkid-symbols.json",
     "/conformance/hkid-names.json",
+    "/conformance/hkid-card.json",
     "/LICENSE",
 ]
 
@@ -38,9 +39,36 @@ path = "rust/tests/symbol_conformance.rs"
 name = "name_conformance"
 path = "rust/tests/name_conformance.rs"
 
+[[test]]
+name = "card_conformance"
+path = "rust/tests/card_conformance.rs"
+
+[[test]]
+name = "card_defaults"
+path = "rust/tests/card_defaults.rs"
+harness = false
+
+[[test]]
+name = "card_browser"
+path = "rust/tests/card_browser.rs"
+
 [dependencies]
-chrono = { version = "0.4", default-features = false, features = ["std"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sys-locale = "0.3"
 unicode-general-category = "1.1"
 unicode-script = "0.5"
+
+[target.'cfg(all(target_os = "linux", target_env = "gnu"))'.dependencies]
+libc = "0.2"
+
+[target.'cfg(all(unix, not(all(target_os = "linux", target_env = "gnu"))))'.dependencies]
+tz-rs = "0.7"
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+chrono = { version = "0.4", default-features = false, features = ["wasmbind"] }
+js-sys = "0.3"
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dev-dependencies]
+wasm-bindgen-test = "0.3"
