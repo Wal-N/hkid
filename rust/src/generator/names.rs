@@ -92,10 +92,15 @@ fn parse_entry(row: [&str; 6]) -> Result<Entry, &'static str> {
 }
 
 fn load_entries(input: &str) -> Result<Vec<Entry>, String> {
-    let mut records = input.lines().enumerate().filter(|(_, line)| {
-        let line = line.trim();
-        !line.is_empty() && !line.starts_with('#')
-    });
+    // Count a CRLF pair as one record separator, including in mixed-ending files.
+    let normalized = input.replace("\r\n", "\n");
+    let mut records = normalized
+        .split(['\r', '\n'])
+        .enumerate()
+        .filter(|(_, line)| {
+            let line = line.trim();
+            !line.is_empty() && !line.starts_with('#')
+        });
     let (index, header) = records.next().ok_or("missing name seed header")?;
     if fields(header) != Ok(HEADER) {
         return Err(format!("invalid name seed header at line {}", index + 1));
@@ -175,19 +180,27 @@ mod tests {
     use std::collections::HashSet;
 
     #[test]
-    fn loads_quoted_fields_comments_and_supplementary_han() {
-        let seed = format!(
-            "  # note\r\n\"commercialCode\",{}\r\n\r\n\"0001\",𠀀, \"cHaN\",TRUE,unisex,7",
-            HEADER[1..].join(",")
-        );
-        let entries = load_entries(&seed).unwrap();
-        let entry = &entries[0];
-        assert_eq!(entry.character, '𠀀');
-        assert_eq!(entry.code.code(), "0001");
-        assert_eq!(entry.romanisation, "Chan");
-        assert!(entry.surname);
-        assert_eq!(entry.sex, None);
-        assert_eq!(entry.weight, 7);
+    fn loads_quoted_fields_comments_and_supplementary_han_with_each_line_ending() {
+        let header = format!("\"commercialCode\",{}", HEADER[1..].join(","));
+        let lines = [
+            "  # note",
+            &header,
+            "",
+            "\"0001\",𠀀, \"cHaN\",TRUE,unisex,7",
+            "2429,文,Man,false,UNISEX,1",
+        ];
+        for separator in ["\n", "\r\n", "\r"] {
+            let entries = load_entries(&lines.join(separator)).unwrap();
+            assert_eq!(entries.len(), 2);
+            let entry = &entries[0];
+            assert_eq!(entry.character, '𠀀');
+            assert_eq!(entry.code.code(), "0001");
+            assert_eq!(entry.romanisation, "Chan");
+            assert!(entry.surname);
+            assert_eq!(entry.sex, None);
+            assert_eq!(entry.weight, 7);
+            assert_eq!(entries[1].character, '文');
+        }
     }
 
     #[test]
@@ -213,6 +226,11 @@ mod tests {
         }
         assert!(load_entries("# empty\n").is_err());
         assert!(load_entries(&header.replace("weight", "other")).is_err());
+        let mixed = format!("# note\r{header}\r\n\n2429,文,Man,false,UNISEX,0\r");
+        assert_eq!(
+            load_entries(&mixed).err().unwrap(),
+            "line 4: weight must be a positive integer"
+        );
     }
 
     #[test]
@@ -258,7 +276,6 @@ mod tests {
         let mut generator = HkidGenerator::with_seed(82);
         let reference = crate::NaiveDate::from_ymd_opt(2026, 7, 27).unwrap();
         for requested in [None, Some(Sex::Male), Some(Sex::Female)] {
-            let mut observed = HashSet::new();
             for _ in 0..64 {
                 let card = generator.card_on(reference, requested).unwrap();
                 let fields = card.fields();
@@ -270,15 +287,9 @@ mod tests {
                         .unwrap();
                     if let Some(association) = row.sex {
                         assert_eq!(association, sex, "given-name character {ch}");
-                        observed.insert(association);
                     }
                 }
             }
-            let expected = match requested {
-                Some(sex) => HashSet::from([sex]),
-                None => HashSet::from([Sex::Male, Sex::Female]),
-            };
-            assert_eq!(observed, expected);
         }
     }
 

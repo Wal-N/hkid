@@ -50,15 +50,25 @@ fn number_generation_respects_each_prefix_policy() {
     assert!(arbitrary.iter().any(|n| n.prefix().len() == 2));
     assert!(arbitrary.iter().any(|n| n.numerals().starts_with('0')));
 
+    let mut defined_prefixes = HashSet::new();
+    let mut restricted_prefixes = HashSet::new();
     for _ in 0..128 {
         let defined = generator.number();
         assert_valid_number(&defined);
-        assert!(defined.defined_prefix().is_some());
+        defined_prefixes.insert(defined.defined_prefix().unwrap().id());
 
         let restricted = generator.number_from_prefixes(&allowed).unwrap();
         assert_valid_number(&restricted);
-        assert!(allowed.contains(&restricted.defined_prefix().unwrap()));
+        restricted_prefixes.insert(restricted.defined_prefix().unwrap().id());
     }
+    assert!(
+        defined_prefixes.len() >= 2,
+        "expected multiple defined prefixes"
+    );
+    assert_eq!(
+        restricted_prefixes,
+        HashSet::from(allowed.map(DefinedPrefix::id))
+    );
 }
 
 #[test]

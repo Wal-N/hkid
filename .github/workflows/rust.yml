@@ -52,6 +52,11 @@ jobs:
           cargo add --offline --manifest-path "$consumer/Cargo.toml" --path "$RUNNER_TEMP/hkid-package"
           echo '#![doc = include_str!("../../hkid-package/rust/README.md")]' > "$consumer/src/lib.rs"
           cargo test --locked --offline --doc --manifest-path "$consumer/Cargo.toml"
+      - name: Test the packaged crate with custom name weights
+        run: |
+          package="$RUNNER_TEMP/hkid-package"
+          cp "$package/rust/tests/fixtures/weighted-name-seed.csv" "$package/data/chinese-name-seed.csv"
+          cargo test --locked --offline --lib --manifest-path "$package/Cargo.toml"
 
   browser:
     name: Browser WASM (Firefox)

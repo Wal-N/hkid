@@ -1,0 +1,10 @@
+commercialCode,character,romanisation,commonSurname,sexAssociation,weight
+7115,陳,Chan,true,UNISEX,1
+# Two high-weight unisex entries can fill a male given name of either default length.
+# Dropping the sex filter would also make the high-weight female entry eligible.
+0857,嘉,Ka,false,UNISEX,1000000
+1131,天,Tin,false,UNISEX,1000000
+1311,子,Tsz,false,UNISEX,1
+1344,安,On,false,UNISEX,1
+0193,俊,Chun,false,MALE,1
+1177,妍,Yin,false,FEMALE,1000000
