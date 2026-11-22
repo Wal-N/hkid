@@ -26,6 +26,8 @@ public final class HkidNumberUtil {
 
     private static final String INVALID_HKID_NUMBER_FORMAT_MESSAGE =
             "Invalid format for HKID number.";
+    private static final String MISSING_CHECK_DIGIT_MESSAGE =
+            "Missing check digit for HKID number.";
     private static final String INVALID_CHECK_DIGIT_MESSAGE =
             "Invalid check digit for HKID number.";
     private static final String INVALID_CHECK_DIGIT_FORMAT_MESSAGE =
@@ -46,7 +48,7 @@ public final class HkidNumberUtil {
      */
     public static boolean isValid(String hkidNumber) {
         try {
-            parse(hkidNumber);
+            parse(hkidNumber, false);
             return true;
         } catch (IllegalArgumentException e) {
             return false;
@@ -186,7 +188,7 @@ public final class HkidNumberUtil {
         return new HkidNumber(prefix, numerals);
     }
 
-    static String[] parse(String hkidNumber) {
+    static String[] parse(String hkidNumber, boolean checkDigitRequired) {
         if (hkidNumber == null || hkidNumber.isEmpty()) {
             throw new HkidNumber.InvalidHkidNumberFormatException(
                     "HKID number cannot be null or empty.");
@@ -204,6 +206,9 @@ public final class HkidNumberUtil {
         String checkDigit = matcher.group(3) != null ? matcher.group(3) : matcher.group(4);
         if (checkDigit == null) {
             checkDigit = matcher.group(5);
+        }
+        if (checkDigitRequired && checkDigit == null) {
+            throw new HkidNumber.MissingCheckDigitException(MISSING_CHECK_DIGIT_MESSAGE);
         }
         validateOptionalCheckDigit(prefix, numerals, checkDigit);
         return new String[]{prefix, numerals};

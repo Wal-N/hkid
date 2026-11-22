@@ -40,7 +40,11 @@ public final class HkidNumber {
      * @throws InvalidCheckDigitException if a supplied check digit does not match
      */
     public HkidNumber(String hkidNumber) {
-        String[] parts = HkidNumberUtil.parse(hkidNumber);
+        this(hkidNumber, false);
+    }
+
+    private HkidNumber(String hkidNumber, boolean checkDigitRequired) {
+        String[] parts = HkidNumberUtil.parse(hkidNumber, checkDigitRequired);
         this.prefix = parts[0];
         this.numerals = parts[1];
     }
@@ -73,6 +77,21 @@ public final class HkidNumber {
         this.prefix = HkidNumberUtil.normalizePrefix(prefix);
         this.numerals = HkidNumberUtil.validateNumerals(numerals);
         HkidNumberUtil.validateOptionalCheckDigit(this.prefix, this.numerals, checkDigit);
+    }
+
+    /**
+     * Parses an HKID number and checks its required check digit. Uses the same
+     * text normalization and supported formats as {@link #HkidNumber(String)}.
+     *
+     * @param hkidNumber number including a check digit, such as {@code A123456(3)}
+     * @return the parsed HKID number
+     * @throws InvalidHkidNumberFormatException if the input is null, empty after trimming,
+     *         or has invalid syntax
+     * @throws MissingCheckDigitException if the prefix and six numerals are present with no check digit
+     * @throws InvalidCheckDigitException if a well-formed check digit does not match
+     */
+    public static HkidNumber parseWithCheckDigit(String hkidNumber) {
+        return new HkidNumber(hkidNumber, true);
     }
 
     /**
@@ -236,6 +255,22 @@ public final class HkidNumber {
          * @param message detail message, or {@code null} for none
          */
         public InvalidHkidNumberFormatException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Indicates that an otherwise well-formed HKID number omits a required check digit.
+     */
+    public static class MissingCheckDigitException extends IllegalArgumentException {
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Creates a missing check-digit exception.
+         *
+         * @param message detail message, or {@code null} for none
+         */
+        public MissingCheckDigitException(String message) {
             super(message);
         }
     }

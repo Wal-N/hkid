@@ -25,6 +25,29 @@ impl fmt::Display for ParseNumberError {
 
 impl Error for ParseNumberError {}
 
+/// The reason a number could not be parsed with a required check digit.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ParseNumberWithCheckDigitError {
+    /// A component or its surrounding syntax is invalid.
+    InvalidFormat,
+    /// The prefix and numerals are present, but the check digit is omitted.
+    MissingCheckDigit,
+    /// The supplied check digit is well formed but does not match the body.
+    InvalidCheckDigit,
+}
+
+impl fmt::Display for ParseNumberWithCheckDigitError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidFormat => ParseNumberError::InvalidFormat.fmt(f),
+            Self::MissingCheckDigit => f.write_str("missing HKID check digit"),
+            Self::InvalidCheckDigit => ParseNumberError::InvalidCheckDigit.fmt(f),
+        }
+    }
+}
+
+impl Error for ParseNumberWithCheckDigitError {}
+
 /// An uppercase prefix and six numerals, including leading zeroes.
 ///
 /// Parse text with `str::parse`; its optional check digit can be bare or
@@ -58,6 +81,23 @@ impl HkidNumber {
             number.verify_digit(single_char(supplied)?)?;
         }
         Ok(number)
+    }
+
+    /// Parses a complete number with a required check digit.
+    ///
+    /// Accepts the same text forms as `str::parse`, including bare check digits
+    /// and matching ASCII or fullwidth parentheses. Returns
+    /// [`ParseNumberWithCheckDigitError::MissingCheckDigit`] for a well-formed
+    /// body without a check digit.
+    pub fn parse_with_check_digit(input: &str) -> Result<Self, ParseNumberWithCheckDigitError> {
+        use ParseNumberWithCheckDigitError as StrictError;
+
+        match Self::parse_text(input) {
+            Ok((number, true)) => Ok(number),
+            Ok((_, false)) => Err(StrictError::MissingCheckDigit),
+            Err(ParseNumberError::InvalidFormat) => Err(StrictError::InvalidFormat),
+            Err(ParseNumberError::InvalidCheckDigit) => Err(StrictError::InvalidCheckDigit),
+        }
     }
 
     /// Tests text using the same parsing and checksum rules as `str::parse`.
@@ -139,6 +179,22 @@ impl HkidNumber {
         format!("{mask}{}(*)", &self.numerals()[3..])
     }
 
+    fn parse_text(input: &str) -> Result<(Self, bool), ParseNumberError> {
+        let (number, suffix) = Self::read_body(trim_outer(input))?;
+        let suffix = suffix.trim_start_matches(is_separator);
+        if suffix.is_empty() {
+            return Ok((number, false));
+        }
+
+        let supplied = suffix
+            .strip_prefix('(')
+            .and_then(|s| s.strip_suffix(')'))
+            .or_else(|| suffix.strip_prefix('（').and_then(|s| s.strip_suffix('）')))
+            .unwrap_or(suffix);
+        number.verify_digit(fold_fullwidth(single_char(supplied)?))?;
+        Ok((number, true))
+    }
+
     // Consume exactly the prefix and six numerals. The caller decides which
     // suffix is valid for its operation (full number or separate body).
     fn read_body(input: &str) -> Result<(Self, &str), ParseNumberError> {
@@ -189,16 +245,7 @@ impl FromStr for HkidNumber {
     type Err = ParseNumberError;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let (number, suffix) = Self::read_body(trim_outer(input))?;
-        let suffix = suffix.trim_start_matches(is_separator);
-        if !suffix.is_empty() {
-            let supplied = suffix
-                .strip_prefix('(')
-                .and_then(|s| s.strip_suffix(')'))
-                .or_else(|| suffix.strip_prefix('（').and_then(|s| s.strip_suffix('）')))
-                .unwrap_or(suffix);
-            number.verify_digit(fold_fullwidth(single_char(supplied)?))?;
-        }
+        let (number, _) = Self::parse_text(input)?;
         Ok(number)
     }
 }
