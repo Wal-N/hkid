@@ -27,13 +27,6 @@ rules and edge cases so you don't have to implement them from scratch.
 
 ## Quick start
 
-Java is available now. The [Rust crate](rust/README.md) supports
-HKID numbers, defined prefixes, smart-card symbols, Chinese and English names,
-and Chinese Commercial Codes. It also validates complete or partial cards
-and describes the holder in English or Traditional Chinese. The Rust generator
-creates sample numbers, bilingual names, dates, and complete cards with a
-reproducible seed. Build it from this repository.
-
 ### Java 8+
 
 Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
@@ -46,7 +39,7 @@ Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
 </dependency>
 ```
 
-### Example
+#### Example
 
 ```java
 import io.github.wal_n.hkid.card.HkidCard;
@@ -82,7 +75,7 @@ public final class HkidExample {
       .dateOfBirth(LocalDate.of(2000, 1, 1))
       .symbolCodes("X") // Reported birthplace is mainland China.
       .build();
-    System.out.println(cardToCheck.isSuspicious()); // true
+    cardToCheck.isSuspicious(); // true
     System.out.println(cardToCheck.findSuspicions());
     // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
 
@@ -106,6 +99,55 @@ public final class HkidExample {
   }
 }
 ```
+
+### Rust 1.100+
+
+The Rust crate is currently unpublished. To use a local checkout in another
+Rust project, add it under `[dependencies]` in that project's `Cargo.toml`.
+
+```toml
+hkid-utils = { path = "../hkid" }
+```
+
+Save this as `src/main.rs` and run `cargo run`.
+
+```rust
+use hkid_utils::{
+    ChineseName, EnglishName, HkidCard, HkidCardFields, HkidGenerator, HkidNumber, HkidSymbols,
+};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Validation and formatting
+    assert!(HkidNumber::is_valid("A123456(3)"));
+    assert!(!HkidNumber::is_valid("A123456(4)"));
+    assert!(ChineseName::is_valid(Some("陳"), Some("大文")));
+    assert!(EnglishName::is_valid(Some("Chan"), Some("Tai Man")));
+    assert!(HkidSymbols::is_valid("***AZ"));
+    let number: HkidNumber = "A123456".parse()?;
+    println!("{number}"); // A123456(3)
+    println!("{}", number.masked()); // ****456(*)
+
+    // Cross-field checks
+    let card = HkidCard::new(HkidCardFields {
+        hkid_number: Some("Z123456".parse()?),
+        date_of_birth: Some("2000-01-01".parse()?),
+        symbols: "X".parse()?,
+        ..Default::default()
+    })?;
+    println!("{:?}", card.find_suspicions()); // [PrefixBirthDateMismatch, PrefixBirthPlaceMismatch]
+
+    // Generate a sample card and describe its holder.
+    let reference = "2026-07-21".parse()?;
+    let sample = HkidGenerator::with_seed(42).card_on(reference, None)?;
+    let fields = sample.fields();
+    println!("{} / {}", fields.chinese_name, fields.english_name);
+    println!("{}", sample.describe_holder_on(Some("zh-HK"), reference)?);
+    println!("{}", sample.describe_holder_on(Some("en"), reference)?);
+    Ok(())
+}
+```
+
+More examples are in the [Rust crate documentation](rust/README.md).
 
 > [!CAUTION]
 > Generated HKID numbers may coincide with real people's numbers. Use them only
@@ -138,8 +180,9 @@ Call `validateAsOf(referenceDate)` to reject future-dated fields.
 
 ### Generated data
 
-Call `HkidCardUtil.generateRandomCard()` for a sample as of today. To reproduce
-the example above, use the same library version, random seed and reference date.
+Call `HkidCardUtil.generateRandomCard()` in Java or `HkidGenerator::new().card(None)`
+in Rust for a sample as of today. To reproduce the examples above, use the same
+library version, random seed and reference date.
 The name generator uses sex-associated and unisex entries. Name validation
 accepts names independently of those associations.
 
