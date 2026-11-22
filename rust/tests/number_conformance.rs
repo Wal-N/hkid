@@ -2,7 +2,7 @@ mod common;
 
 use chrono::Datelike;
 use common::{Object, check_case_ids, check_schema_version, fixture_date};
-use hkid_utils::{DefinedPrefix, HkidNumber, ParseNumberError};
+use hkid_utils::{DefinedPrefix, HkidNumber, ParseNumberError, ParseNumberWithCheckDigitError};
 use serde::Deserialize;
 
 const NUMBER_FIXTURES: &str = include_str!("../../conformance/hkid-number.json");
@@ -157,6 +157,39 @@ fn rejects_invalid_numbers_with_the_expected_error() {
             .ok_or(ParseNumberError::InvalidFormat)
             .and_then(str::parse::<HkidNumber>);
         assert_eq!(parsed, Err(expected), "{id}");
+    }
+}
+
+#[test]
+fn parses_complete_numbers_with_a_required_check_digit() {
+    use ParseNumberWithCheckDigitError::{InvalidCheckDigit, InvalidFormat, MissingCheckDigit};
+
+    for input in [
+        "A000002A",
+        "a000002(a)",
+        "\tａ\u{3000}０００００２ （ａ）\r\n",
+    ] {
+        let number = HkidNumber::parse_with_check_digit(input).unwrap();
+        assert_eq!(number.to_string(), "A000002(A)", "{input:?}");
+    }
+
+    for (input, expected) in [
+        ("A000002", MissingCheckDigit),
+        ("\tａ\u{3000}０００００２\u{00a0}\r\n", MissingCheckDigit),
+        ("AB123456", MissingCheckDigit),
+        ("A000002(0)", InvalidCheckDigit),
+        ("Ａ０００００２（０）", InvalidCheckDigit),
+        ("A000002(B)", InvalidFormat),
+        ("A000002()", InvalidFormat),
+        ("A000002(Ａ）", InvalidFormat),
+        ("A00002", InvalidFormat),
+        ("", InvalidFormat),
+    ] {
+        assert_eq!(
+            HkidNumber::parse_with_check_digit(input),
+            Err(expected),
+            "{input:?}"
+        );
     }
 }
 

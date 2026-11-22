@@ -3,6 +3,7 @@ package io.github.wal_n.hkid.number;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Field;
@@ -162,6 +163,40 @@ class HkidNumberTest {
         assertThrows(HkidNumber.InvalidCheckDigitException.class, () -> new HkidNumber("A123456(7)"));
         assertThrows(HkidNumber.InvalidCheckDigitException.class, () -> new HkidNumber("AB123456(0)"));
         assertThrows(HkidNumber.InvalidCheckDigitException.class, () -> new HkidNumber("A", "123456", "7"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "AB1234569, AB123456(9)",
+            "A123456(3), A123456(3)",
+            "'\tａ\u3000０００００２\u00a0（ａ）\r', A000002(A)"
+    })
+    void parsesNumbersWithSuppliedCheckDigits(String input, String expected) {
+        assertEquals(expected, HkidNumber.parseWithCheckDigit(input).toString());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"A123456", "\tａ\u3000１２３４５６\u00a0"})
+    void reportsMissingCheckDigitsSeparately(String input) {
+        assertThrows(HkidNumber.MissingCheckDigitException.class,
+                () -> HkidNumber.parseWithCheckDigit(input));
+        assertEquals("A123456(3)", new HkidNumber(input).toString());
+        assertTrue(HkidNumberUtil.isValid(input));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"A123456(4)", "AB1234560", "Ａ １２３４５６ （ａ）"})
+    void reportsIncorrectSuppliedCheckDigits(String input) {
+        assertThrows(HkidNumber.InvalidCheckDigitException.class,
+                () -> HkidNumber.parseWithCheckDigit(input));
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"\t \u00a0\u3000", "A12345", "A123456()", "A123456(３）", "A123456(B)"})
+    void reportsMalformedInputsWhenRequiringACheckDigit(String input) {
+        assertThrows(HkidNumber.InvalidHkidNumberFormatException.class,
+                () -> HkidNumber.parseWithCheckDigit(input));
     }
 
     @Test

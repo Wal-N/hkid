@@ -18,7 +18,7 @@ pub use commercial_code::{ChineseCommercialCode, CommercialCodeError};
 pub use generator::{GeneratedName, GenerationError, HkidGenerator};
 pub use holder::HkidSuspicion;
 pub use name::{ChineseName, EnglishName, NameError};
-pub use number::{HkidNumber, ParseNumberError};
+pub use number::{HkidNumber, ParseNumberError, ParseNumberWithCheckDigitError};
 pub use prefix::DefinedPrefix;
 pub use symbol::{HkidSymbol, HkidSymbolCategory};
 pub use symbols::{HkidSymbols, ParseSymbolsError, SymbolAgeError};
