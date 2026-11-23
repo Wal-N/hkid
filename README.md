@@ -35,7 +35,7 @@ Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
 <dependency>
     <groupId>io.github.wal-n</groupId>
     <artifactId>hkid-utils</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 

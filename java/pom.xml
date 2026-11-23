@@ -6,7 +6,7 @@
 
     <groupId>io.github.wal-n</groupId>
     <artifactId>hkid-utils</artifactId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
     <name>HKID Utilities</name>
@@ -33,7 +33,7 @@
         <connection>scm:git:https://github.com/Wal-N/hkid.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/Wal-N/hkid.git</developerConnection>
         <url>https://github.com/Wal-N/hkid</url>
-        <tag>HEAD</tag>
+        <tag>java-v1.2.0</tag>
     </scm>
 
     <properties>
