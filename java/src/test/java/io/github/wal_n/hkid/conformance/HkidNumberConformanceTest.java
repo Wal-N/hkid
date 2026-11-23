@@ -1,6 +1,7 @@
 package io.github.wal_n.hkid.conformance;
 
 import com.google.gson.JsonObject;
+import io.github.wal_n.hkid.internal.ResourceJson;
 import io.github.wal_n.hkid.number.DefinedPrefix;
 import io.github.wal_n.hkid.number.HkidNumber;
 import io.github.wal_n.hkid.number.HkidNumberUtil;
@@ -54,6 +55,24 @@ class HkidNumberConformanceTest {
                                     () -> assertEquals(expectValid,
                                             HkidNumber.isValidCheckDigit(input, checkDigit)));
                         }));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> describesSharedNumberPrefixesInBothLanguages() {
+        return ConformanceFixtures.cases(FIXTURE, "prefixDescriptionCases")
+                .map(testCase -> {
+                    ResourceJson.requireExactKeys(testCase, FIXTURE,
+                            "id", "input", "expectEnglish", "expectTraditionalChinese");
+                    String id = ResourceJson.requireString(testCase, "id", FIXTURE);
+                    return DynamicTest.dynamicTest(id, () -> {
+                        HkidNumber number = new HkidNumber(ResourceJson.requireString(testCase, "input", id));
+                        assertAll(
+                                () -> assertEquals(ResourceJson.requireString(testCase, "expectEnglish", id),
+                                        number.getPrefixDescription()),
+                                () -> assertEquals(ResourceJson.requireString(testCase, "expectTraditionalChinese", id),
+                                        number.getPrefixTraditionalChineseDescription()));
+                    });
+                });
     }
 
     @TestFactory

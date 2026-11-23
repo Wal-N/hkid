@@ -174,6 +174,13 @@ each prefix letter, the first three numerals, and the check digit with `*`,
 preserving the last three numerals and parentheses: `A123456(3)` becomes
 `****456(*)`, and `AB123456(9)` becomes `*****456(*)`.
 
+For a defined prefix, the number's English and Traditional Chinese descriptions
+come from the corresponding entry in `data/defined-prefixes.json`. For an unknown
+prefix such as `QZ`, return `No predefined description is available for prefix QZ.`
+and `字頭 QZ 沒有預定義說明。`, using the normalized uppercase prefix.
+`prefixDescriptionCases` supplies a number as `input` and the exact expected
+strings as `expectEnglish` and `expectTraditionalChinese`.
+
 ### Names and commercial codes
 
 - Name parts are not trimmed, case-folded, or width-normalized.

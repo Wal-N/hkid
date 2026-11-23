@@ -3,7 +3,7 @@
 mod cards;
 mod names;
 
-pub use names::GeneratedName;
+pub use names::{ChineseNameEntry, GeneratedName};
 
 use std::fmt;
 

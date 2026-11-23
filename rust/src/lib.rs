@@ -15,7 +15,7 @@ mod text;
 pub use card::{CardError, HkidCard, HkidCardFields, Sex, YearMonth};
 pub use chrono::NaiveDate;
 pub use commercial_code::{ChineseCommercialCode, CommercialCodeError};
-pub use generator::{GeneratedName, GenerationError, HkidGenerator};
+pub use generator::{ChineseNameEntry, GeneratedName, GenerationError, HkidGenerator};
 pub use holder::HkidSuspicion;
 pub use name::{ChineseName, EnglishName, NameError};
 pub use number::{HkidNumber, ParseNumberError, ParseNumberWithCheckDigitError};

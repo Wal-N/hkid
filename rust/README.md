@@ -6,6 +6,15 @@ up defined prefixes and symbol descriptions.
 Complete and partial cards support cross-field checks and bilingual holder summaries.
 The generator creates sample numbers, bilingual names, dates, and complete cards.
 
+## Installation
+
+Add the crate to your project's `Cargo.toml` with Rust 1.100 or later.
+
+```toml
+[dependencies]
+hkid-utils = "1.2.0"
+```
+
 ## Numbers and prefixes
 
 ```rust
@@ -19,6 +28,10 @@ assert!(HkidNumber::is_valid_ascii_without_whitespace("A123456(3)"));
 
 let prefix = DefinedPrefix::lookup("ｗｘ").unwrap();
 assert_eq!(prefix.id(), "WX");
+
+let unlisted: HkidNumber = "Q123456".parse().unwrap();
+assert_eq!(unlisted.prefix_description(), "No predefined description is available for prefix Q.");
+assert_eq!(unlisted.prefix_traditional_chinese_description(), "字頭 Q 沒有預定義說明。");
 
 // Both first-issue prefixes were in use during the July 2026 transition.
 let july = DefinedPrefix::from_first_issue_month(2026, 7);
@@ -87,6 +100,22 @@ English names retain their spelling and case. Within each part, ASCII letter
 groups may be joined by a single space, period, apostrophe or hyphen. The
 formatted name can contain up to 40 characters, including the comma and space.
 Either name part can be absent. Complete English-name validation requires a surname.
+
+Use `ChineseNameEntry::all()` to read the same character entries the name generator
+uses, in CSV order. Each entry includes its commercial code, romanisation, surname
+flag, supported sexes and selection weight.
+
+```rust
+use hkid_utils::{ChineseNameEntry, Sex};
+
+let entries = ChineseNameEntry::all().unwrap();
+let chan = entries.iter().find(|entry| entry.character() == '陳').unwrap();
+assert_eq!(chan.commercial_code().code(), "7115");
+assert_eq!(chan.romanisation(), "Chan");
+assert!(chan.is_common_surname());
+assert!(chan.supports_sex(Sex::Female));
+assert_eq!(chan.weight(), 100);
+```
 
 ## Complete and partial cards
 
