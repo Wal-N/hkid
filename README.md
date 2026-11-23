@@ -52,7 +52,6 @@ import io.github.wal_n.hkid.number.HkidNumberUtil;
 
 import java.time.LocalDate;
 import java.util.Locale;
-import java.util.Random;
 
 public final class HkidExample {
   public static void main(String[] args) {
@@ -79,9 +78,9 @@ public final class HkidExample {
     System.out.println(cardToCheck.findSuspicions());
     // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
 
-    // Generate data
+    // Generate data. The output below is one example and varies with each run.
     LocalDate referenceDate = LocalDate.of(2026, 7, 21);
-    HkidCard sample = HkidCardUtil.generateRandomCard(new Random(42), referenceDate);
+    HkidCard sample = HkidCardUtil.generateRandomCard(referenceDate);
     System.out.println(sample.getChineseName());            // 李妍
     System.out.println(sample.getChineseCommercialCodes()); // [2621, 1177]
     System.out.println(sample.getEnglishName());            // Lee, Yin
@@ -100,7 +99,7 @@ public final class HkidExample {
 }
 ```
 
-### Rust 1.100+
+### Rust (v1.2.0+)
 
 The Rust crate is currently unpublished. To use a local checkout in another
 Rust project, add it under `[dependencies]` in that project's `Cargo.toml`.
@@ -117,12 +116,14 @@ use hkid_utils::{
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Validation and formatting
-    assert!(HkidNumber::is_valid("A123456(3)"));
-    assert!(!HkidNumber::is_valid("A123456(4)"));
-    assert!(ChineseName::is_valid(Some("陳"), Some("大文")));
-    assert!(EnglishName::is_valid(Some("Chan"), Some("Tai Man")));
-    assert!(HkidSymbols::is_valid("***AZ"));
+    // Validation
+    println!("{}", HkidNumber::is_valid("A123456(3)")); // true
+    println!("{}", HkidNumber::is_valid("A123456(4)")); // false (expected check digit 3)
+    println!("{}", ChineseName::is_valid(Some("陳"), Some("大文"))); // true
+    println!("{}", EnglishName::is_valid(Some("Chan"), Some("Tai Man"))); // true
+    println!("{}", HkidSymbols::is_valid("***AZ")); // true
+
+    // Formatting
     let number: HkidNumber = "A123456".parse()?;
     println!("{number}"); // A123456(3)
     println!("{}", number.masked()); // ****456(*)
@@ -136,13 +137,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     })?;
     println!("{:?}", card.find_suspicions()); // [PrefixBirthDateMismatch, PrefixBirthPlaceMismatch]
 
-    // Generate a sample card and describe its holder.
+    // Generate data. The output below is from one run.
     let reference = "2026-07-21".parse()?;
-    let sample = HkidGenerator::with_seed(42).card_on(reference, None)?;
+    let sample = HkidGenerator::new().card_on(reference, None)?;
     let fields = sample.fields();
-    println!("{} / {}", fields.chinese_name, fields.english_name);
+    println!("{}", fields.chinese_name); // 何國德
+    let codes: Vec<_> = fields.chinese_name.commercial_codes()
+        .iter()
+        .map(|code| code.code())
+        .collect();
+    println!("[{}]", codes.join(", ")); // [0149, 0948, 1795]
+    println!("{}", fields.english_name); // Ho, Kwok Tak
+    // Generated cards always have a sex and an HKID number.
+    println!("{}", fields.sex.unwrap()); // 男 M
+    println!("{}", fields.hkid_number.as_ref().unwrap()); // Z557054(A)
+    println!("{}", fields.symbols); // ***AZ
+
+    // Holder summaries
     println!("{}", sample.describe_holder_on(Some("zh-HK"), reference)?);
+    // 持有人為39歲男性，於香港出生。持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
     println!("{}", sample.describe_holder_on(Some("en"), reference)?);
+    // The holder is male, aged 39, and was born in Hong Kong. The holder has
+    // the right of abode in Hong Kong and, at registration, was aged 18 or over
+    // and eligible for a Re-entry Permit.
     Ok(())
 }
 ```
@@ -181,8 +198,7 @@ Call `validateAsOf(referenceDate)` to reject future-dated fields.
 ### Generated data
 
 Call `HkidCardUtil.generateRandomCard()` in Java or `HkidGenerator::new().card(None)`
-in Rust for a sample as of today. To reproduce the examples above, use the same
-library version, random seed and reference date.
+in Rust for a sample as of today. 
 The name generator uses sex-associated and unisex entries. Name validation
 accepts names independently of those associations.
 
@@ -194,13 +210,6 @@ Age-specific and stay-restriction symbols describe the holder at registration.
 The summary omits names, Chinese Commercial Codes, exact birth dates, HKID
 numbers and registration dates. It returns an empty string for a card with
 nothing to describe.
-
-## For AI agents
-
-Use the [Java library](java/) and Maven dependency above for validation and
-generation. Consult the [reference data](data/README.md) and
-[JSON conformance fixtures](conformance/README.md) for input examples and
-expected behaviour.
 
 ## Disclaimer
 
