@@ -14,6 +14,7 @@ struct Fixtures {
     parse_cases: Vec<Object<ParseCase>>,
     invalid_parse_cases: Vec<Object<InvalidParseCase>>,
     check_digit_validation_cases: Vec<Object<CheckDigitCase>>,
+    prefix_description_cases: Vec<Object<PrefixDescriptionCase>>,
     birth_registration_prefix_cases: Vec<Object<BirthPrefixCase>>,
     first_issue_prefix_cases: Vec<Object<FirstIssueCase>>,
 }
@@ -62,6 +63,15 @@ struct CheckDigitCase {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PrefixDescriptionCase {
+    id: String,
+    input: String,
+    expect_english: String,
+    expect_traditional_chinese: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct BirthPrefixCase {
     id: String,
     date: String,
@@ -88,6 +98,11 @@ fn load_fixtures(input: &str) -> Result<Fixtures, String> {
     check_case_ids(
         "checkDigitValidationCases",
         &fixtures.check_digit_validation_cases,
+        |case| &case.id,
+    )?;
+    check_case_ids(
+        "prefixDescriptionCases",
+        &fixtures.prefix_description_cases,
         |case| &case.id,
     )?;
     check_case_ids(
@@ -208,6 +223,25 @@ fn validates_separate_check_digits() {
 }
 
 #[test]
+fn describes_number_prefixes_in_both_languages() {
+    let cases = fixtures().prefix_description_cases;
+    assert!(!cases.is_empty());
+    for Object(case) in cases {
+        let id = &case.id;
+        let number: HkidNumber = case
+            .input
+            .parse()
+            .unwrap_or_else(|err| panic!("{id}: {err}"));
+        assert_eq!(number.prefix_description(), case.expect_english, "{id}");
+        assert_eq!(
+            number.prefix_traditional_chinese_description(),
+            case.expect_traditional_chinese,
+            "{id}"
+        );
+    }
+}
+
+#[test]
 fn resolves_birth_registration_prefixes() {
     let cases = fixtures().birth_registration_prefix_cases;
     assert!(!cases.is_empty());
@@ -252,7 +286,7 @@ fn requires_explicit_strings_or_nulls_for_validation_inputs() {
 
 #[test]
 fn requires_json_objects_for_the_document_cases_and_expectations() {
-    let array_root = "[1, [], [], [], [], []]";
+    let array_root = "[1, [], [], [], [], [], []]";
     assert!(serde_json::from_str::<Object<Fixtures>>(array_root).is_err());
 
     let array_case = r#"["nullable",null,null,false]"#;

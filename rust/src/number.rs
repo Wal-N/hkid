@@ -1,6 +1,6 @@
 //! HKID number parsing, validation and card-face formatting.
 
-use std::{error::Error, fmt, str::FromStr};
+use std::{borrow::Cow, error::Error, fmt, str::FromStr};
 
 use crate::prefix::DefinedPrefix;
 use crate::text::{fold_fullwidth, is_separator, trim_outer};
@@ -139,6 +139,25 @@ impl HkidNumber {
     /// The predefined metadata for this prefix, when available.
     pub fn defined_prefix(&self) -> Option<&'static DefinedPrefix> {
         DefinedPrefix::lookup(self.prefix())
+    }
+
+    /// English description from the bundled prefix table, or a message naming an unknown prefix.
+    pub fn prefix_description(&self) -> Cow<'static, str> {
+        match self.defined_prefix() {
+            Some(prefix) => Cow::Borrowed(prefix.description()),
+            None => Cow::Owned(format!(
+                "No predefined description is available for prefix {}.",
+                self.prefix()
+            )),
+        }
+    }
+
+    /// Traditional Chinese description from the table, or a message naming an unknown prefix.
+    pub fn prefix_traditional_chinese_description(&self) -> Cow<'static, str> {
+        match self.defined_prefix() {
+            Some(prefix) => Cow::Borrowed(prefix.traditional_chinese_description()),
+            None => Cow::Owned(format!("字頭 {} 沒有預定義說明。", self.prefix())),
+        }
     }
 
     /// The calculated ASCII check digit, including `A` for a value of ten.

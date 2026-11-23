@@ -89,9 +89,9 @@ public final class HkidExample {
     System.out.println(sample.getSymbols());                // ***AZ
 
     // Holder summaries
-    System.out.println(sample.describeHolder(Locale.TRADITIONAL_CHINESE, referenceDate));
+    System.out.println(sample.describeHolder(Locale.TRADITIONAL_CHINESE));
     // 持有人為91歲女性，於香港出生。持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
-    System.out.println(sample.describeHolder(Locale.ENGLISH, referenceDate));
+    System.out.println(sample.describeHolder(Locale.ENGLISH));
     // The holder is female, aged 91, and was born in Hong Kong. The holder has
     // the right of abode in Hong Kong and, at registration, was aged 18 or over
     // and eligible for a Re-entry Permit.
@@ -99,14 +99,16 @@ public final class HkidExample {
 }
 ```
 
-### Rust (v1.2.0+)
+### Rust 1.100+
 
-The Rust crate is currently unpublished. To use a local checkout in another
-Rust project, add it under `[dependencies]` in that project's `Cargo.toml`.
+Add the crate to your project's `Cargo.toml`.
 
 ```toml
-hkid-utils = { path = "../hkid" }
+[dependencies]
+hkid-utils = "1.2.0"
 ```
+
+For a local checkout, use `hkid-utils = { path = "../hkid" }` in the same section.
 
 Save this as `src/main.rs` and run `cargo run`.
 
@@ -142,11 +144,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sample = HkidGenerator::new().card_on(reference, None)?;
     let fields = sample.fields();
     println!("{}", fields.chinese_name); // 何國德
-    let codes: Vec<_> = fields.chinese_name.commercial_codes()
-        .iter()
-        .map(|code| code.code())
-        .collect();
-    println!("[{}]", codes.join(", ")); // [0149, 0948, 1795]
+    for code in fields.chinese_name.commercial_codes() {
+        println!("{code}"); // 0149, 0948 and 1795
+    }
     println!("{}", fields.english_name); // Ho, Kwok Tak
     // Generated cards always have a sex and an HKID number.
     println!("{}", fields.sex.unwrap()); // 男 M
@@ -154,9 +154,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", fields.symbols); // ***AZ
 
     // Holder summaries
-    println!("{}", sample.describe_holder_on(Some("zh-HK"), reference)?);
+    println!("{}", sample.describe_holder(Some("zh-HK"))?);
     // 持有人為39歲男性，於香港出生。持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
-    println!("{}", sample.describe_holder_on(Some("en"), reference)?);
+    println!("{}", sample.describe_holder(Some("en"))?);
     // The holder is male, aged 39, and was born in Hong Kong. The holder has
     // the right of abode in Hong Kong and, at registration, was aged 18 or over
     // and eligible for a Re-entry Permit.

@@ -1041,6 +1041,32 @@
       "expectValid": false
     }
   ],
+  "prefixDescriptionCases": [
+    {
+      "id": "defined-single-letter-prefix",
+      "input": "A123456(3)",
+      "expectEnglish": "Early identity-card registration sequence used from 1949 through 1962",
+      "expectTraditionalChinese": "1949至1962年使用的早期身份證登記系列"
+    },
+    {
+      "id": "defined-two-letter-prefix-without-period",
+      "input": "wx123456",
+      "expectEnglish": "Foreign-worker and domestic-helper first-issue sequence in use from 2 January 2009",
+      "expectTraditionalChinese": "2009年1月2日起使用的外籍勞工及家庭傭工首次簽發系列"
+    },
+    {
+      "id": "undefined-single-letter-prefix",
+      "input": "Q123456",
+      "expectEnglish": "No predefined description is available for prefix Q.",
+      "expectTraditionalChinese": "字頭 Q 沒有預定義說明。"
+    },
+    {
+      "id": "undefined-normalized-two-letter-prefix",
+      "input": "ｑｚ123456",
+      "expectEnglish": "No predefined description is available for prefix QZ.",
+      "expectTraditionalChinese": "字頭 QZ 沒有預定義說明。"
+    }
+  ],
   "birthRegistrationPrefixCases": [
     {
       "id": "before-defined-ranges",

@@ -2,8 +2,8 @@ use std::collections::HashSet;
 
 use chrono::{Datelike, Days, Months};
 use hkid_utils::{
-    DefinedPrefix, GenerationError, HkidCard, HkidGenerator, HkidNumber, HkidSymbol, NaiveDate,
-    Sex, YearMonth,
+    ChineseNameEntry, DefinedPrefix, GenerationError, HkidCard, HkidGenerator, HkidNumber,
+    HkidSymbol, NaiveDate, Sex, YearMonth,
 };
 
 fn date(year: i32, month: u32, day: u32) -> NaiveDate {
@@ -21,6 +21,36 @@ fn assert_valid_number(number: &HkidNumber) {
     assert_eq!(number.numerals().len(), 6);
     assert!(number.numerals().bytes().all(|byte| byte.is_ascii_digit()));
     assert_eq!(&number.to_string().parse::<HkidNumber>().unwrap(), number);
+}
+
+#[test]
+fn exposes_the_bundled_name_seed_to_callers() {
+    let entries = ChineseNameEntry::all().unwrap();
+    let find = |character| {
+        entries
+            .iter()
+            .find(|entry| entry.character() == character)
+            .unwrap()
+    };
+
+    let chan = find('陳');
+    assert_eq!(chan.commercial_code().code(), "7115");
+    assert_eq!(chan.romanisation(), "Chan");
+    assert!(chan.is_common_surname());
+    assert_eq!(chan.weight(), 100);
+    assert_eq!(chan.supported_sexes(), &[Sex::Male, Sex::Female]);
+    assert!(chan.supports_sex(Sex::Male));
+    assert!(chan.supports_sex(Sex::Female));
+
+    let chun = find('俊');
+    assert_eq!(chun.commercial_code().code(), "0193");
+    assert!(!chun.is_common_surname());
+    assert_eq!(chun.supported_sexes(), &[Sex::Male]);
+    assert!(!chun.supports_sex(Sex::Female));
+
+    let yin = find('妍');
+    assert_eq!(yin.supported_sexes(), &[Sex::Female]);
+    assert!(!yin.supports_sex(Sex::Male));
 }
 
 #[test]

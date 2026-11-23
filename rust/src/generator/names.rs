@@ -11,7 +11,7 @@ const HEADER: [&str; 6] = [
     "sexAssociation",
     "weight",
 ];
-static ENTRIES: LazyLock<Result<Vec<Entry>, String>> =
+static ENTRIES: LazyLock<Result<Vec<ChineseNameEntry>, String>> =
     LazyLock::new(|| load_entries(include_str!("../../../data/chinese-name-seed.csv")));
 
 /// A generated Chinese name with commercial codes and its matching romanisation.
@@ -23,13 +23,63 @@ pub struct GeneratedName {
     pub english: EnglishName,
 }
 
-struct Entry {
+/// One character in the bundled name seed used by [`HkidGenerator::name`].
+#[derive(Debug, Eq, PartialEq)]
+pub struct ChineseNameEntry {
     code: ChineseCommercialCode,
     character: char,
     romanisation: String,
     surname: bool,
     sex: Option<Sex>,
     weight: u64,
+}
+
+impl ChineseNameEntry {
+    /// All entries in CSV order. A malformed seed returns [`GenerationError::InvalidSeed`].
+    pub fn all() -> Result<&'static [Self], GenerationError> {
+        ENTRIES
+            .as_deref()
+            .map_err(|message| GenerationError::InvalidSeed(message.clone()))
+    }
+
+    /// The Han character represented by this entry.
+    pub fn character(&self) -> char {
+        self.character
+    }
+
+    /// The character's four-digit Chinese commercial code.
+    pub fn commercial_code(&self) -> &ChineseCommercialCode {
+        &self.code
+    }
+
+    /// The title-cased romanisation used in generated English names.
+    pub fn romanisation(&self) -> &str {
+        &self.romanisation
+    }
+
+    /// Whether the generator uses this entry as a surname.
+    pub fn is_common_surname(&self) -> bool {
+        self.surname
+    }
+
+    /// The card sex values for which the generator may select this entry.
+    pub fn supported_sexes(&self) -> &'static [Sex] {
+        match self.sex {
+            Some(Sex::Male) => &[Sex::Male],
+            Some(Sex::Female) => &[Sex::Female],
+            None => &[Sex::Male, Sex::Female],
+        }
+    }
+
+    /// Whether the generator may select this entry for the requested sex.
+    pub fn supports_sex(&self, sex: Sex) -> bool {
+        self.supported_sexes().contains(&sex)
+    }
+
+    /// The positive relative selection weight within the eligible pool.
+    pub fn weight(&self) -> u64 {
+        self.weight
+    }
 }
 
 fn fields(line: &str) -> Result<[&str; 6], &'static str> {
@@ -49,7 +99,7 @@ fn fields(line: &str) -> Result<[&str; 6], &'static str> {
         .map_err(|_| "expected six fields")
 }
 
-fn parse_entry(row: [&str; 6]) -> Result<Entry, &'static str> {
+fn parse_entry(row: [&str; 6]) -> Result<ChineseNameEntry, &'static str> {
     let [code, character, romanisation, surname, sex, weight] = row;
     let code = ChineseCommercialCode::new(code, None).map_err(|_| "invalid commercialCode")?;
     if !ChineseName::is_valid_part(character) {
@@ -81,7 +131,7 @@ fn parse_entry(row: [&str; 6]) -> Result<Entry, &'static str> {
         .ok()
         .filter(|&n| n > 0)
         .ok_or("weight must be a positive integer")?;
-    Ok(Entry {
+    Ok(ChineseNameEntry {
         code,
         character,
         romanisation,
@@ -91,7 +141,7 @@ fn parse_entry(row: [&str; 6]) -> Result<Entry, &'static str> {
     })
 }
 
-fn load_entries(input: &str) -> Result<Vec<Entry>, String> {
+fn load_entries(input: &str) -> Result<Vec<ChineseNameEntry>, String> {
     // Count a CRLF pair as one record separator, including in mixed-ending files.
     let normalized = input.replace("\r\n", "\n");
     let mut records = normalized
@@ -114,7 +164,7 @@ fn load_entries(input: &str) -> Result<Vec<Entry>, String> {
         .collect()
 }
 
-fn draw<'a>(rng: &mut fastrand::Rng, pool: &mut Vec<&'a Entry>) -> &'a Entry {
+fn draw<'a>(rng: &mut fastrand::Rng, pool: &mut Vec<&'a ChineseNameEntry>) -> &'a ChineseNameEntry {
     let total = pool.iter().map(|entry| entry.weight).sum::<u64>();
     let mut ticket = rng.u64(..total);
     for (index, entry) in pool.iter().enumerate() {
@@ -142,12 +192,10 @@ impl HkidGenerator {
         if !(1..ChineseName::MAX_LENGTH).contains(&length) {
             return Err(GenerationError::InvalidNameLength);
         }
-        let entries = ENTRIES
-            .as_ref()
-            .map_err(|message| GenerationError::InvalidSeed(message.clone()))?;
+        let entries = ChineseNameEntry::all()?;
         let (mut surnames, mut given): (Vec<_>, Vec<_>) = entries
             .iter()
-            .filter(|e| sex.is_none() || e.sex.is_none() || e.sex == sex)
+            .filter(|entry| sex.is_none_or(|sex| entry.supports_sex(sex)))
             .partition(|e| e.surname);
         if surnames.is_empty() || given.len() < length {
             return Err(GenerationError::InsufficientNameEntries);
