@@ -89,10 +89,12 @@ public final class HkidCardUtil {
         Locale effectiveLocale = locale != null ? locale : Locale.getDefault();
         boolean chinese = "zh".equals(effectiveLocale.getLanguage());
         HkidSymbols symbols = card.getSymbols();
+        Sex sex = card.getSex();
+        HolderReference reference = HolderReference.forSex(sex);
         String[] sections = {
-                describeBasicDetails(age, card.getSex(), symbols, chinese),
-                describeStatusAndEligibility(symbols, chinese),
-                describeAmendments(symbols, chinese)
+                describeBasicDetails(age, sex, symbols, chinese),
+                describeStatusAndEligibility(symbols, chinese, reference),
+                describeAmendments(symbols, chinese, reference)
         };
         List<String> sentences = new ArrayList<>();
         for (String section : sections) {
@@ -101,6 +103,32 @@ public final class HkidCardUtil {
             }
         }
         return String.join(chinese ? "" : " ", sentences);
+    }
+
+    private enum HolderReference {
+        HOLDER("持有人", "The holder", "The holder's", "their"),
+        MALE("他", "He", "His", "his"),
+        FEMALE("她", "She", "Her", "her");
+
+        final String chineseSubject;
+        final String englishSubject;
+        final String englishPossessive;
+        final String englishPossessivePronoun;
+
+        HolderReference(String chineseSubject, String englishSubject,
+                        String englishPossessive, String englishPossessivePronoun) {
+            this.chineseSubject = chineseSubject;
+            this.englishSubject = englishSubject;
+            this.englishPossessive = englishPossessive;
+            this.englishPossessivePronoun = englishPossessivePronoun;
+        }
+
+        static HolderReference forSex(Sex sex) {
+            if (sex == null) {
+                return HOLDER;
+            }
+            return sex == Sex.FEMALE ? FEMALE : MALE;
+        }
     }
 
     private static String describeBasicDetails(
@@ -150,7 +178,8 @@ public final class HkidCardUtil {
         }
     }
 
-    private static String describeStatusAndEligibility(HkidSymbols symbols, boolean chinese) {
+    private static String describeStatusAndEligibility(
+            HkidSymbols symbols, boolean chinese, HolderReference reference) {
         HkidSymbol status = symbolInCategory(symbols, HkidSymbolCategory.RESIDENTIAL_STATUS);
         HkidSymbol eligibility = symbolInCategory(
                 symbols, HkidSymbolCategory.RE_ENTRY_PERMIT_ELIGIBILITY);
@@ -167,15 +196,16 @@ public final class HkidCardUtil {
             if (status != null && eligibility != null) {
                 separator = registrationStatus ? "，" : "，於領證登記時";
             }
-            return "持有人" + time + statusClause + separator + eligibilityClause + "。";
+            return reference.chineseSubject + time + statusClause + separator + eligibilityClause + "。";
         }
         String subject = registrationStatus || status == null
-                ? "At registration, the holder " : "The holder ";
+                ? "At registration, " + reference.englishSubject.toLowerCase(Locale.ROOT)
+                : reference.englishSubject;
         String separator = "";
         if (status != null && eligibility != null) {
             separator = registrationStatus ? " and " : " and, at registration, ";
         }
-        return subject + statusClause + separator + eligibilityClause + ".";
+        return subject + " " + statusClause + separator + eligibilityClause + ".";
     }
 
     private static String describeResidentialStatus(HkidSymbol symbol, boolean chinese) {
@@ -212,19 +242,22 @@ public final class HkidCardUtil {
         }
     }
 
-    private static String describeAmendments(HkidSymbols symbols, boolean chinese) {
+    private static String describeAmendments(
+            HkidSymbols symbols, boolean chinese, HolderReference reference) {
         boolean birthChanged = symbols.contains(HkidSymbol.BIRTH_DETAILS_CHANGED);
         boolean nameChanged = symbols.contains(HkidSymbol.NAME_CHANGED);
+        String owner = chinese ? reference.chineseSubject + "的" : reference.englishPossessive;
         if (birthChanged && nameChanged) {
-            return chinese ? "持有人的出生日期或出生地曾更改，姓名亦曾更改。"
-                    : "The holder's date or place of birth has been amended, as has their name.";
+            return chinese ? owner + "出生日期或出生地曾更改，姓名亦曾更改。"
+                    : owner + " date or place of birth has been amended, as has "
+                            + reference.englishPossessivePronoun + " name.";
         }
         if (birthChanged) {
-            return chinese ? "持有人的出生日期或出生地曾更改。"
-                    : "The holder's date or place of birth has been amended.";
+            return chinese ? owner + "出生日期或出生地曾更改。"
+                    : owner + " date or place of birth has been amended.";
         }
         if (nameChanged) {
-            return chinese ? "持有人的姓名曾更改。" : "The holder's name has been amended.";
+            return chinese ? owner + "姓名曾更改。" : owner + " name has been amended.";
         }
         return "";
     }

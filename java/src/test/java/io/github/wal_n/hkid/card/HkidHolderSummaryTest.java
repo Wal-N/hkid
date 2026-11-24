@@ -37,13 +37,13 @@ class HkidHolderSummaryTest {
 
         assertSummary(card,
                 "持有人為18歲女性，於香港出生。"
-                        + "持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。"
-                        + "持有人的出生日期或出生地曾更改，姓名亦曾更改。",
+                        + "她享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。"
+                        + "她的出生日期或出生地曾更改，姓名亦曾更改。",
                 "The holder is female, aged 18, and was born in Hong Kong. "
-                        + "The holder has the right of abode in Hong Kong "
+                        + "She has the right of abode in Hong Kong "
                         + "and, at registration, was aged 18 or over "
                         + "and eligible for a Re-entry Permit. "
-                        + "The holder's date or place of birth has been amended, as has their name.");
+                        + "Her date or place of birth has been amended, as has her name.");
     }
 
     @Test
@@ -56,9 +56,9 @@ class HkidHolderSummaryTest {
 
         assertSummary(card,
                 "持有人為51歲女性，於香港出生。"
-                        + "持有人享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。",
+                        + "她享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。",
                 "The holder is female, aged 51, and was born in Hong Kong. "
-                        + "The holder has the right of abode in Hong Kong "
+                        + "She has the right of abode in Hong Kong "
                         + "and, at registration, was aged 18 or over "
                         + "and eligible for a Re-entry Permit.");
     }
@@ -234,8 +234,8 @@ class HkidHolderSummaryTest {
                 "持有人的出生日期或出生地曾更改，姓名亦曾更改。",
                 "The holder's date or place of birth has been amended, as has their name.");
         assertSummary(HkidCard.builder().sex(Sex.MALE).symbolCodes("N").build(),
-                "持有人為男性。持有人的姓名曾更改。",
-                "The holder is male. The holder's name has been amended.");
+                "持有人為男性。他的姓名曾更改。",
+                "The holder is male. His name has been amended.");
         assertSummary(HkidCard.builder().symbolCodes("ZAB").build(),
                 "持有人於香港出生。持有人享有香港居留權。持有人的出生日期或出生地曾更改。",
                 "The holder was born in Hong Kong. The holder has the right of abode in Hong Kong. "

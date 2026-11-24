@@ -115,11 +115,12 @@ impl HkidCard {
         if let Some(status) = language.status_and_eligibility(
             in_category(HkidSymbolCategory::ResidentialStatus),
             in_category(HkidSymbolCategory::ReEntryPermitEligibility),
+            fields.sex,
         )? {
             sections.push(status);
         }
-        if let Some(amendments) = language.amendments(symbols) {
-            sections.push(amendments.to_owned());
+        if let Some(amendments) = language.amendments(symbols, fields.sex) {
+            sections.push(amendments);
         }
         Ok(sections.join(language.text(" ", "")))
     }
@@ -277,6 +278,7 @@ impl Language {
         self,
         status: Option<HkidSymbol>,
         eligibility: Option<HkidSymbol>,
+        sex: Option<Sex>,
     ) -> Result<Option<String>, CardError> {
         let status_clause = match status {
             Some(HkidSymbol::RightOfAbode) => {
@@ -321,10 +323,13 @@ impl Language {
             status,
             Some(HkidSymbol::RightOfAbode | HkidSymbol::RightToLand)
         );
-        let subject = if present_tense {
-            self.text("The holder ", "持有人")
-        } else {
-            self.text("At registration, the holder ", "持有人於領證登記時")
+        let subject = match (sex, present_tense) {
+            (Some(Sex::Female), true) => self.text("She ", "她"),
+            (Some(Sex::Male), true) => self.text("He ", "他"),
+            (None, true) => self.text("The holder ", "持有人"),
+            (Some(Sex::Female), false) => self.text("At registration, she ", "她於領證登記時"),
+            (Some(Sex::Male), false) => self.text("At registration, he ", "他於領證登記時"),
+            (None, false) => self.text("At registration, the holder ", "持有人於領證登記時"),
         };
         let separator = if status_clause.is_empty() || eligibility.is_empty() {
             ""
@@ -339,25 +344,35 @@ impl Language {
         )))
     }
 
-    fn amendments(self, symbols: &HkidSymbols) -> Option<&'static str> {
-        match (
+    fn amendments(self, symbols: &HkidSymbols, sex: Option<Sex>) -> Option<String> {
+        let (possessive, english_name_possessive) = match sex {
+            Some(Sex::Female) => (self.text("Her ", "她的"), "her"),
+            Some(Sex::Male) => (self.text("His ", "他的"), "his"),
+            None => (self.text("The holder's ", "持有人的"), "their"),
+        };
+        let birth_change = self.text(
+            "date or place of birth has been amended",
+            "出生日期或出生地曾更改",
+        );
+        let stop = self.text(".", "。");
+        let sentence = match (
             symbols.contains(HkidSymbol::BirthDetailsChanged),
             symbols.contains(HkidSymbol::NameChanged),
         ) {
-            (true, true) => Some(self.text(
-                "The holder's date or place of birth has been amended, as has their name.",
-                "持有人的出生日期或出生地曾更改，姓名亦曾更改。",
-            )),
-            (true, false) => Some(self.text(
-                "The holder's date or place of birth has been amended.",
-                "持有人的出生日期或出生地曾更改。",
-            )),
-            (false, true) => Some(self.text(
-                "The holder's name has been amended.",
-                "持有人的姓名曾更改。",
-            )),
-            (false, false) => None,
-        }
+            (true, true) => match self {
+                Self::English => {
+                    format!("{possessive}{birth_change}, as has {english_name_possessive} name.")
+                }
+                Self::TraditionalChinese => format!("{possessive}{birth_change}，姓名亦曾更改。"),
+            },
+            (true, false) => format!("{possessive}{birth_change}{stop}"),
+            (false, true) => {
+                let name_change = self.text("name has been amended", "姓名曾更改");
+                format!("{possessive}{name_change}{stop}")
+            }
+            (false, false) => return None,
+        };
+        Some(sentence)
     }
 }
 
@@ -425,7 +440,7 @@ mod tests {
         let symbol = HkidSymbol::BornInHongKong;
         for eligibility in [None, Some(HkidSymbol::NameChanged)] {
             assert_eq!(
-                Language::English.status_and_eligibility(Some(symbol), eligibility),
+                Language::English.status_and_eligibility(Some(symbol), eligibility, None),
                 Err(CardError::UnsupportedHolderSymbol {
                     symbol,
                     category: HkidSymbolCategory::ResidentialStatus,
@@ -439,7 +454,7 @@ mod tests {
         let symbol = HkidSymbol::NameChanged;
         for status in [None, Some(HkidSymbol::RightOfAbode)] {
             assert_eq!(
-                Language::English.status_and_eligibility(status, Some(symbol)),
+                Language::English.status_and_eligibility(status, Some(symbol), None),
                 Err(CardError::UnsupportedHolderSymbol {
                     symbol,
                     category: HkidSymbolCategory::ReEntryPermitEligibility,
