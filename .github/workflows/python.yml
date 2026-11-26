@@ -1,0 +1,107 @@
+name: Python CI
+
+on:
+  push:
+    paths:
+      - "python/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "rust/**"
+      - "data/**"
+      - "conformance/**"
+      - "LICENSE"
+      - ".github/workflows/python.yml"
+  pull_request:
+    paths:
+      - "python/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - "rust/**"
+      - "data/**"
+      - "conformance/**"
+      - "LICENSE"
+      - ".github/workflows/python.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wheel:
+    name: Wheel on ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm, macos-15-intel, macos-15, windows-2025]
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        id: minimum
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-python@v7
+        id: latest
+        with:
+          python-version: "3.x"
+          check-latest: true
+
+      - name: Build the stable ABI wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: v1.16.0
+          manylinux: "2_28"
+          args: --release --locked --manifest-path python/Cargo.toml --out dist
+
+      - name: Test the wheel on minimum and current CPython
+        shell: python {0}
+        env:
+          MINIMUM_PYTHON: ${{ steps.minimum.outputs.python-path }}
+          LATEST_PYTHON: ${{ steps.latest.outputs.python-path }}
+        run: |
+          import os
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          wheel, = Path("dist").glob("*.whl")
+          for python in (os.environ["MINIMUM_PYTHON"], os.environ["LATEST_PYTHON"]):
+              with tempfile.TemporaryDirectory() as directory:
+                  subprocess.run([python, "-m", "venv", directory], check=True)
+                  executable = Path(directory, "Scripts/python.exe" if os.name == "nt" else "bin/python")
+                  subprocess.run([executable, "-m", "pip", "install", "--no-index", "--no-deps", wheel], check=True)
+                  subprocess.run([executable, "-I", "-m", "unittest", "discover", "-s", "python/tests", "-v"], check=True)
+
+      - name: Rebuild the wheel from the source distribution
+        if: matrix.runner == 'ubuntu-24.04'
+        run: |
+          python -m pip install build
+          python -m build --sdist --outdir source-dist python
+          python -m pip wheel --no-deps --wheel-dir rebuilt source-dist/*.tar.gz
+
+      - name: Check both wheels carry the Python README
+        if: matrix.runner == 'ubuntu-24.04'
+        shell: python {0}
+        run: |
+          from email.parser import Parser
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          expected = Path("python/README-Python.md").read_text(encoding="utf-8").strip()
+          for directory in ("dist", "rebuilt"):
+              wheel, = Path(directory).glob("*.whl")
+              with ZipFile(wheel) as archive:
+                  metadata, = (name for name in archive.namelist() if name.endswith(".dist-info/METADATA"))
+                  description = Parser().parsestr(archive.read(metadata).decode("utf-8")).get_payload()
+              if description.strip() != expected:
+                  raise ValueError(f"{wheel} description differs from the Python README")
+
+      - name: Upload the tested wheel
+        uses: actions/upload-artifact@v7
+        with:
+          path: dist/*.whl
+          archive: false
+          if-no-files-found: error
