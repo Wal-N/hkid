@@ -12,7 +12,7 @@ Add the crate to your project's `Cargo.toml` with Rust 1.100 or later.
 
 ```toml
 [dependencies]
-hkid-utils = "1.2.0"
+hkid-utils = "1.2.1"
 ```
 
 ## Numbers and prefixes

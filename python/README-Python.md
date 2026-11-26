@@ -5,20 +5,31 @@ CPython 3.11 and later using the stable ABI. The wheel build targets are
 Windows x86-64, macOS on Apple silicon and Intel, and Linux with glibc 2.28
 or later on x86-64 and ARM64.
 
-Install the prebuilt wheel from PyPI.
+## Quick start
+
+Install the prebuilt wheel from [PyPI](https://pypi.org/project/hkid-utils/).
 
 ~~~shell
-python -m pip install --only-binary=:all: hkid-utils
+pip install hkid-utils
 ~~~
+
+## Example
 
 ~~~python
 from hkid_utils import check_digit, format_number, is_valid
 
-is_valid("A123456(3)")       # True
-is_valid("A123456(4)")       # False
-check_digit("a000002")       # 'A'
-format_number("ａ１２３４５６")  # 'A123456(3)'
+# Validation
+print(is_valid("A123456(3)"))  # True
+print(is_valid("A123456(4)"))  # False (expected check digit 3)
+
+# Formatting
+number = "A123456"
+print(format_number(number))  # A123456(3)
+print(check_digit(number))    # 3
 ~~~
+
+The check digit can also be a letter. For example, `check_digit("a000002")`
+returns `"A"`. Fullwidth input such as `ａ１２３４５６` formats as `A123456(3)`.
 
 All three functions accept a string with a one- or two-letter prefix, six
 digits and an optional check digit. A supplied digit must match. For invalid

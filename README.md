@@ -27,20 +27,6 @@ rules and edge cases so you don't have to implement them from scratch.
 
 ## Quick start
 
-### CPython 3.11+
-
-Install the [Python package](python/README-Python.md) from PyPI and validate an HKID number.
-
-```shell
-python -m pip install --only-binary=:all: hkid-utils
-```
-
-```python
-from hkid_utils import is_valid
-
-is_valid("A123456(3)")  # True
-```
-
 ### Java 8+
 
 Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
@@ -49,11 +35,29 @@ Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
 <dependency>
     <groupId>io.github.wal-n</groupId>
     <artifactId>hkid-utils</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
 </dependency>
 ```
 
-#### Example
+### Rust 1.100+
+
+Add the crate from [crates.io](https://crates.io/crates/hkid-utils).
+
+```shell
+cargo add hkid-utils
+```
+
+### CPython 3.11+
+
+Install the prebuilt wheel from [PyPI](https://pypi.org/project/hkid-utils/).
+
+```shell
+pip install hkid-utils
+```
+
+## Examples
+
+### Java
 
 ```java
 import io.github.wal_n.hkid.card.HkidCard;
@@ -113,18 +117,7 @@ public final class HkidExample {
 }
 ```
 
-### Rust 1.100+
-
-Add the crate to your project's `Cargo.toml`.
-
-```toml
-[dependencies]
-hkid-utils = "1.2.0"
-```
-
-For a local checkout, use `hkid-utils = { path = "../hkid" }` in the same section.
-
-Save this as `src/main.rs` and run `cargo run`.
+### Rust
 
 ```rust
 use hkid_utils::{
@@ -180,6 +173,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 More examples are in the [Rust crate documentation](rust/README.md).
 
+### Python
+
+The Python 1.2.1 API covers HKID numbers.
+
+```python
+from hkid_utils import check_digit, format_number, is_valid
+
+# Validation
+print(is_valid("A123456(3)"))  # True
+print(is_valid("A123456(4)"))  # False (expected check digit 3)
+
+# Formatting
+number = "A123456"
+print(format_number(number))  # A123456(3)
+print(check_digit(number))    # 3
+```
+
+See the [Python package guide](python/README-Python.md) for supported platforms and error handling.
+
 > [!CAUTION]
 > Generated HKID numbers may coincide with real people's numbers. Use them only
 > in isolated test datasets and environments. A valid checksum does not guarantee
@@ -212,7 +224,7 @@ Call `validateAsOf(referenceDate)` to reject future-dated fields.
 ### Generated data
 
 Call `HkidCardUtil.generateRandomCard()` in Java or `HkidGenerator::new().card(None)`
-in Rust for a sample as of today. 
+in Rust for a sample as of today.
 The name generator uses sex-associated and unisex entries. Name validation
 accepts names independently of those associations.
 
