@@ -107,9 +107,9 @@ public final class HkidExample {
     System.out.println(sample.getSymbols());                // ***AZ
 
     // Holder summaries
-    System.out.println(sample.describeHolder(Locale.TRADITIONAL_CHINESE));
+    System.out.println(sample.describeHolder(Locale.TRADITIONAL_CHINESE, referenceDate));
     // 持有人為91歲女性，於香港出生。她享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
-    System.out.println(sample.describeHolder(Locale.ENGLISH));
+    System.out.println(sample.describeHolder(Locale.ENGLISH, referenceDate));
     // The holder is female, aged 91, and was born in Hong Kong. She has the
     // right of abode in Hong Kong and, at registration, was aged 18 or over
     // and eligible for a Re-entry Permit.
@@ -161,9 +161,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", fields.symbols); // ***AZ
 
     // Holder summaries
-    println!("{}", sample.describe_holder(Some("zh-HK"))?);
+    println!("{}", sample.describe_holder_on(Some("zh-HK"), reference)?);
     // 持有人為39歲男性，於香港出生。他享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
-    println!("{}", sample.describe_holder(Some("en"))?);
+    println!("{}", sample.describe_holder_on(Some("en"), reference)?);
     // The holder is male, aged 39, and was born in Hong Kong. He has the
     // right of abode in Hong Kong and, at registration, was aged 18 or over
     // and eligible for a Re-entry Permit.
@@ -230,7 +230,7 @@ accepts names independently of those associations.
 
 ### Holder summaries
 
-`describeHolder()` reports age on the reference date,
+Holder summaries report age as of the supplied reference date (today by default),
 sex, reported birthplace and symbol meanings when those fields are available.
 Age-specific and stay-restriction symbols describe the holder at registration.
 The summary omits names, Chinese Commercial Codes, exact birth dates, HKID
