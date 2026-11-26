@@ -1,0 +1,16 @@
+[package]
+name = "hkid-utils-python"
+version.workspace = true
+edition = "2024"
+rust-version = "1.100"
+license-file = "../LICENSE"
+publish = false
+
+[lib]
+name = "hkid_utils"
+crate-type = ["cdylib"]
+doc = false
+
+[dependencies]
+hkid_core = { package = "hkid-utils", path = ".." }
+pyo3 = { version = "0.30", features = ["abi3-py311"] }

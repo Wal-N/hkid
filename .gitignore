@@ -28,3 +28,7 @@ Thumbs.db
 *.jar
 *.war
 *.ear
+
+# Python
+__pycache__/
+.venv/

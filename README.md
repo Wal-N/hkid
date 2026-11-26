@@ -35,11 +35,29 @@ Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
 <dependency>
     <groupId>io.github.wal-n</groupId>
     <artifactId>hkid-utils</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
 </dependency>
 ```
 
-#### Example
+### Rust 1.100+
+
+Add the crate from [crates.io](https://crates.io/crates/hkid-utils).
+
+```shell
+cargo add hkid-utils
+```
+
+### CPython 3.11+
+
+Install the prebuilt wheel from [PyPI](https://pypi.org/project/hkid-utils/).
+
+```shell
+pip install hkid-utils
+```
+
+## Examples
+
+### Java
 
 ```java
 import io.github.wal_n.hkid.card.HkidCard;
@@ -89,9 +107,9 @@ public final class HkidExample {
     System.out.println(sample.getSymbols());                // ***AZ
 
     // Holder summaries
-    System.out.println(sample.describeHolder(Locale.TRADITIONAL_CHINESE));
+    System.out.println(sample.describeHolder(Locale.TRADITIONAL_CHINESE, referenceDate));
     // 持有人為91歲女性，於香港出生。她享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
-    System.out.println(sample.describeHolder(Locale.ENGLISH));
+    System.out.println(sample.describeHolder(Locale.ENGLISH, referenceDate));
     // The holder is female, aged 91, and was born in Hong Kong. She has the
     // right of abode in Hong Kong and, at registration, was aged 18 or over
     // and eligible for a Re-entry Permit.
@@ -99,18 +117,7 @@ public final class HkidExample {
 }
 ```
 
-### Rust 1.100+
-
-Add the crate to your project's `Cargo.toml`.
-
-```toml
-[dependencies]
-hkid-utils = "1.2.0"
-```
-
-For a local checkout, use `hkid-utils = { path = "../hkid" }` in the same section.
-
-Save this as `src/main.rs` and run `cargo run`.
+### Rust
 
 ```rust
 use hkid_utils::{
@@ -154,9 +161,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", fields.symbols); // ***AZ
 
     // Holder summaries
-    println!("{}", sample.describe_holder(Some("zh-HK"))?);
+    println!("{}", sample.describe_holder_on(Some("zh-HK"), reference)?);
     // 持有人為39歲男性，於香港出生。他享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
-    println!("{}", sample.describe_holder(Some("en"))?);
+    println!("{}", sample.describe_holder_on(Some("en"), reference)?);
     // The holder is male, aged 39, and was born in Hong Kong. He has the
     // right of abode in Hong Kong and, at registration, was aged 18 or over
     // and eligible for a Re-entry Permit.
@@ -165,6 +172,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 More examples are in the [Rust crate documentation](rust/README.md).
+
+### Python
+
+The Python 1.2.1 API covers HKID numbers.
+
+```python
+from hkid_utils import check_digit, format_number, is_valid
+
+# Validation
+print(is_valid("A123456(3)"))  # True
+print(is_valid("A123456(4)"))  # False (expected check digit 3)
+
+# Formatting
+number = "A123456"
+print(format_number(number))  # A123456(3)
+print(check_digit(number))    # 3
+```
+
+See the [Python package guide](python/README-Python.md) for supported platforms and error handling.
 
 > [!CAUTION]
 > Generated HKID numbers may coincide with real people's numbers. Use them only
@@ -198,13 +224,13 @@ Call `validateAsOf(referenceDate)` to reject future-dated fields.
 ### Generated data
 
 Call `HkidCardUtil.generateRandomCard()` in Java or `HkidGenerator::new().card(None)`
-in Rust for a sample as of today. 
+in Rust for a sample as of today.
 The name generator uses sex-associated and unisex entries. Name validation
 accepts names independently of those associations.
 
 ### Holder summaries
 
-`describeHolder()` reports age on the reference date,
+Holder summaries report age as of the supplied reference date (today by default),
 sex, reported birthplace and symbol meanings when those fields are available.
 Age-specific and stay-restriction symbols describe the holder at registration.
 The summary omits names, Chinese Commercial Codes, exact birth dates, HKID
