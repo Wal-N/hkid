@@ -5,6 +5,12 @@ CPython 3.11 and later using the stable ABI. The wheel build targets are
 Windows x86-64, macOS on Apple silicon and Intel, and Linux with glibc 2.28
 or later on x86-64 and ARM64.
 
+Install the prebuilt wheel from PyPI.
+
+~~~shell
+python -m pip install --only-binary=:all: hkid-utils
+~~~
+
 ~~~python
 from hkid_utils import check_digit, format_number, is_valid
 

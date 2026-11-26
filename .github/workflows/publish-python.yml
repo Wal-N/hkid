@@ -1,0 +1,63 @@
+name: Publish Python wheels
+
+on:
+  push:
+    # pypi/<version>/<successful Python CI run ID>
+    tags: ["pypi/*/*"]
+
+permissions: {}
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      actions: read
+      id-token: write
+    steps:
+      - name: Check the selected Python CI run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          IFS=/ read -r prefix version run_id <<< "$GITHUB_REF_NAME"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && "$run_id" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id" |
+            jq -e --arg repo "$GITHUB_REPOSITORY" '
+              .head_repository.full_name == $repo and .event == "push" and
+              .path == ".github/workflows/python.yml" and .conclusion == "success"'
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Download the tested wheel files
+        uses: actions/download-artifact@v8
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          pattern: "*.whl"
+          path: dist
+          merge-multiple: true
+          skip-decompress: true
+
+      - name: Verify the release contains all five wheels
+        shell: python {0}
+        env:
+          VERSION: ${{ steps.source.outputs.version }}
+        run: |
+          import os
+          from pathlib import Path
+
+          platforms = (
+              "win_amd64", "macosx_*_x86_64", "macosx_*_arm64",
+              "manylinux_2_28_x86_64", "manylinux_2_28_aarch64",
+          )
+          directory = Path("dist")
+          expected = set()
+          for platform in platforms:
+              wheel, = directory.glob(f"hkid_utils-{os.environ['VERSION']}-cp311-abi3-{platform}.whl")
+              expected.add(wheel)
+          if set(directory.iterdir()) != expected:
+              raise ValueError("Unexpected files in the PyPI release")
+
+      - name: Publish verified wheels to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

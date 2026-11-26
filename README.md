@@ -27,6 +27,20 @@ rules and edge cases so you don't have to implement them from scratch.
 
 ## Quick start
 
+### CPython 3.11+
+
+Install the [Python package](python/README-Python.md) from PyPI and validate an HKID number.
+
+```shell
+python -m pip install --only-binary=:all: hkid-utils
+```
+
+```python
+from hkid_utils import is_valid
+
+is_valid("A123456(3)")  # True
+```
+
 ### Java 8+
 
 Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
