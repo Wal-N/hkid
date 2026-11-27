@@ -14,7 +14,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -108,6 +107,15 @@ class HkidNameUtilTest {
     }
 
     @Test
+    void selectsAnEntryWhenCombinedWeightsExceedIntegerLimit() {
+        List<ChineseNameEntry> surnames = Arrays.asList(
+                new ChineseNameEntry("7115", "陳", "Chan", true, EnumSet.allOf(Sex.class), 1_500_000_000),
+                new ChineseNameEntry("2621", "李", "Lee", true, EnumSet.allOf(Sex.class), 1_500_000_000));
+
+        assertTrue(surnames.contains(HkidNameUtil.weightedRandom(surnames)));
+    }
+
+    @Test
     void nameAssertionsHandleSupplementarySurnameAndPersonalName() {
         ChineseNameEntry surname = new ChineseNameEntry(
                 "0001", "\uD840\uDC00", "Wan", true, EnumSet.allOf(Sex.class), 1);
@@ -133,9 +141,8 @@ class HkidNameUtilTest {
     void sexSpecificGenerationUsesOnlyCompatibleGivenNameEntries() {
         for (Sex sex : Sex.values()) {
             for (int personalNameLength = 1; personalNameLength <= 5; personalNameLength++) {
-                for (int seed = 0; seed < 50; seed++) {
-                    GeneratedName name = HkidNameUtil.generateRandomName(
-                            new Random(seed), personalNameLength, sex);
+                for (int sample = 0; sample < 50; sample++) {
+                    GeneratedName name = HkidNameUtil.generateRandomName(personalNameLength, sex);
 
                     assertGeneratedNameMatchesSeed(name, personalNameLength);
                     assertGeneratedNameMatchesSex(name, sex);
@@ -145,30 +152,30 @@ class HkidNameUtilTest {
     }
 
     @Test
-    void sexSpecificGenerationRejectsMissingDependencies() {
+    void sexSpecificGenerationRejectsNullSex() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> HkidNameUtil.generateRandomName((Sex) null));
+                () -> HkidNameUtil.generateRandomName(null));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> HkidNameUtil.generateRandomName(null, Sex.MALE));
+                () -> HkidNameUtil.generateRandomName(2, null));
     }
 
     @Test
-    void sexSpecificGenerationIsDeterministicWithSeededRandom() {
-        GeneratedName first = HkidNameUtil.generateRandomName(
-                new Random(123456789L), Sex.FEMALE);
-        GeneratedName second = HkidNameUtil.generateRandomName(
-                new Random(123456789L), Sex.FEMALE);
-
-        assertEquals(first.getChineseNameString(), second.getChineseNameString());
-        assertEquals(first.getEnglishNameString(), second.getEnglishNameString());
-        assertEquals(first.getChineseCommercialCodes(), second.getChineseCommercialCodes());
+    void defaultLengthGenerationProducesOneOrTwoGivenNameCharacters() {
+        GeneratedName female = HkidNameUtil.generateRandomName(Sex.FEMALE);
+        assertGeneratedNameMatchesSex(female, Sex.FEMALE);
+        for (GeneratedName name : Arrays.asList(HkidNameUtil.generateRandomName(), female)) {
+            String personalName = name.getChineseName().getPersonalName();
+            int length = personalName.codePointCount(0, personalName.length());
+            assertTrue(length == 1 || length == 2);
+            assertGeneratedNameMatchesSeed(name, length);
+        }
     }
 
     @Test
     void generatedNamesAndCardsExposeTheSameNameValuesAndText() {
-        GeneratedName generated = HkidNameUtil.generateRandomName(new Random(1234L), 2, Sex.FEMALE);
+        GeneratedName generated = HkidNameUtil.generateRandomName(2, Sex.FEMALE);
         HkidCard card = HkidCard.builder()
                 .chineseName(generated.getChineseName())
                 .englishName(generated.getEnglishName())

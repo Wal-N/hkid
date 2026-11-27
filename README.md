@@ -97,8 +97,7 @@ public final class HkidExample {
     // [PREFIX_BIRTH_DATE_MISMATCH, PREFIX_BIRTH_PLACE_MISMATCH]
 
     // Generate data. The output below is one example and varies with each run.
-    LocalDate referenceDate = LocalDate.of(2026, 7, 21);
-    HkidCard sample = HkidCardUtil.generateRandomCard(referenceDate);
+    HkidCard sample = HkidCardUtil.generateRandomCard();
     System.out.println(sample.getChineseName());            // 李妍
     System.out.println(sample.getChineseCommercialCodes()); // [2621, 1177]
     System.out.println(sample.getEnglishName());            // Lee, Yin
@@ -107,10 +106,10 @@ public final class HkidExample {
     System.out.println(sample.getSymbols());                // ***AZ
 
     // Holder summaries
-    System.out.println(sample.describeHolder(Locale.TRADITIONAL_CHINESE, referenceDate));
-    // 持有人為91歲女性，於香港出生。她享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
-    System.out.println(sample.describeHolder(Locale.ENGLISH, referenceDate));
-    // The holder is female, aged 91, and was born in Hong Kong. She has the
+    System.out.println(sample.describeHolder(Locale.TRADITIONAL_CHINESE));
+    // 持有人為55歲女性，於香港出生。她享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
+    System.out.println(sample.describeHolder(Locale.ENGLISH));
+    // The holder is female, aged 55, and was born in Hong Kong. She has the
     // right of abode in Hong Kong and, at registration, was aged 18 or over
     // and eligible for a Re-entry Permit.
   }
@@ -147,8 +146,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{:?}", card.find_suspicions()); // [PrefixBirthDateMismatch, PrefixBirthPlaceMismatch]
 
     // Generate data. The output below is from one run.
-    let reference = "2026-07-21".parse()?;
-    let sample = HkidGenerator::new().card_on(reference, None)?;
+    let sample = HkidGenerator::new().card()?;
     let fields = sample.fields();
     println!("{}", fields.chinese_name); // 何國德
     for code in fields.chinese_name.commercial_codes() {
@@ -161,9 +159,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", fields.symbols); // ***AZ
 
     // Holder summaries
-    println!("{}", sample.describe_holder_on(Some("zh-HK"), reference)?);
+    println!("{}", sample.describe_holder(Some("zh-HK"))?);
     // 持有人為39歲男性，於香港出生。他享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
-    println!("{}", sample.describe_holder_on(Some("en"), reference)?);
+    println!("{}", sample.describe_holder(Some("en"))?);
     // The holder is male, aged 39, and was born in Hong Kong. He has the
     // right of abode in Hong Kong and, at registration, was aged 18 or over
     // and eligible for a Re-entry Permit.
@@ -223,8 +221,12 @@ Call `validateAsOf(referenceDate)` to reject future-dated fields.
 
 ### Generated data
 
-Call `HkidCardUtil.generateRandomCard()` in Java or `HkidGenerator::new().card(None)`
+Call `HkidCardUtil.generateRandomCard()` in Java or `HkidGenerator::new().card()`
 in Rust for a sample as of today.
+Both methods pick an age uniformly from 11 to 85 inclusive and sample birthplace
+independently using the all-ages distribution from Hong Kong's 2021 Population Census
+(61.7% Hong Kong, 28.9% mainland China, 0.7% Macao and 8.7% elsewhere, including Taiwan).
+
 The name generator uses sex-associated and unisex entries. Name validation
 accepts names independently of those associations.
 

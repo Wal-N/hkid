@@ -95,15 +95,17 @@ impl DefinedPrefix {
         month: u32,
         latest: Option<NaiveDate>,
     ) -> bool {
-        let Some(first_day) = NaiveDate::from_ymd_opt(year, month, 1) else {
-            return false;
-        };
+        NaiveDate::from_ymd_opt(year, month, 1)
+            .is_some_and(|first| self.supports_first_issue_from(first, latest))
+    }
+
+    fn supports_first_issue_from(&self, first: NaiveDate, latest: Option<NaiveDate>) -> bool {
         let Some((start, end)) = self.first_issue_period() else {
             return false;
         };
-        let earliest = first_day.max(start);
-        earliest.year() == year
-            && earliest.month() == month
+        let earliest = first.max(start);
+        earliest.year() == first.year()
+            && earliest.month() == first.month()
             && end.is_none_or(|end| earliest < end)
             && latest.is_none_or(|limit| earliest <= limit)
     }
@@ -127,9 +129,19 @@ impl DefinedPrefix {
         month: u32,
         latest: Option<NaiveDate>,
     ) -> Vec<&'static Self> {
+        NaiveDate::from_ymd_opt(year, month, 1).map_or_else(Vec::new, |first| {
+            Self::first_issue_prefixes_from(first, latest)
+        })
+    }
+
+    /// Prefixes eligible in `first`'s month, starting on that day and through `latest`.
+    pub(crate) fn first_issue_prefixes_from(
+        first: NaiveDate,
+        latest: Option<NaiveDate>,
+    ) -> Vec<&'static Self> {
         Self::all()
             .iter()
-            .filter(|prefix| prefix.supports_first_issue_month(year, month, latest))
+            .filter(|prefix| prefix.supports_first_issue_from(first, latest))
             .collect()
     }
 }

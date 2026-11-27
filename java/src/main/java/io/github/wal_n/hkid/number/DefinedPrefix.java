@@ -182,12 +182,7 @@ public enum DefinedPrefix {
      *         {@code false} for null or a month outside that period
      */
     public boolean supportsFirstIssueMonth(YearMonth firstIssueMonth) {
-        PrefixMetadata metadata = metadata();
-        return firstIssueMonth != null
-                && metadata.firstIssueStartDate != null
-                && !firstIssueMonth.atEndOfMonth().isBefore(metadata.firstIssueStartDate)
-                && (metadata.firstIssueEndDateExclusive == null
-                || firstIssueMonth.atDay(1).isBefore(metadata.firstIssueEndDateExclusive));
+        return supportsFirstIssueMonth(firstIssueMonth, LocalDate.MAX);
     }
 
     /**
@@ -202,10 +197,26 @@ public enum DefinedPrefix {
      */
     public boolean supportsFirstIssueMonth(
             YearMonth firstIssueMonth, LocalDate latestFirstIssueDate) {
-        return latestFirstIssueDate != null
-                && supportsFirstIssueMonth(firstIssueMonth)
-                && !latestFirstIssueDate.isBefore(firstIssueMonth.atDay(1))
-                && !latestFirstIssueDate.isBefore(metadata().firstIssueStartDate);
+        return supportsFirstIssueMonth(firstIssueMonth, LocalDate.MIN, latestFirstIssueDate);
+    }
+
+    private boolean supportsFirstIssueMonth(
+            YearMonth month, LocalDate earliestFirstIssueDate, LocalDate latestFirstIssueDate) {
+        if (month == null || earliestFirstIssueDate == null || latestFirstIssueDate == null) {
+            return false;
+        }
+        LocalDate first = month.atDay(1);
+        LocalDate last = month.atEndOfMonth();
+        if (earliestFirstIssueDate.isAfter(first)) {
+            first = earliestFirstIssueDate;
+        }
+        if (latestFirstIssueDate.isBefore(last)) {
+            last = latestFirstIssueDate;
+        }
+        PrefixMetadata period = metadata();
+        return !first.isAfter(last) && period.firstIssueStartDate != null
+                && !last.isBefore(period.firstIssueStartDate)
+                && (period.firstIssueEndDateExclusive == null || first.isBefore(period.firstIssueEndDateExclusive));
     }
 
     /**
@@ -216,9 +227,7 @@ public enum DefinedPrefix {
      * @return all matching prefixes, or an empty array for null or when no exact period matches
      */
     public static DefinedPrefix[] fromFirstIssueMonth(YearMonth firstIssueMonth) {
-        return Arrays.stream(values())
-                .filter(prefix -> prefix.supportsFirstIssueMonth(firstIssueMonth))
-                .toArray(DefinedPrefix[]::new);
+        return fromFirstIssueMonth(firstIssueMonth, LocalDate.MIN, LocalDate.MAX);
     }
 
     /**
@@ -233,8 +242,22 @@ public enum DefinedPrefix {
      */
     public static DefinedPrefix[] fromFirstIssueMonth(
             YearMonth firstIssueMonth, LocalDate latestFirstIssueDate) {
+        return fromFirstIssueMonth(firstIssueMonth, LocalDate.MIN, latestFirstIssueDate);
+    }
+
+    /**
+     * Finds prefixes in use on at least one eligible day of the first-issue month.
+     *
+     * @param firstIssueMonth printed month of first issue
+     * @param earliestFirstIssueDate earliest possible day of first issue, inclusive
+     * @param latestFirstIssueDate latest possible day of first issue, inclusive
+     * @return all matching prefixes, or an empty array if any argument is null or no eligible day matches
+     */
+    public static DefinedPrefix[] fromFirstIssueMonth(
+            YearMonth firstIssueMonth, LocalDate earliestFirstIssueDate, LocalDate latestFirstIssueDate) {
         return Arrays.stream(values())
-                .filter(prefix -> prefix.supportsFirstIssueMonth(firstIssueMonth, latestFirstIssueDate))
+                .filter(prefix -> prefix.supportsFirstIssueMonth(
+                        firstIssueMonth, earliestFirstIssueDate, latestFirstIssueDate))
                 .toArray(DefinedPrefix[]::new);
     }
 

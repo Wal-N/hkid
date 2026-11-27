@@ -6,7 +6,6 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Random;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,7 +26,6 @@ class HkidDefaultDateTest {
         TimeZone original = TimeZone.getDefault();
         AtomicInteger zoneLookups = new AtomicInteger();
         LocalDate referenceDate = LocalDate.of(2026, 7, 21);
-        HkidCard explicitDateCard = HkidCardUtil.generateRandomCard(new Random(42), referenceDate);
         try {
             for (ZoneOffset zone : SYSTEM_ZONES) {
                 // Observe every call without relying on random outputs landing on date boundaries.
@@ -52,14 +50,16 @@ class HkidDefaultDateTest {
                             "Each default-date call must resolve the current system time zone");
                     generated.validateAsOf(after);
                     assertFalse(generated.getDateOfRegistration().isBefore(before.minusYears(10)));
+                    // Allow either local date if the call crossed midnight.
+                    assertTrue(generated.getAge(after).get() >= 11);
+                    assertTrue(generated.getAge(before).get() <= 85);
                     if (requestSex) {
                         assertEquals(Sex.FEMALE, generated.getSex());
                     }
                 }
 
                 int lookupsBefore = zoneLookups.get();
-                assertEquals(explicitDateCard,
-                        HkidCardUtil.generateRandomCard(new Random(42), referenceDate));
+                HkidCardUtil.generateRandomCard(referenceDate).validateAsOf(referenceDate);
                 assertEquals(lookupsBefore, zoneLookups.get(),
                         "An explicit reference date must not consult the system time zone");
             }

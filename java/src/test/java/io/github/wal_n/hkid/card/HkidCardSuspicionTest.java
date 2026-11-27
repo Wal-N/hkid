@@ -11,7 +11,6 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -240,8 +239,8 @@ class HkidCardSuspicionTest {
     @Test
     void generatedCardsDoNotProduceSuspicions() {
         LocalDate referenceDate = LocalDate.of(2026, 11, 11);
-        for (int seed = 0; seed < 20; seed++) {
-            assertSuspicions(HkidCardUtil.generateRandomCard(new Random(seed), referenceDate));
+        for (int i = 0; i < 20; i++) {
+            assertSuspicions(HkidCardUtil.generateRandomCard(referenceDate));
         }
     }
 

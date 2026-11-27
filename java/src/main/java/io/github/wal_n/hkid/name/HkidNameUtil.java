@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
@@ -34,7 +33,7 @@ public final class HkidNameUtil {
      * @return a generated Chinese name with matching commercial codes and English name
      */
     public static GeneratedName generateRandomName() {
-        return generateRandomName(ThreadLocalRandom.current());
+        return generateRandomName(randomPersonalNameLength());
     }
 
     /**
@@ -51,7 +50,7 @@ public final class HkidNameUtil {
      * @throws IllegalArgumentException if the requested length is outside the supported range
      */
     public static GeneratedName generateRandomName(int requestedPersonalNameLength) {
-        return generateRandomName(ThreadLocalRandom.current(), requestedPersonalNameLength);
+        return generateName(requestedPersonalNameLength, entry -> true);
     }
 
     /**
@@ -65,7 +64,7 @@ public final class HkidNameUtil {
      * @throws IllegalArgumentException if {@code sex} is null
      */
     public static GeneratedName generateRandomName(Sex sex) {
-        return generateRandomName(ThreadLocalRandom.current(), sex);
+        return generateRandomName(randomPersonalNameLength(), sex);
     }
 
     /**
@@ -79,68 +78,17 @@ public final class HkidNameUtil {
      */
     public static GeneratedName generateRandomName(
             int requestedPersonalNameLength, Sex sex) {
-        return generateRandomName(
-                ThreadLocalRandom.current(), requestedPersonalNameLength, sex);
+        if (sex == null) {
+            throw new IllegalArgumentException("Sex cannot be null");
+        }
+        return generateName(requestedPersonalNameLength, entry -> entry.isCompatibleWith(sex));
     }
 
-    /**
-     * Generates a name using caller-controlled random state and the default
-     * personal-name length distribution.
-     *
-     * @param random random generator used for every generated name value
-     * @return a generated Chinese name with matching commercial codes and English name
-     * @throws IllegalArgumentException if {@code random} is null
-     */
-    public static GeneratedName generateRandomName(Random random) {
-        validateRandom(random);
-
-        int roll = random.nextInt(100);
-        return generateRandomName(random, defaultPersonalNameLengthForRoll(roll));
+    private static int randomPersonalNameLength() {
+        return defaultPersonalNameLengthForRoll(ThreadLocalRandom.current().nextInt(100));
     }
 
-    /**
-     * Generates a sex-associated name using caller-controlled random state
-     * and the default personal-name length distribution.
-     *
-     * @param random random generator used for every generated name value
-     * @param sex requested generated-name sex
-     * @return a generated Chinese name with matching commercial codes and English name
-     * @throws IllegalArgumentException if either argument is null
-     */
-    public static GeneratedName generateRandomName(Random random, Sex sex) {
-        validateSex(sex);
-        validateRandom(random);
-
-        int roll = random.nextInt(100);
-        return generateRandomName(random, defaultPersonalNameLengthForRoll(roll), sex);
-    }
-
-    /**
-     * Generates a sex-associated name with a requested personal-name length
-     * using caller-controlled random state.
-     *
-     * @param random random generator used for every generated name value
-     * @param requestedPersonalNameLength number of generated personal-name characters
-     * @param sex requested generated-name sex
-     * @return a generated Chinese name with matching commercial codes and English name
-     * @throws IllegalArgumentException if the length is unsupported or either object is null
-     */
-    public static GeneratedName generateRandomName(
-            Random random, int requestedPersonalNameLength, Sex sex) {
-        validateSex(sex);
-        validateRandom(random);
-        return generateRandomName(
-                random,
-                requestedPersonalNameLength,
-                entry -> entry.isCompatibleWith(sex));
-    }
-
-    private static GeneratedName generateRandomName(Random random, int requestedPersonalNameLength) {
-        return generateRandomName(random, requestedPersonalNameLength, entry -> true);
-    }
-
-    private static GeneratedName generateRandomName(
-            Random random,
+    private static GeneratedName generateName(
             int requestedPersonalNameLength,
             Predicate<ChineseNameEntry> givenNamePredicate) {
         validateGeneratedPersonalNameLength(requestedPersonalNameLength);
@@ -158,11 +106,11 @@ public final class HkidNameUtil {
             throw new IllegalStateException("Not enough given name seed entries are available");
         }
 
-        ChineseNameEntry surname = weightedRandom(random, surnameEntries);
+        ChineseNameEntry surname = weightedRandom(surnameEntries);
         List<ChineseNameEntry> personalNameEntries = new ArrayList<>();
         List<ChineseNameEntry> remainingGivenNameEntries = new ArrayList<>(givenNameEntries);
         for (int i = 0; i < requestedPersonalNameLength; i++) {
-            ChineseNameEntry entry = weightedRandom(random, remainingGivenNameEntries);
+            ChineseNameEntry entry = weightedRandom(remainingGivenNameEntries);
             personalNameEntries.add(entry);
             remainingGivenNameEntries.remove(entry);
         }
@@ -234,13 +182,13 @@ public final class HkidNameUtil {
         return new GeneratedName(chineseName, englishName);
     }
 
-    private static ChineseNameEntry weightedRandom(Random random, List<ChineseNameEntry> entries) {
-        int totalWeight = 0;
+    static ChineseNameEntry weightedRandom(List<ChineseNameEntry> entries) {
+        long totalWeight = 0;
         for (ChineseNameEntry entry : entries) {
             totalWeight += entry.getWeight();
         }
 
-        int selectedWeight = random.nextInt(totalWeight);
+        long selectedWeight = ThreadLocalRandom.current().nextLong(totalWeight);
         for (ChineseNameEntry entry : entries) {
             selectedWeight -= entry.getWeight();
             if (selectedWeight < 0) {
@@ -280,18 +228,6 @@ public final class HkidNameUtil {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(
                     "Invalid sex association at line " + lineNumber + ": " + value, e);
-        }
-    }
-
-    private static void validateSex(Sex sex) {
-        if (sex == null) {
-            throw new IllegalArgumentException("Sex cannot be null");
-        }
-    }
-
-    private static void validateRandom(Random random) {
-        if (random == null) {
-            throw new IllegalArgumentException("Random generator cannot be null");
         }
     }
 

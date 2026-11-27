@@ -162,7 +162,7 @@ returns `CardError::UnsupportedHolderSymbol` with the symbol and its assigned ca
 use hkid_utils::{HkidGenerator, NaiveDate, Sex};
 
 let reference = NaiveDate::from_ymd_opt(2026, 7, 27).unwrap();
-let mut generator = HkidGenerator::with_seed(42);
+let mut generator = HkidGenerator::new();
 let card = generator.card_on(reference, Some(Sex::Female)).unwrap();
 assert_eq!(card.fields().sex, Some(Sex::Female));
 assert!(card.validate_as_of(reference).is_ok());
@@ -173,11 +173,13 @@ assert_eq!(name.chinese.personal_name().chars().count(), 3);
 assert_eq!(name.chinese.commercial_codes().len(), 4);
 ```
 
-Use `HkidGenerator::new()` for a fresh generator. A fixed seed, explicit reference
-dates, and the same sequence of calls reproduce samples with the same build and
-reference data. `card(None)` uses today's local date and picks the sex. Generated
-cards include a checksum-valid number, matching bilingual names and codes, and
-symbols appropriate at registration.
+`card()` uses today's local date and picks the sex at random.
+Use `card_with_sex` to specify the sex or `card_on` to supply a reference date.
+All three methods pick an age uniformly from 11 to 85 inclusive. They sample
+birthplace independently using the all-ages distribution from Hong Kong's 2021
+Population Census (61.7% Hong Kong, 28.9% mainland China, 0.7% Macao and 8.7%
+elsewhere, including Taiwan). Generated cards include a checksum-valid number,
+matching bilingual names and codes, and symbols appropriate at registration.
 
 `number()` uses a defined prefix. Use `number_from_prefixes` to supply a list,
 or `number_with_any_prefix()` for arbitrary one- or two-letter prefixes.
