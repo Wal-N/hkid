@@ -4,6 +4,7 @@ mod birthplace;
 mod cards;
 mod names;
 
+pub use cards::{CardGenerationOptions, InvalidCardOptions};
 pub use names::{ChineseNameEntry, GeneratedName};
 
 use std::fmt;

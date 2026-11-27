@@ -173,22 +173,31 @@ More examples are in the [Rust crate documentation](rust/README.md).
 
 ### Python
 
-The Python 1.2.1 API covers HKID numbers.
+To use the full Python API from this checkout, run `python -m pip install ./python` from the repository root.
 
 ```python
-from hkid_utils import check_digit, format_number, is_valid
+from datetime import date
+from hkid_utils import HkidCard, HkidGenerator, HkidNumber, is_valid
 
 # Validation
 print(is_valid("A123456(3)"))  # True
 print(is_valid("A123456(4)"))  # False (expected check digit 3)
 
-# Formatting
-number = "A123456"
-print(format_number(number))  # A123456(3)
-print(check_digit(number))    # 3
+number = HkidNumber("A123456")
+print(number.masked)  # ****456(*)
+
+card = HkidCard(hkid_number="Z123456", date_of_birth=date(2000, 1, 1), symbols="X")
+print(card.find_suspicions())
+# ['PREFIX_BIRTH_DATE_MISMATCH', 'PREFIX_BIRTH_PLACE_MISMATCH']
+
+reference = date(2026, 7, 21)
+sample = HkidGenerator().card_on(reference)
+sample.validate_as_of(reference)
+print(sample.chinese_name, sample.english_name, sample.symbols)
+print(sample.describe_holder_on(reference, "zh-HK"))
 ```
 
-See the [Python package guide](python/README-Python.md) for supported platforms and error handling.
+See the [Python package guide](python/README-Python.md) for prefix lookups, names, symbols and generation options.
 
 > [!CAUTION]
 > Generated HKID numbers may coincide with real people's numbers. Use them only

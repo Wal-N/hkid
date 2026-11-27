@@ -1,10 +1,65 @@
+use std::{fmt, ops::RangeInclusive};
+
 use chrono::{Datelike, Days, Months, NaiveDate};
 
 use super::{GenerationError, HkidGenerator};
 use crate::card::completed_years;
-use crate::{DefinedPrefix, HkidCard, HkidCardFields, HkidNumber, HkidSymbol, HkidSymbols, Sex};
+use crate::{
+    DefinedPrefix, HkidCard, HkidCardFields, HkidNumber, HkidSymbol, HkidSymbolCategory,
+    HkidSymbols, Sex,
+};
 
 const FIRST_ISSUE_DATE: NaiveDate = NaiveDate::from_ymd_opt(1949, 1, 1).unwrap();
+
+/// Age and birthplace constraints for a randomly generated card.
+#[derive(Clone, Debug)]
+pub struct CardGenerationOptions {
+    ages: RangeInclusive<i32>,
+    birthplace: Option<HkidSymbol>,
+}
+
+impl Default for CardGenerationOptions {
+    fn default() -> Self {
+        Self {
+            ages: 11..=85,
+            birthplace: None,
+        }
+    }
+}
+
+/// An invalid age range or birthplace constraint.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum InvalidCardOptions {
+    AgeRange,
+    Birthplace,
+}
+
+impl fmt::Display for InvalidCardOptions {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::AgeRange => "ages must satisfy 11 <= min_age <= max_age <= 100",
+            Self::Birthplace => "expected a reported place-of-birth symbol",
+        })
+    }
+}
+
+impl std::error::Error for InvalidCardOptions {}
+
+impl CardGenerationOptions {
+    /// Use an inclusive age range within 11 to 100. An absent birthplace uses census weights.
+    pub fn new(
+        ages: RangeInclusive<i32>,
+        birthplace: Option<HkidSymbol>,
+    ) -> Result<Self, InvalidCardOptions> {
+        if ages.is_empty() || *ages.start() < 11 || *ages.end() > 100 {
+            return Err(InvalidCardOptions::AgeRange);
+        }
+        if birthplace.is_some_and(|s| s.category() != HkidSymbolCategory::ReportedPlaceOfBirth) {
+            return Err(InvalidCardOptions::Birthplace);
+        }
+        Ok(Self { ages, birthplace })
+    }
+}
 
 impl HkidGenerator {
     /// Generates a complete sample card with a random sex as of today in the system time zone.
@@ -29,14 +84,26 @@ impl HkidGenerator {
         reference: NaiveDate,
         sex: Option<Sex>,
     ) -> Result<HkidCard, GenerationError> {
+        self.card_with_options(reference, sex, CardGenerationOptions::default())
+    }
+
+    /// Generates a card with the requested age range and birthplace as of the reference date.
+    pub fn card_with_options(
+        &mut self,
+        reference: NaiveDate,
+        sex: Option<Sex>,
+        options: CardGenerationOptions,
+    ) -> Result<HkidCard, GenerationError> {
         if reference < HkidCard::SMART_CARD_START_DATE {
             return Err(GenerationError::ReferenceBeforeSmartCard);
         }
-        let age = self.rng.u32(11..=85);
+        let age = self.rng.i32(options.ages) as u32;
         let earliest_birth = reference - Months::new(12 * (age + 1)) + Days::new(1);
         let latest_birth = reference - Months::new(12 * age);
         let birth = self.inclusive_date(earliest_birth, latest_birth);
-        let birthplace = self.census_birthplace();
+        let birthplace = options
+            .birthplace
+            .unwrap_or_else(|| self.census_birthplace());
         self.card_for_birth(birth, reference, sex, birthplace)
     }
 
