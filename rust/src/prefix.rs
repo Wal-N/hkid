@@ -112,7 +112,7 @@ impl DefinedPrefix {
 
     /// All prefixes with an exact first-issue period overlapping the supplied month.
     pub fn from_first_issue_month(year: i32, month: u32) -> Vec<&'static Self> {
-        Self::matching_first_issue_prefixes(year, month, None)
+        Self::from_first_issue_month_between(year, month, None, None)
     }
 
     /// All first-issue prefixes eligible within the supplied month on or before `latest`.
@@ -121,17 +121,24 @@ impl DefinedPrefix {
         month: u32,
         latest: NaiveDate,
     ) -> Vec<&'static Self> {
-        Self::matching_first_issue_prefixes(year, month, Some(latest))
+        Self::from_first_issue_month_between(year, month, None, Some(latest))
     }
 
-    fn matching_first_issue_prefixes(
+    /// Prefixes eligible in the month within the optional inclusive date bounds.
+    pub fn from_first_issue_month_between(
         year: i32,
         month: u32,
+        earliest: Option<NaiveDate>,
         latest: Option<NaiveDate>,
     ) -> Vec<&'static Self> {
-        NaiveDate::from_ymd_opt(year, month, 1).map_or_else(Vec::new, |first| {
-            Self::first_issue_prefixes_from(first, latest)
-        })
+        let Some(start) = NaiveDate::from_ymd_opt(year, month, 1) else {
+            return Vec::new();
+        };
+        let first = earliest.map_or(start, |date| date.max(start));
+        if (first.year(), first.month()) != (year, month) {
+            return Vec::new();
+        }
+        Self::first_issue_prefixes_from(first, latest)
     }
 
     /// Prefixes eligible in `first`'s month, starting on that day and through `latest`.

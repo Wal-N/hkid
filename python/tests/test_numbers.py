@@ -1,18 +1,13 @@
-import json
 import unittest
-from pathlib import Path
 
+from fixtures import load_fixtures
 from hkid_utils import check_digit, format_number, is_valid
 
 
 class NumberTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        path = Path(__file__).resolve().parents[2] / "conformance" / "hkid-number.json"
-        cls.fixtures = json.loads(path.read_text(encoding="utf-8"))
-        version = cls.fixtures["schemaVersion"]
-        if type(version) is not int or version != 1:
-            raise ValueError(f"Unsupported HKID number fixture schema version {version!r}")
+        cls.fixtures = load_fixtures("hkid-number")
 
     def test_valid_numbers(self):
         cases = self.fixtures["parseCases"]

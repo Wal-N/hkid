@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "hkid-utils"
 dynamic = ["version"]
-description = "Validate, calculate check digits for, and format Hong Kong identity card numbers"
+description = "Validate Hong Kong identity card numbers, names, symbols and card data, and generate sample cards"
 readme = "README-Python.md"
 requires-python = ">=3.11"
 license = "MIT"
