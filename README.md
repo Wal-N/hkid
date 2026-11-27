@@ -35,7 +35,7 @@ Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
 <dependency>
     <groupId>io.github.wal-n</groupId>
     <artifactId>hkid-utils</artifactId>
-    <version>1.2.1</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
@@ -173,28 +173,55 @@ More examples are in the [Rust crate documentation](rust/README.md).
 
 ### Python
 
-To use the full Python API from this checkout, run `python -m pip install ./python` from the repository root.
+The examples below use `hkid-utils` 1.3.0 or later.
 
 ```python
 from datetime import date
-from hkid_utils import HkidCard, HkidGenerator, HkidNumber, is_valid
+
+from hkid_utils import (
+    ChineseName, EnglishName, HkidCard, HkidGenerator, HkidNumber, HkidSymbols, is_valid,
+)
 
 # Validation
-print(is_valid("A123456(3)"))  # True
-print(is_valid("A123456(4)"))  # False (expected check digit 3)
+print(is_valid("A123456(3)"))                  # True
+print(is_valid("A123456(4)"))                  # False (expected check digit 3)
+print(ChineseName.is_valid("陳", "大文"))      # True
+print(EnglishName.is_valid("Chan", "Tai Man"))  # True
+print(HkidSymbols.is_valid("***AZ"))           # True
 
+# Formatting calculates a missing check digit. Masking keeps the last three numerals.
 number = HkidNumber("A123456")
+print(number)         # A123456(3)
 print(number.masked)  # ****456(*)
 
-card = HkidCard(hkid_number="Z123456", date_of_birth=date(2000, 1, 1), symbols="X")
+# Cross-field checks
+# The Z prefix was used for Hong Kong birth registrations from 1980 to 1988.
+card = HkidCard(
+    hkid_number="Z123456",
+    date_of_birth=date(2000, 1, 1),  # After the Z registration period.
+    symbols="X",                    # Reported birthplace is mainland China.
+)
+print(card.is_suspicious())  # True
 print(card.find_suspicions())
 # ['PREFIX_BIRTH_DATE_MISMATCH', 'PREFIX_BIRTH_PLACE_MISMATCH']
 
-reference = date(2026, 7, 21)
-sample = HkidGenerator().card_on(reference)
-sample.validate_as_of(reference)
-print(sample.chinese_name, sample.english_name, sample.symbols)
-print(sample.describe_holder_on(reference, "zh-HK"))
+# Generate a card as of today. The six fields below are from one run.
+sample = HkidGenerator().card()
+sample.validate_as_of(date.today())  # Raises ValueError if a card date is in the future.
+print(sample.chinese_name)  # 林嘉美
+print([code.code for code in sample.chinese_name.commercial_codes])  # ['2651', '0857', '5019']
+print(sample.english_name)  # Lam, Ka Mei
+print(sample.sex)           # 女 F
+print(sample.hkid_number)   # P437302(6)
+print(sample.symbols)       # ***AX
+
+# Holder summaries for the same generated card
+print(sample.describe_holder("zh-HK"))
+# 持有人為63歲女性，於內地出生。她享有香港居留權，於領證登記時年滿18歲，並符合回港證申領資格。
+print(sample.describe_holder("en"))
+# The holder is female, aged 63, and was born in the Chinese Mainland. She has the
+# right of abode in Hong Kong and, at registration, was aged 18 or over and
+# eligible for a Re-entry Permit.
 ```
 
 See the [Python package guide](python/README-Python.md) for prefix lookups, names, symbols and generation options.
