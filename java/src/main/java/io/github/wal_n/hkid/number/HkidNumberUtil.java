@@ -4,7 +4,6 @@ import io.github.wal_n.hkid.internal.FullwidthAscii;
 import io.github.wal_n.hkid.internal.ParsingWhitespace;
 
 import java.util.Locale;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -120,7 +119,16 @@ public final class HkidNumberUtil {
      * @return a random HKID number
      */
     public static HkidNumber generateRandomHkidNumber(boolean onlyDefinedPrefix) {
-        return generateRandomHkidNumber(ThreadLocalRandom.current(), onlyDefinedPrefix);
+        if (onlyDefinedPrefix) {
+            return generateRandomHkidNumber(DefinedPrefix.values());
+        }
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        int prefixLength = random.nextInt(1, 3);
+        StringBuilder prefix = new StringBuilder(prefixLength);
+        for (int i = 0; i < prefixLength; i++) {
+            prefix.append((char) random.nextInt('A', 'Z' + 1));
+        }
+        return buildRandomHkidNumber(prefix.toString());
     }
 
     /**
@@ -139,19 +147,13 @@ public final class HkidNumberUtil {
     }
 
     /**
-     * Generates an HKID number from caller-controlled random state and allowed prefixes.
+     * Generates an HKID number from the allowed prefixes.
      *
-     * @param random random generator used to select the prefix and numerals
      * @param allowedPrefixes non-empty set of prefixes eligible for selection
      * @return a random HKID number using one of {@code allowedPrefixes}
-     * @throws IllegalArgumentException if the random generator or prefix set is null,
-     *         the prefix set is empty, or it contains {@code null}
+     * @throws IllegalArgumentException if the prefix set is null, empty or contains {@code null}
      */
-    public static HkidNumber generateRandomHkidNumber(
-            Random random, DefinedPrefix... allowedPrefixes) {
-        if (random == null) {
-            throw new IllegalArgumentException("Random generator cannot be null");
-        }
+    public static HkidNumber generateRandomHkidNumber(DefinedPrefix... allowedPrefixes) {
         if (allowedPrefixes == null || allowedPrefixes.length == 0) {
             throw new IllegalArgumentException("At least one allowed prefix is required");
         }
@@ -161,30 +163,12 @@ public final class HkidNumberUtil {
             }
         }
 
-        DefinedPrefix prefix = allowedPrefixes[random.nextInt(allowedPrefixes.length)];
-        return buildRandomHkidNumber(random, prefix.name());
+        DefinedPrefix prefix = allowedPrefixes[ThreadLocalRandom.current().nextInt(allowedPrefixes.length)];
+        return buildRandomHkidNumber(prefix.name());
     }
 
-    private static HkidNumber generateRandomHkidNumber(Random random, boolean onlyDefinedPrefix) {
-        String prefix;
-
-        if (onlyDefinedPrefix) {
-            DefinedPrefix[] prefixes = DefinedPrefix.values();
-            prefix = prefixes[random.nextInt(prefixes.length)].name();
-        } else {
-            int prefixLength = random.nextInt(2) + 1;
-            StringBuilder builder = new StringBuilder(prefixLength);
-            for (int i = 0; i < prefixLength; i++) {
-                builder.append((char) ('A' + random.nextInt('Z' - 'A' + 1)));
-            }
-            prefix = builder.toString();
-        }
-
-        return buildRandomHkidNumber(random, prefix);
-    }
-
-    private static HkidNumber buildRandomHkidNumber(Random random, String prefix) {
-        String numerals = String.format(Locale.ROOT, "%06d", random.nextInt(1_000_000));
+    private static HkidNumber buildRandomHkidNumber(String prefix) {
+        String numerals = String.format(Locale.ROOT, "%06d", ThreadLocalRandom.current().nextInt(1_000_000));
         return new HkidNumber(prefix, numerals);
     }
 

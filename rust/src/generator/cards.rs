@@ -2,22 +2,28 @@ use chrono::{Datelike, Days, Months, NaiveDate};
 
 use super::{GenerationError, HkidGenerator};
 use crate::card::completed_years;
-use crate::{
-    DefinedPrefix, HkidCard, HkidCardFields, HkidNumber, HkidSymbol, HkidSymbols, Sex, YearMonth,
-};
+use crate::{DefinedPrefix, HkidCard, HkidCardFields, HkidNumber, HkidSymbol, HkidSymbols, Sex};
 
 const FIRST_ISSUE_DATE: NaiveDate = NaiveDate::from_ymd_opt(1949, 1, 1).unwrap();
 
 impl HkidGenerator {
+    /// Generates a complete sample card with a random sex as of today in the system time zone.
+    /// Uses the same age range and birthplace distribution as [`Self::card_on`].
+    pub fn card(&mut self) -> Result<HkidCard, GenerationError> {
+        self.card_on(crate::holder::local_today(), None)
+    }
+
     /// Generates a complete sample card as of today in the system time zone.
-    /// A requested sex also controls the pool of given-name characters.
-    pub fn card(&mut self, sex: Option<Sex>) -> Result<HkidCard, GenerationError> {
-        self.card_on(crate::holder::local_today(), sex)
+    /// Uses the same age range and birthplace distribution as [`Self::card_on`].
+    /// The specified sex also controls the pool of given-name characters.
+    pub fn card_with_sex(&mut self, sex: Sex) -> Result<HkidCard, GenerationError> {
+        self.card_on(crate::holder::local_today(), Some(sex))
     }
 
     /// Generates a complete sample card as of a date on or after 26 November 2018.
-    /// The holder is 11 through 100 on that date. The current registration
-    /// may fall on the reference date itself.
+    /// Ages 11 through 85 are equally likely on that date. Birthplace is sampled
+    /// independently using the all-ages distribution from Hong Kong's 2021 Population Census.
+    /// The current registration may fall on the reference date itself.
     pub fn card_on(
         &mut self,
         reference: NaiveDate,
@@ -26,11 +32,12 @@ impl HkidGenerator {
         if reference < HkidCard::SMART_CARD_START_DATE {
             return Err(GenerationError::ReferenceBeforeSmartCard);
         }
-        let age = self.rng.u32(11..=100);
+        let age = self.rng.u32(11..=85);
         let earliest_birth = reference - Months::new(12 * (age + 1)) + Days::new(1);
         let latest_birth = reference - Months::new(12 * age);
         let birth = self.inclusive_date(earliest_birth, latest_birth);
-        self.card_for_birth(birth, reference, sex)
+        let birthplace = self.census_birthplace();
+        self.card_for_birth(birth, reference, sex, birthplace)
     }
 
     fn card_for_birth(
@@ -38,6 +45,7 @@ impl HkidGenerator {
         birth: NaiveDate,
         reference: NaiveDate,
         sex: Option<Sex>,
+        birthplace: HkidSymbol,
     ) -> Result<HkidCard, GenerationError> {
         let eleventh_birthday = anniversary(birth, 11);
         let (age_symbol, eligible_from) = if completed_years(birth, reference) >= 18 {
@@ -49,8 +57,14 @@ impl HkidGenerator {
             .max(HkidCard::SMART_CARD_START_DATE)
             .max(eligible_from);
         let registration = self.inclusive_date(earliest_registration, reference);
-        let first = self.registration_month(eleventh_birthday.max(FIRST_ISSUE_DATE), registration);
-        let number = self.card_number(birth, first, registration)?;
+        let first = self.first_eligible_day_in_random_month(
+            eleventh_birthday.max(FIRST_ISSUE_DATE),
+            registration,
+        );
+        // A Hong Kong birth registration can be recorded up to 42 days after birth.
+        let hk_birth_registration = (birthplace == HkidSymbol::BornInHongKong)
+            .then(|| birth + Days::new(self.rng.u64(0..=42)));
+        let number = self.card_number(hk_birth_registration, first, registration)?;
         let sex = sex.unwrap_or_else(|| {
             if self.rng.bool() {
                 Sex::Male
@@ -59,12 +73,8 @@ impl HkidGenerator {
             }
         });
         let name = self.name(Some(sex), None)?;
-        let symbols = HkidSymbols::from_symbols([
-            age_symbol,
-            HkidSymbol::RightOfAbode,
-            HkidSymbol::BornInHongKong,
-        ])
-        .map_err(GenerationError::InvalidSymbols)?;
+        let symbols = HkidSymbols::from_symbols([age_symbol, HkidSymbol::RightOfAbode, birthplace])
+            .map_err(GenerationError::InvalidSymbols)?;
         HkidCard::new(HkidCardFields {
             hkid_number: Some(number),
             chinese_name: name.chinese,
@@ -72,7 +82,7 @@ impl HkidGenerator {
             sex: Some(sex),
             date_of_birth: Some(birth),
             symbols,
-            first_registration_year_month: Some(first),
+            first_registration_year_month: Some(first.into()),
             date_of_registration: Some(registration),
         })
         .map_err(GenerationError::InvalidCard)
@@ -83,33 +93,33 @@ impl HkidGenerator {
         first + Days::new(self.rng.u64(0..=days))
     }
 
-    fn registration_month(&mut self, first: NaiveDate, last: NaiveDate) -> YearMonth {
+    fn first_eligible_day_in_random_month(
+        &mut self,
+        first: NaiveDate,
+        last: NaiveDate,
+    ) -> NaiveDate {
         let months = (last.year() - first.year()) * 12 + last.month() as i32 - first.month() as i32;
         let offset = self.rng.u32(0..=months as u32);
-        (first.with_day(1).unwrap() + Months::new(offset)).into()
+        (first.with_day(1).unwrap() + Months::new(offset)).max(first)
     }
 
     fn card_number(
         &mut self,
-        birth: NaiveDate,
-        first_registration: YearMonth,
+        hk_birth_registration: Option<NaiveDate>,
+        first_eligible_day: NaiveDate,
         registration: NaiveDate,
     ) -> Result<HkidNumber, GenerationError> {
-        // A Hong Kong birth registration can be recorded up to 42 days after birth.
-        let birth_registration = birth + Days::new(self.rng.u64(0..=42));
-        let prefix =
-            if let Some(prefix) = DefinedPrefix::from_birth_registration_date(birth_registration) {
-                prefix
-            } else {
-                let candidates = DefinedPrefix::from_first_issue_month_through(
-                    first_registration.year(),
-                    first_registration.month(),
-                    registration,
-                );
-                self.rng
-                    .choice(candidates)
-                    .ok_or(GenerationError::NoCompatiblePrefix)?
-            };
+        let prefix = if let Some(prefix) =
+            hk_birth_registration.and_then(DefinedPrefix::from_birth_registration_date)
+        {
+            prefix
+        } else {
+            let candidates =
+                DefinedPrefix::first_issue_prefixes_from(first_eligible_day, Some(registration));
+            self.rng
+                .choice(candidates)
+                .ok_or(GenerationError::NoCompatiblePrefix)?
+        };
         Ok(self.number_for_prefix(prefix.id()))
     }
 }
@@ -128,6 +138,7 @@ fn anniversary(birth: NaiveDate, years: u32) -> NaiveDate {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::YearMonth;
 
     fn date(year: i32, month: u32, day: u32) -> NaiveDate {
         NaiveDate::from_ymd_opt(year, month, day).unwrap()
@@ -135,10 +146,15 @@ mod tests {
 
     #[test]
     fn registration_can_land_on_the_last_representable_date() {
-        let mut generator = HkidGenerator::with_seed(42);
+        let mut generator = HkidGenerator::new();
         let last = NaiveDate::MAX;
         let eighteenth_birthday = generator
-            .card_for_birth(last - Months::new(18 * 12), last, None)
+            .card_for_birth(
+                last - Months::new(18 * 12),
+                last,
+                None,
+                HkidSymbol::BornElsewhere,
+            )
             .unwrap();
         assert_eq!(
             eighteenth_birthday.fields().date_of_registration,
@@ -149,10 +165,15 @@ mod tests {
 
     #[test]
     fn leap_day_birthdays_transition_on_march_first() {
-        let mut generator = HkidGenerator::with_seed(12);
+        let mut generator = HkidGenerator::new();
         let birth = date(2004, 2, 29);
         let minor = generator
-            .card_for_birth(birth, date(2022, 2, 28), Some(Sex::Female))
+            .card_for_birth(
+                birth,
+                date(2022, 2, 28),
+                Some(Sex::Female),
+                HkidSymbol::BornInHongKong,
+            )
             .unwrap();
         assert!(
             minor
@@ -162,7 +183,12 @@ mod tests {
         );
         assert_eq!(minor.fields().sex, Some(Sex::Female));
         let adult = generator
-            .card_for_birth(birth, date(2022, 3, 1), Some(Sex::Male))
+            .card_for_birth(
+                birth,
+                date(2022, 3, 1),
+                Some(Sex::Male),
+                HkidSymbol::BornInHongKong,
+            )
             .unwrap();
         assert!(
             adult
@@ -173,7 +199,12 @@ mod tests {
         assert_eq!(adult.fields().date_of_registration, Some(date(2022, 3, 1)));
         assert_eq!(adult.fields().sex, Some(Sex::Male));
         let child = generator
-            .card_for_birth(date(2016, 2, 29), date(2027, 3, 1), None)
+            .card_for_birth(
+                date(2016, 2, 29),
+                date(2027, 3, 1),
+                None,
+                HkidSymbol::BornInHongKong,
+            )
             .unwrap();
         assert_eq!(child.fields().date_of_registration, Some(date(2027, 3, 1)));
         assert_eq!(
@@ -183,39 +214,69 @@ mod tests {
     }
 
     #[test]
-    fn prefers_the_birth_registration_prefix_and_bounds_first_issue_by_the_printed_date() {
-        let mut generator = HkidGenerator::with_seed(1);
-        let july = YearMonth::new(2026, 7).unwrap();
-        let first_birth_that_can_reach_y = date(1989, 1, 1) - Days::new(42);
-        let mut birth_prefixes = std::collections::HashSet::new();
-        let mut issue_prefixes = std::collections::HashSet::new();
-        for _ in 0..512 {
-            let number = generator
-                .card_number(first_birth_that_can_reach_y, july, date(2026, 7, 27))
+    fn birthplace_controls_the_card_symbol_and_prefix_on_the_eleventh_birthday() {
+        let mut generator = HkidGenerator::new();
+        let birth = date(2015, 7, 27);
+        let registration = date(2026, 7, 27);
+        for (birthplace, expected_prefix) in [
+            (HkidSymbol::BornInHongKong, "S"),
+            (HkidSymbol::BornInMainland, "L"),
+            (HkidSymbol::BornInMacao, "L"),
+            (HkidSymbol::BornElsewhere, "L"),
+        ] {
+            let card = generator
+                .card_for_birth(birth, registration, None, birthplace)
                 .unwrap();
-            birth_prefixes.insert(number.defined_prefix().unwrap().id());
-            let previous_birth = first_birth_that_can_reach_y.pred_opt().unwrap();
+            assert!(card.fields().symbols.contains(birthplace));
             assert_eq!(
-                generator
-                    .card_number(previous_birth, july, date(2026, 7, 27))
-                    .unwrap()
-                    .prefix(),
-                "Z"
+                card.fields().hkid_number.as_ref().unwrap().prefix(),
+                expected_prefix
             );
-            let older_birth = date(1950, 1, 1);
-            assert_eq!(
-                generator
-                    .card_number(older_birth, july, date(2026, 7, 26))
-                    .unwrap()
-                    .prefix(),
-                "F"
-            );
-            let number = generator
-                .card_number(older_birth, july, date(2026, 7, 27))
-                .unwrap();
-            issue_prefixes.insert(number.defined_prefix().unwrap().id());
+            assert!(!card.is_suspicious());
         }
-        assert_eq!(birth_prefixes, ["Y", "Z"].into());
-        assert_eq!(issue_prefixes, ["F", "L"].into());
+    }
+
+    #[test]
+    fn first_issue_prefixes_respect_the_birthday_within_the_registration_month() {
+        let mut generator = HkidGenerator::new();
+        let registration = date(2026, 7, 27);
+        for (birthday, expected) in [(26, vec!["F", "L"]), (27, vec!["L"])] {
+            let first = generator.first_eligible_day_in_random_month(
+                anniversary(date(2015, 7, birthday), 11),
+                registration,
+            );
+            let candidates = DefinedPrefix::first_issue_prefixes_from(first, Some(registration));
+            assert_eq!(
+                candidates
+                    .into_iter()
+                    .map(DefinedPrefix::id)
+                    .collect::<Vec<_>>(),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn prefers_the_birth_registration_prefix_and_bounds_first_issue_by_the_printed_date() {
+        let mut generator = HkidGenerator::new();
+        let july = date(2026, 7, 1);
+        for (birth_registration, expected) in [(date(1988, 12, 31), "Z"), (date(1989, 1, 1), "Y")] {
+            assert_eq!(
+                generator
+                    .card_number(Some(birth_registration), july, date(2026, 7, 27))
+                    .unwrap()
+                    .prefix(),
+                expected
+            );
+        }
+        let older_birth_registration = Some(date(1950, 1, 1));
+        let before = generator
+            .card_number(older_birth_registration, july, date(2026, 7, 26))
+            .unwrap();
+        assert_eq!(before.prefix(), "F");
+        let on_transition = generator
+            .card_number(older_birth_registration, july, date(2026, 7, 27))
+            .unwrap();
+        assert!(matches!(on_transition.prefix(), "F" | "L"));
     }
 }

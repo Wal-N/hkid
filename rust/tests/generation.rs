@@ -1,9 +1,7 @@
-use std::collections::HashSet;
-
 use chrono::{Datelike, Days, Months};
 use hkid_utils::{
     ChineseNameEntry, DefinedPrefix, GenerationError, HkidCard, HkidGenerator, HkidNumber,
-    HkidSymbol, NaiveDate, Sex, YearMonth,
+    HkidSymbol, HkidSymbolCategory, NaiveDate, Sex, YearMonth,
 };
 
 fn date(year: i32, month: u32, day: u32) -> NaiveDate {
@@ -20,7 +18,10 @@ fn assert_valid_number(number: &HkidNumber) {
     );
     assert_eq!(number.numerals().len(), 6);
     assert!(number.numerals().bytes().all(|byte| byte.is_ascii_digit()));
-    assert_eq!(&number.to_string().parse::<HkidNumber>().unwrap(), number);
+    assert_eq!(
+        &HkidNumber::parse_with_check_digit(&number.to_string()).unwrap(),
+        number
+    );
 }
 
 #[test]
@@ -54,8 +55,8 @@ fn exposes_the_bundled_name_seed_to_callers() {
 }
 
 #[test]
-fn number_generation_respects_each_prefix_policy() {
-    let mut generator = HkidGenerator::with_seed(42);
+fn number_generation_uses_defined_or_caller_selected_prefixes() {
+    let mut generator = HkidGenerator::new();
     let allowed = [
         DefinedPrefix::lookup("F").unwrap(),
         DefinedPrefix::lookup("XA").unwrap(),
@@ -69,43 +70,49 @@ fn number_generation_respects_each_prefix_policy() {
         assert_eq!(number.defined_prefix(), Some(prefix));
     }
 
-    let arbitrary: Vec<_> = (0..128)
-        .map(|_| generator.number_with_any_prefix())
-        .collect();
-    for number in &arbitrary {
-        assert_valid_number(number);
-    }
-    assert!(arbitrary.iter().any(|n| n.defined_prefix().is_none()));
-    assert!(arbitrary.iter().any(|n| n.prefix().len() == 1));
-    assert!(arbitrary.iter().any(|n| n.prefix().len() == 2));
-    assert!(arbitrary.iter().any(|n| n.numerals().starts_with('0')));
-
-    let mut defined_prefixes = HashSet::new();
-    let mut restricted_prefixes = HashSet::new();
     for _ in 0..128 {
         let defined = generator.number();
         assert_valid_number(&defined);
-        defined_prefixes.insert(defined.defined_prefix().unwrap().id());
+        assert!(defined.defined_prefix().is_some());
 
         let restricted = generator.number_from_prefixes(&allowed).unwrap();
         assert_valid_number(&restricted);
-        restricted_prefixes.insert(restricted.defined_prefix().unwrap().id());
+        assert!(allowed.contains(&restricted.defined_prefix().unwrap()));
     }
-    assert!(
-        defined_prefixes.len() >= 2,
-        "expected multiple defined prefixes"
-    );
-    assert_eq!(
-        restricted_prefixes,
-        HashSet::from(allowed.map(DefinedPrefix::id))
-    );
+}
+
+#[test]
+fn arbitrary_prefix_generation_covers_both_lengths_and_unlisted_prefixes() {
+    let mut generator = HkidGenerator::new();
+    let mut saw_one_letter = false;
+    let mut saw_two_letters = false;
+    let mut saw_unlisted = false;
+    let mut saw_leading_zero = false;
+
+    for _ in 0..1024 {
+        let number = generator.number_with_any_prefix();
+        assert_valid_number(&number);
+        saw_one_letter |= number.prefix().len() == 1;
+        saw_two_letters |= number.prefix().len() == 2;
+        saw_unlisted |= number.defined_prefix().is_none();
+        saw_leading_zero |= number.numerals().starts_with('0');
+        if saw_one_letter && saw_two_letters && saw_unlisted && saw_leading_zero {
+            break;
+        }
+    }
+
+    assert!(saw_one_letter, "no one-letter prefix generated");
+    assert!(saw_two_letters, "no two-letter prefix generated");
+    assert!(saw_unlisted, "generated only predefined prefixes");
+    assert!(saw_leading_zero, "no six-digit body with a leading zero");
 }
 
 #[test]
 fn date_ranges_are_half_open_across_the_supported_calendar() {
-    let mut generator = HkidGenerator::with_seed(100);
+    let mut generator = HkidGenerator::new();
     for start in [
         NaiveDate::MIN,
+        date(2024, 2, 28),
         date(2024, 2, 29),
         NaiveDate::MAX.pred_opt().unwrap(),
     ] {
@@ -126,40 +133,24 @@ fn date_ranges_are_half_open_across_the_supported_calendar() {
             .unwrap();
         assert!((NaiveDate::MIN..NaiveDate::MAX).contains(&sampled));
     }
-    let leap_dates: HashSet<_> = (0..32)
-        .map(|_| {
-            generator
-                .date_in_range(date(2024, 2, 28), Some(date(2024, 3, 1)))
-                .unwrap()
-        })
-        .collect();
-    assert_eq!(
-        leap_dates,
-        HashSet::from([date(2024, 2, 28), date(2024, 2, 29)])
-    );
 }
 
 #[test]
 fn complete_cards_satisfy_the_reference_date_and_prefix_history() {
-    let mut generator = HkidGenerator::with_seed(161);
+    let mut generator = HkidGenerator::new();
     let start = HkidCard::SMART_CARD_START_DATE;
     assert_eq!(
         generator.card_on(start.pred_opt().unwrap(), None),
         Err(GenerationError::ReferenceBeforeSmartCard)
     );
-    let mut generated_sexes = HashSet::new();
     for reference in [start, date(2024, 2, 29), date(2026, 7, 27), NaiveDate::MAX] {
         for requested_sex in [Some(Sex::Female), Some(Sex::Male), None] {
             for _ in 0..32 {
                 let card = generator.card_on(reference, requested_sex).unwrap();
                 assert_complete_card(&card, reference, requested_sex);
-                if requested_sex.is_none() {
-                    generated_sexes.insert(card.fields().sex.unwrap());
-                }
             }
         }
     }
-    assert_eq!(generated_sexes, HashSet::from([Sex::Male, Sex::Female]));
 }
 
 fn assert_complete_card(card: &HkidCard, reference: NaiveDate, requested_sex: Option<Sex>) {
@@ -183,27 +174,38 @@ fn assert_complete_card(card: &HkidCard, reference: NaiveDate, requested_sex: Op
     let earliest_month = YearMonth::from(eleventh_birthday).max(YearMonth::new(1949, 1).unwrap());
     assert!((earliest_month..=YearMonth::from(registration)).contains(&first_month));
     let age = card.age_on(reference).unwrap().unwrap();
-    assert!((11..=100).contains(&age));
+    assert!((11..=85).contains(&age));
     let permit = if age >= 18 {
         HkidSymbol::AdultReEntryPermit
     } else {
         HkidSymbol::MinorReEntryPermit
     };
+    let birthplace = fields
+        .symbols
+        .by_category(HkidSymbolCategory::ReportedPlaceOfBirth)
+        .next()
+        .expect("generated cards must report a birthplace");
     assert_eq!(
         fields.symbols.as_slice(),
-        &[permit, HkidSymbol::RightOfAbode, HkidSymbol::BornInHongKong]
+        &[permit, HkidSymbol::RightOfAbode, birthplace]
     );
 
     let number = fields.hkid_number.as_ref().unwrap();
     assert_valid_number(number);
     let prefix = number.defined_prefix().unwrap();
     if prefix.birth_registration_period().is_some() {
+        assert_eq!(birthplace, HkidSymbol::BornInHongKong);
         assert!(
             (0..=42).any(|days| prefix.supports_birth_registration_date(
                 birth.checked_add_days(Days::new(days)).unwrap()
             ))
         );
     } else {
+        if birthplace == HkidSymbol::BornInHongKong {
+            assert!((0..=42).any(|days| {
+                DefinedPrefix::from_birth_registration_date(birth + Days::new(days)).is_none()
+            }));
+        }
         assert!(prefix.supports_first_issue_month(
             first_month.year(),
             first_month.month(),
@@ -227,34 +229,4 @@ fn assert_complete_card(card: &HkidCard, reference: NaiveDate, requested_sex: Op
             .count(),
         given_length
     );
-}
-
-#[test]
-fn a_seed_reproduces_a_sequence_of_different_operations() {
-    let reference = date(2028, 2, 29);
-    let mut left = HkidGenerator::with_seed(82);
-    let mut right = HkidGenerator::with_seed(82);
-    for sex in [None, Some(Sex::Female), Some(Sex::Male)] {
-        assert_eq!(
-            left.number_with_any_prefix(),
-            right.number_with_any_prefix()
-        );
-        let left_name = left.name(sex, Some(5)).unwrap();
-        let right_name = right.name(sex, Some(5)).unwrap();
-        assert_eq!(left_name.chinese.personal_name().chars().count(), 5);
-        assert_eq!(left_name.chinese, right_name.chinese);
-        assert_eq!(left_name.english, right_name.english);
-        assert_eq!(
-            left.date_in_range(NaiveDate::MIN, Some(reference)).unwrap(),
-            right
-                .date_in_range(NaiveDate::MIN, Some(reference))
-                .unwrap()
-        );
-        assert_eq!(
-            left.card_on(reference, sex).unwrap(),
-            right.card_on(reference, sex).unwrap()
-        );
-    }
-    let card = HkidGenerator::new().card_on(reference, None).unwrap();
-    card.validate_as_of(reference).unwrap();
 }

@@ -1,5 +1,6 @@
-//! Random test data with caller-owned generator state.
+//! Random HKID test data.
 
+mod birthplace;
 mod cards;
 mod names;
 
@@ -53,7 +54,7 @@ impl std::error::Error for GenerationError {
     }
 }
 
-/// Generates sample HKID data. A seeded instance can replay a sequence of calls.
+/// Generates sample HKID data.
 pub struct HkidGenerator {
     rng: fastrand::Rng,
 }
@@ -65,18 +66,10 @@ impl Default for HkidGenerator {
 }
 
 impl HkidGenerator {
-    /// Creates a generator with a fresh seed.
+    /// Creates a generator for random samples.
     pub fn new() -> Self {
         Self {
             rng: fastrand::Rng::new(),
-        }
-    }
-
-    /// Creates a generator for repeatable samples with the same build, reference
-    /// data, explicit dates, and sequence of calls.
-    pub fn with_seed(seed: u64) -> Self {
-        Self {
-            rng: fastrand::Rng::with_seed(seed),
         }
     }
 

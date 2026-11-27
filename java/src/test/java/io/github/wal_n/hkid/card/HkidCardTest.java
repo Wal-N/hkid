@@ -8,15 +8,12 @@ import io.github.wal_n.hkid.number.HkidNumber;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.YearMonth;
-import java.time.temporal.ChronoUnit;
-import java.util.EnumSet;
-import java.util.Random;
-import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -26,35 +23,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class HkidCardTest {
     private static final LocalDate REFERENCE_DATE = LocalDate.of(2026, 7, 21);
 
-    @Test
-    void generatesCompleteCardAtLowerRandomBoundaries() {
-        HkidCard hkidCard = HkidCardUtil.generateRandomCard(new BoundaryRandom(false), REFERENCE_DATE);
+    @ParameterizedTest
+    @CsvSource({"11, *AZ", "100, ***AZ"})
+    void generatesCompleteCardAtAgeLimits(int age, String symbols) {
+        HkidCard card = HkidCardUtil.generateRandomCard(
+                REFERENCE_DATE, age, age, HkidSymbol.BORN_IN_HONG_KONG);
 
-        assertGeneratedCard(hkidCard);
-        assertEquals(Sex.MALE, hkidCard.getSex());
-        assertEquals(11, Period.between(hkidCard.getDateOfBirth(), REFERENCE_DATE).getYears());
-        assertEquals(HkidCard.ageAnniversary(hkidCard.getDateOfBirth(), 11),
-                hkidCard.getDateOfRegistration());
-        assertEquals(YearMonth.from(hkidCard.getDateOfRegistration()), hkidCard.getFirstRegistrationYearMonth());
-        assertEquals(HkidSymbols.parse("*AZ"), hkidCard.getSymbols());
-
-        System.out.println(hkidCard);
-        System.out.println("HKID Number: " + hkidCard.getHkidNumber());
-        System.out.println("Age: " + hkidCard.getAge(REFERENCE_DATE));
+        assertGeneratedCard(card, REFERENCE_DATE);
+        assertEquals(Integer.valueOf(age), card.getAge(REFERENCE_DATE).orElse(null));
+        assertEquals(symbols, card.getSymbolsString());
     }
 
     @Test
-    void generatesValidCardForLeapDayBirthAtLowerRandomBoundaries() {
-        LocalDate referenceDate = LocalDate.of(2028, 2, 28);
+    void generatesValidCardOnEleventhAnniversaryOfLeapDayBirth() {
+        LocalDate referenceDate = LocalDate.of(2027, 3, 1);
+        HkidCard card = HkidCardUtil.generateCompleteCard(
+                referenceDate, null, LocalDate.of(2016, 2, 29), HkidSymbol.BORN_IN_HONG_KONG);
 
-        HkidCard card = HkidCardUtil.generateRandomCard(
-                new BoundaryRandom(false), referenceDate);
-
-        assertEquals(LocalDate.of(2016, 2, 29), card.getDateOfBirth());
-        assertEquals(LocalDate.of(2027, 3, 1), card.getDateOfRegistration());
+        assertEquals(referenceDate, card.getDateOfRegistration());
         assertEquals(YearMonth.of(2027, 3), card.getFirstRegistrationYearMonth());
-        assertEquals(Integer.valueOf(11),
-                card.getAge(card.getDateOfRegistration()).orElse(null));
+        assertEquals(Integer.valueOf(11), card.getAge(referenceDate).orElse(null));
         assertEquals(HkidSymbols.parse("*AZ"), card.getSymbols());
         card.validateAsOf(referenceDate);
     }
@@ -63,8 +51,8 @@ class HkidCardTest {
     void randomLeapDayCardChangesToAdultSymbolOnMarchFirst() {
         LocalDate dateOfBirth = LocalDate.of(2004, 2, 29);
         LocalDate dayBeforeAnniversary = LocalDate.of(2022, 2, 28);
-        HkidCard juvenileCard = generateCardWithDateOfBirth(
-                dayBeforeAnniversary, dateOfBirth);
+        HkidCard juvenileCard = HkidCardUtil.generateCompleteCard(
+                dayBeforeAnniversary, null, dateOfBirth, HkidSymbol.BORN_IN_HONG_KONG);
 
         assertEquals(dateOfBirth, juvenileCard.getDateOfBirth());
         assertEquals(HkidSymbols.parse("*AZ"), juvenileCard.getSymbols());
@@ -72,8 +60,8 @@ class HkidCardTest {
                 juvenileCard.getAge(dayBeforeAnniversary).orElse(null));
 
         LocalDate anniversary = LocalDate.of(2022, 3, 1);
-        HkidCard adultCard = generateCardWithDateOfBirth(
-                anniversary, dateOfBirth);
+        HkidCard adultCard = HkidCardUtil.generateCompleteCard(
+                anniversary, null, dateOfBirth, HkidSymbol.BORN_IN_HONG_KONG);
 
         assertEquals(dateOfBirth, adultCard.getDateOfBirth());
         assertEquals(HkidSymbols.parse("***AZ"), adultCard.getSymbols());
@@ -82,53 +70,28 @@ class HkidCardTest {
     }
 
     @Test
-    void generatesCompleteCardAtUpperRandomBoundaries() {
-        HkidCard hkidCard = HkidCardUtil.generateRandomCard(new BoundaryRandom(true), REFERENCE_DATE);
-
-        assertGeneratedCard(hkidCard);
-        assertEquals(Sex.FEMALE, hkidCard.getSex());
-        assertEquals(100, Period.between(hkidCard.getDateOfBirth(), REFERENCE_DATE).getYears());
-        assertEquals(REFERENCE_DATE, hkidCard.getDateOfRegistration());
-        assertEquals(YearMonth.from(REFERENCE_DATE), hkidCard.getFirstRegistrationYearMonth());
-        assertEquals(HkidSymbols.parse("***AZ"), hkidCard.getSymbols());
-    }
-
-    @Test
-    void rejectsMissingRandomGenerationDependencies() {
+    void rejectsMissingGenerationArguments() {
         assertThrows(IllegalArgumentException.class,
                 () -> HkidCardUtil.generateRandomCard((LocalDate) null));
         assertThrows(IllegalArgumentException.class,
                 () -> HkidCardUtil.generateRandomCard((Sex) null));
-        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(null, REFERENCE_DATE));
-        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.generateRandomCard(new Random(), null));
         assertThrows(IllegalArgumentException.class,
                 () -> HkidCardUtil.generateRandomCard(REFERENCE_DATE, null));
-        assertThrows(IllegalArgumentException.class,
-                () -> HkidCardUtil.generateRandomCard(new Random(), REFERENCE_DATE, null));
     }
 
     @Test
     void rejectsReferenceDateBeforeCurrentSmartHkidStartDate() {
         LocalDate unsupportedDate = HkidCard.CURRENT_SMART_HKID_START_DATE.minusDays(1);
 
-        IllegalArgumentException threadLocalException = assertThrows(
-                IllegalArgumentException.class,
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
                 () -> HkidCardUtil.generateRandomCard(unsupportedDate));
-        IllegalArgumentException deterministicException = assertThrows(
-                IllegalArgumentException.class,
-                () -> HkidCardUtil.generateRandomCard(new Random(1L), unsupportedDate));
-
-        assertEquals(
-                "Reference date cannot be before " + HkidCard.CURRENT_SMART_HKID_START_DATE,
-                threadLocalException.getMessage());
-        assertEquals(threadLocalException.getMessage(), deterministicException.getMessage());
+        assertEquals("Reference date cannot be before " + HkidCard.CURRENT_SMART_HKID_START_DATE,
+                error.getMessage());
     }
 
     @Test
     void acceptsCurrentSmartHkidStartDate() {
-        HkidCard card = HkidCardUtil.generateRandomCard(
-                new BoundaryRandom(false),
-                HkidCard.CURRENT_SMART_HKID_START_DATE);
+        HkidCard card = HkidCardUtil.generateRandomCard(HkidCard.CURRENT_SMART_HKID_START_DATE);
 
         assertEquals(HkidCard.CURRENT_SMART_HKID_START_DATE, card.getDateOfRegistration());
         card.validateAsOf(HkidCard.CURRENT_SMART_HKID_START_DATE);
@@ -136,18 +99,35 @@ class HkidCardTest {
 
     @Test
     void generatesCompleteCardForCallerControlledReferenceDate() {
-        HkidCard hkidCard = HkidCardUtil.generateRandomCard(REFERENCE_DATE);
+        assertGeneratedCard(HkidCardUtil.generateRandomCard(REFERENCE_DATE), REFERENCE_DATE);
+    }
 
-        assertGeneratedCard(hkidCard);
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void defaultCardsUseCensusBirthplacesAndAgesElevenThroughEightyFive(boolean requestSex) {
+        boolean sawHongKong = false;
+        boolean sawOtherBirthplace = false;
+        for (int i = 0; i < 256; i++) {
+            HkidCard card = requestSex
+                    ? HkidCardUtil.generateRandomCard(REFERENCE_DATE, Sex.FEMALE)
+                    : HkidCardUtil.generateRandomCard(REFERENCE_DATE);
+            int age = card.getAge(REFERENCE_DATE).get();
+            assertTrue(age >= 11 && age <= 85, "Default age outside 11–85: " + age);
+            assertEquals(1, card.getSymbols().getByCategory(HkidSymbolCategory.REPORTED_PLACE_OF_BIRTH).size());
+            boolean hongKong = card.getSymbols().contains(HkidSymbol.BORN_IN_HONG_KONG);
+            sawHongKong |= hongKong;
+            sawOtherBirthplace |= !hongKong;
+        }
+        assertTrue(sawHongKong, "Expected a Hong Kong birthplace");
+        assertTrue(sawOtherBirthplace, "Expected a birthplace outside Hong Kong");
     }
 
     @Test
     void generatesCompleteCardWithRequestedSex() {
         for (Sex sex : Sex.values()) {
-            HkidCard card = HkidCardUtil.generateRandomCard(
-                    new Random(123456789L), REFERENCE_DATE, sex);
+            HkidCard card = HkidCardUtil.generateRandomCard(REFERENCE_DATE, sex);
 
-            assertGeneratedCard(card);
+            assertGeneratedCard(card, REFERENCE_DATE);
             assertEquals(sex, card.getSex());
         }
     }
@@ -160,25 +140,105 @@ class HkidCardTest {
                 HkidCardUtil.generateRandomCard(REFERENCE_DATE, Sex.FEMALE).getSex());
     }
 
-    @Test
-    void sameSeedGeneratesSameCompleteCard() {
-        HkidCard first = HkidCardUtil.generateRandomCard(new Random(123456789L), REFERENCE_DATE);
-        HkidCard second = HkidCardUtil.generateRandomCard(new Random(123456789L), REFERENCE_DATE);
+    @ParameterizedTest
+    @CsvSource({
+            "17, BORN_IN_HONG_KONG, *AZ",
+            "17, BORN_IN_MAINLAND, *AX",
+            "18, BORN_IN_MACAO, ***AW",
+            "18, BORN_ELSEWHERE, ***AO"
+    })
+    void generatesCompleteCardsAtRequestedAgeBoundsWithCompatiblePrefixes(
+            int expectedAge, HkidSymbol birthplace, String expectedSymbols) {
+        HkidCard card = HkidCardUtil.generateRandomCard(
+                REFERENCE_DATE, Sex.FEMALE, expectedAge, expectedAge, birthplace);
 
-        assertEquals(first, second);
+        assertGeneratedCard(card, REFERENCE_DATE);
+        assertEquals(Integer.valueOf(expectedAge), card.getAge(REFERENCE_DATE).orElse(null));
+        assertEquals(expectedSymbols, card.getSymbolsString());
+        assertEquals(Sex.FEMALE, card.getSex());
+        assertTrue(card.findSuspicions().isEmpty());
+        DefinedPrefix prefix = card.getHkidNumber().getDefinedPrefix().get();
+        if (birthplace == HkidSymbol.BORN_IN_HONG_KONG) {
+            assertTrue(supportsPossibleBirthRegistrationDate(prefix, card.getDateOfBirth()));
+        } else {
+            assertTrue(prefix.supportsFirstIssueMonth(
+                    card.getFirstRegistrationYearMonth(), card.getDateOfRegistration()));
+        }
     }
 
     @Test
-    void generatedCardNameMatchesGeneratedSex() {
-        Set<Sex> generatedSexes = EnumSet.noneOf(Sex.class);
-        for (int seed = 0; seed < 200; seed++) {
-            HkidCard card = HkidCardUtil.generateRandomCard(new Random(seed), REFERENCE_DATE);
-
-            generatedSexes.add(card.getSex());
-            assertNameMatchesSex(card);
+    void generatesWithinRequestedAgeRange() {
+        for (int i = 0; i < 30; i++) {
+            HkidCard card = HkidCardUtil.generateRandomCard(
+                    REFERENCE_DATE, 25, 35, HkidSymbol.BORN_ELSEWHERE);
+            int age = card.getAge(REFERENCE_DATE).get();
+            assertTrue(age >= 25 && age <= 35);
         }
+    }
 
-        assertEquals(EnumSet.allOf(Sex.class), generatedSexes);
+    @Test
+    void constrainedConvenienceOverloadsUseRequestedValues() {
+        HkidCard dated = HkidCardUtil.generateRandomCard(
+                REFERENCE_DATE, 100, 100, HkidSymbol.BORN_ELSEWHERE);
+        assertEquals(Integer.valueOf(100), dated.getAge(REFERENCE_DATE).orElse(null));
+        assertEquals("***AO", dated.getSymbolsString());
+        assertEquals("*AW", HkidCardUtil.generateRandomCard(
+                11, 11, HkidSymbol.BORN_IN_MACAO).getSymbolsString());
+    }
+
+    @Test
+    void rejectsUnsupportedAgeRangesAndBirthplaces() {
+        HkidSymbol hongKong = HkidSymbol.BORN_IN_HONG_KONG;
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(REFERENCE_DATE, 10, 12, hongKong));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(REFERENCE_DATE, 99, 101, hongKong));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(REFERENCE_DATE, 18, 17, hongKong));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(REFERENCE_DATE, 11, 100, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(REFERENCE_DATE, 11, 100, HkidSymbol.RIGHT_OF_ABODE));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCard(REFERENCE_DATE, null, 11, 100, hongKong));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "0, BORN_IN_HONG_KONG", "4574833, BORN_IN_HONG_KONG",
+            "4574834, BORN_IN_MAINLAND", "6718959, BORN_IN_MAINLAND",
+            "6718960, BORN_IN_MACAO", "6770934, BORN_IN_MACAO",
+            "6770935, BORN_ELSEWHERE", "7413069, BORN_ELSEWHERE"
+    })
+    void census2021BirthplaceWeightsCoverEachInterval(int ticket, HkidSymbol expected) {
+        assertEquals(expected, HkidCardUtil.censusBirthplaceForTicket(ticket));
+    }
+
+    @Test
+    void censusTicketsSpanExactlyTheResidentPopulation() {
+        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.censusBirthplaceForTicket(-1));
+        assertThrows(IllegalArgumentException.class, () -> HkidCardUtil.censusBirthplaceForTicket(7_413_070));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {17, 100})
+    void generatesCompletePopulationBirthplaceCard(int age) {
+        LocalDate reference = HkidCard.CURRENT_SMART_HKID_START_DATE;
+        HkidCard card = HkidCardUtil.generateRandomCardByBirthplaceDistribution(reference, age, age);
+
+        assertGeneratedCard(card, reference);
+        assertEquals(Integer.valueOf(age), card.getAge(reference).orElse(null));
+        assertEquals(reference, card.getDateOfRegistration());
+        assertEquals(1, card.getSymbols().getByCategory(HkidSymbolCategory.REPORTED_PLACE_OF_BIRTH).size());
+        assertTrue(card.findSuspicions().isEmpty());
+    }
+
+    @Test
+    void rejectsInvalidPopulationSamplingArguments() {
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCardByBirthplaceDistribution(null, 11, 100));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidCardUtil.generateRandomCardByBirthplaceDistribution(REFERENCE_DATE, 18, 17));
     }
 
     @Test
@@ -196,8 +256,9 @@ class HkidCardTest {
 
     @Test
     void generatedPrefixMatchesHongKongBirthRegistrationPeriod() {
-        for (int seed = 0; seed < 500; seed++) {
-            HkidCard card = HkidCardUtil.generateRandomCard(new Random(seed), REFERENCE_DATE);
+        for (int age = 11; age <= 100; age++) {
+            HkidCard card = HkidCardUtil.generateRandomCard(
+                    REFERENCE_DATE, age, age, HkidSymbol.BORN_IN_HONG_KONG);
             LocalDate dateOfBirth = card.getDateOfBirth();
             DefinedPrefix prefix = card.getHkidNumber().getDefinedPrefix().orElse(null);
 
@@ -210,79 +271,48 @@ class HkidCardTest {
                     assertTrue(supportsPossibleBirthRegistrationDate(prefix, dateOfBirth));
                     break;
                 default:
-                    assertTrue(prefix.supportsFirstIssueMonth(card.getFirstRegistrationYearMonth()));
+                    assertTrue(prefix.supportsFirstIssueMonth(
+                            card.getFirstRegistrationYearMonth(), card.getDateOfRegistration()));
                     break;
             }
         }
     }
 
     @Test
-    void generatedPrefixMatchesFirstRegistrationMonth() {
-        HkidCard card = HkidCardUtil.generateRandomCard(
-                new Random(41), LocalDate.of(2026, 7, 21));
-
-        assertEquals(LocalDate.of(1978, 4, 25), card.getDateOfBirth());
-        assertEquals(YearMonth.of(2004, 11), card.getFirstRegistrationYearMonth());
-        assertEquals(DefinedPrefix.R, card.getHkidNumber().getDefinedPrefix().orElse(null));
-        assertTrue(DefinedPrefix.R.supportsFirstIssueMonth(
-                card.getFirstRegistrationYearMonth()));
+    void generatedFirstIssuePrefixesAreBoundedByEligibilityAndRegistrationDates() {
+        YearMonth firstIssue = YearMonth.of(2026, 7);
+        LocalDate july26 = firstIssue.atDay(26);
+        LocalDate july27 = firstIssue.atDay(27);
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.F}, HkidCardUtil.compatiblePrefixesFor(
+                null, firstIssue, july26, july26));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.F, DefinedPrefix.L}, HkidCardUtil.compatiblePrefixesFor(
+                null, firstIssue, july26, july27));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.L}, HkidCardUtil.compatiblePrefixesFor(
+                null, firstIssue, july27, july27));
     }
 
     @ParameterizedTest
-    @CsvSource({
-            "2026-07-01, F",
-            "2026-07-21, F",
-            "2026-07-26, F",
-            "2026-07-27, L",
-            "2026-08-01, L"
-    })
-    void generatedFirstIssuePrefixRespectsExactTransitionDate(
-            LocalDate referenceDate, DefinedPrefix expectedPrefix) {
-        HkidCard card = HkidCardUtil.generateRandomCard(
-                new BoundaryRandom(true), referenceDate);
+    @CsvSource({"2020-02-24, F", "2026-07-26, F", "2026-07-27, L", "2026-08-01, L"})
+    void generatesCompatibleFirstIssuePrefixOnEleventhBirthday(LocalDate reference, DefinedPrefix expected) {
+        HkidCard card = HkidCardUtil.generateCompleteCard(
+                reference, null, reference.minusYears(11), HkidSymbol.BORN_IN_MAINLAND);
 
-        assertTrue(card.getDateOfBirth().isBefore(LocalDate.of(1980, 1, 1)));
-        assertEquals(referenceDate, card.getDateOfRegistration());
-        assertEquals(YearMonth.from(referenceDate), card.getFirstRegistrationYearMonth());
-        assertEquals(expectedPrefix, card.getHkidNumber().getDefinedPrefix().orElse(null));
-        card.validateAsOf(referenceDate);
+        assertEquals(reference, card.getDateOfRegistration());
+        assertEquals(YearMonth.from(reference), card.getFirstRegistrationYearMonth());
+        assertEquals(expected, card.getHkidNumber().getDefinedPrefix().get());
+        card.validateAsOf(reference);
     }
 
     @Test
-    void generatedFirstIssuePrefixIsBoundedByCardRegistrationDate() {
-        LocalDate referenceDate = LocalDate.of(2026, 7, 27);
-        Random random = new Random() {
-            private static final long serialVersionUID = 1L;
-            private int calls;
-
-            @Override
-            public int nextInt(int bound) {
-                // Choose the previous day for card registration; all other choices use the upper bound.
-                return ++calls == 3 ? bound - 2 : bound - 1;
-            }
-        };
-
-        HkidCard card = HkidCardUtil.generateRandomCard(random, referenceDate);
-
-        assertEquals(LocalDate.of(2026, 7, 26), card.getDateOfRegistration());
-        assertEquals(YearMonth.of(2026, 7), card.getFirstRegistrationYearMonth());
-        assertEquals(DefinedPrefix.F, card.getHkidNumber().getDefinedPrefix().orElse(null));
-        card.validateAsOf(referenceDate);
-    }
-
-    @Test
-    void generatedBirthPrefixUsesRegistrationDateAfterDateOfBirth() {
-        LocalDate referenceDate = LocalDate.of(2026, 7, 21);
-        LocalDate dateOfBirth = LocalDate.of(1988, 12, 31);
-        LocalDate earliestDateOfBirthForAge = referenceDate.minusYears(38).plusDays(1);
-        int dateOfBirthOffset = Math.toIntExact(
-                ChronoUnit.DAYS.between(earliestDateOfBirthForAge, dateOfBirth));
-        Random random = new SequenceRandom(26, dateOfBirthOffset, 0, 0, 1);
-
-        HkidCard card = HkidCardUtil.generateRandomCard(random, referenceDate);
-
-        assertEquals(dateOfBirth, card.getDateOfBirth());
-        assertEquals(DefinedPrefix.Y, card.getHkidNumber().getDefinedPrefix().orElse(null));
+    void generatedBirthPrefixUsesBirthRegistrationDate() {
+        YearMonth firstIssue = YearMonth.of(2004, 11);
+        LocalDate registration = LocalDate.of(2026, 7, 21);
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.Z}, HkidCardUtil.compatiblePrefixesFor(
+                LocalDate.of(1988, 12, 31), firstIssue, firstIssue.atDay(1), registration));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.Y}, HkidCardUtil.compatiblePrefixesFor(
+                LocalDate.of(1989, 1, 1), firstIssue, firstIssue.atDay(1), registration));
+        assertArrayEquals(new DefinedPrefix[]{DefinedPrefix.R}, HkidCardUtil.compatiblePrefixesFor(
+                null, firstIssue, firstIssue.atDay(1), registration));
     }
 
     private static boolean supportsPossibleBirthRegistrationDate(
@@ -296,17 +326,7 @@ class HkidCardTest {
         return false;
     }
 
-    private static HkidCard generateCardWithDateOfBirth(
-            LocalDate referenceDate, LocalDate dateOfBirth) {
-        int age = HkidCard.ageOn(dateOfBirth, referenceDate);
-        LocalDate earliestDateOfBirth = referenceDate.minusYears(age + 1L).plusDays(1);
-        int dateOfBirthOffset = Math.toIntExact(
-                ChronoUnit.DAYS.between(earliestDateOfBirth, dateOfBirth));
-        Random random = new SequenceRandom(age - 11, dateOfBirthOffset);
-        return HkidCardUtil.generateRandomCard(random, referenceDate);
-    }
-
-    private void assertGeneratedCard(HkidCard hkidCard) {
+    private void assertGeneratedCard(HkidCard hkidCard, LocalDate referenceDate) {
         assertNotNull(hkidCard.getHkidNumber());
         assertNotNull(hkidCard.getChineseName());
         assertNotNull(hkidCard.getEnglishName());
@@ -314,12 +334,12 @@ class HkidCardTest {
         assertNotNull(hkidCard.getDateOfBirth());
         assertNotNull(hkidCard.getDateOfRegistration());
         assertNotNull(hkidCard.getFirstRegistrationYearMonth());
-        LocalDate earliestCurrentRegistration = REFERENCE_DATE.minusYears(10)
+        LocalDate earliestCurrentRegistration = referenceDate.minusYears(10)
                 .isAfter(HkidCard.CURRENT_SMART_HKID_START_DATE)
-                ? REFERENCE_DATE.minusYears(10)
+                ? referenceDate.minusYears(10)
                 : HkidCard.CURRENT_SMART_HKID_START_DATE;
         assertFalse(hkidCard.getDateOfRegistration().isBefore(earliestCurrentRegistration));
-        assertFalse(hkidCard.getDateOfRegistration().isAfter(REFERENCE_DATE));
+        assertFalse(hkidCard.getDateOfRegistration().isAfter(referenceDate));
         assertFalse(hkidCard.getFirstRegistrationYearMonth()
                 .isBefore(YearMonth.from(
                         HkidCard.ageAnniversary(hkidCard.getDateOfBirth(), 11))));
@@ -331,7 +351,7 @@ class HkidCardTest {
         assertEquals(chineseName.codePointCount(0, chineseName.length()),
                 hkidCard.getChineseCommercialCodes().size());
         assertNameMatchesSex(hkidCard);
-        hkidCard.validateAsOf(REFERENCE_DATE);
+        hkidCard.validateAsOf(referenceDate);
     }
 
     private void assertNameMatchesSex(HkidCard hkidCard) {
@@ -347,38 +367,5 @@ class HkidCardTest {
                     .orElseThrow(AssertionError::new);
             assertTrue(entry.isCompatibleWith(hkidCard.getSex()));
         });
-    }
-
-    private static final class BoundaryRandom extends Random {
-        private static final long serialVersionUID = 1L;
-        private final boolean upperBoundary;
-
-        private BoundaryRandom(boolean upperBoundary) {
-            this.upperBoundary = upperBoundary;
-        }
-
-        @Override
-        public int nextInt(int bound) {
-            return upperBoundary ? bound - 1 : 0;
-        }
-    }
-
-    private static final class SequenceRandom extends Random {
-        private static final long serialVersionUID = 1L;
-        private final int[] values;
-        private int index;
-
-        private SequenceRandom(int... values) {
-            this.values = values;
-        }
-
-        @Override
-        public int nextInt(int bound) {
-            int value = index < values.length ? values[index++] : 0;
-            if (value < 0 || value >= bound) {
-                throw new AssertionError(String.format("Random value %s is outside bound %s", value, bound));
-            }
-            return value;
-        }
     }
 }

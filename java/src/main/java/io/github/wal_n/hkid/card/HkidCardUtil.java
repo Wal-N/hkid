@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -21,10 +20,17 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class HkidCardUtil {
     private static final int MIN_AGE = 11;
+    private static final int DEFAULT_MAX_AGE = 85;
     private static final int MAX_AGE = 100;
     private static final int RECENT_CARD_YEARS = 10;
     private static final int HONG_KONG_BIRTH_REGISTRATION_DAYS = 42;
-    private static final YearMonth FIRST_HKID_ISSUE_MONTH = YearMonth.of(1949, 1);
+    private static final LocalDate FIRST_HKID_ISSUE_DATE = LocalDate.of(1949, 1, 1);
+    private static final int CENSUS_2021_HONG_KONG_BORN = 4_574_834;
+    private static final int CENSUS_2021_MAINLAND_BORN = 2_144_126;
+    private static final int CENSUS_2021_MACAO_BORN = 51_975;
+    private static final int CENSUS_2021_ELSEWHERE_BORN = 17_761 + 624_374; // Taiwan and all other places
+    private static final int CENSUS_2021_POPULATION = CENSUS_2021_HONG_KONG_BORN + CENSUS_2021_MAINLAND_BORN
+            + CENSUS_2021_MACAO_BORN + CENSUS_2021_ELSEWHERE_BORN;
 
     private HkidCardUtil() {
         throw new AssertionError("HkidCardUtil cannot be instantiated");
@@ -346,8 +352,9 @@ public final class HkidCardUtil {
     }
 
     /**
-     * Generates a sample HKID card using the current system date and a
-     * thread-local random generator. The JVM's default time zone is read on every call.
+     * Generates a sample HKID card for a holder aged 11 through 85 inclusive
+     * as of today. Birthplace is sampled using the 2021 Hong Kong Population Census.
+     * The JVM's default time zone is read on every call.
      *
      * @return a randomly generated card valid as of the current system date
      */
@@ -356,9 +363,8 @@ public final class HkidCardUtil {
     }
 
     /**
-     * Generates a sample HKID card with the requested sex using the current
-     * system date and a thread-local random generator. The JVM's default time
-     * zone is read on every call.
+     * Generates a sample HKID card with the requested sex using the same age range,
+     * census birthplace distribution and local date as {@link #generateRandomCard()}.
      *
      * @param sex requested card sex and generated-name association
      * @return a randomly generated card with {@code sex}, valid as of the current system date
@@ -369,11 +375,8 @@ public final class HkidCardUtil {
     }
 
     /**
-     * Generates a sample HKID card for a caller-controlled reference date using
-     * a thread-local random generator.
-     *
-     * <p>Use this overload when the generated card should be valid at a specific
-     * point in time but its random values do not need to be reproducible.</p>
+     * Generates a sample HKID card using the age range and census birthplace
+     * distribution of {@link #generateRandomCard()} on the supplied reference date.
      *
      * @param referenceDate date used to calculate age and registration ranges
      * @return a randomly generated card valid as of {@code referenceDate}
@@ -381,12 +384,12 @@ public final class HkidCardUtil {
      *         the first issuance of the current smart HKID
      */
     public static HkidCard generateRandomCard(LocalDate referenceDate) {
-        return generateRandomCard(ThreadLocalRandom.current(), referenceDate);
+        return generateRandomCardByBirthplaceDistribution(referenceDate, MIN_AGE, DEFAULT_MAX_AGE);
     }
 
     /**
-     * Generates a sample HKID card with the requested sex for a
-     * caller-controlled reference date using a thread-local random generator.
+     * Generates a sample HKID card with the requested sex using the age range and census
+     * birthplace distribution of {@link #generateRandomCard()} on the supplied reference date.
      *
      * @param referenceDate date used to calculate age and registration ranges
      * @param sex requested card sex and generated-name association
@@ -395,51 +398,101 @@ public final class HkidCardUtil {
      *         {@code referenceDate} precedes the first issuance of the current smart HKID
      */
     public static HkidCard generateRandomCard(LocalDate referenceDate, Sex sex) {
-        return generateRandomCard(ThreadLocalRandom.current(), referenceDate, sex);
+        return generateRandomCard(referenceDate, sex, MIN_AGE, DEFAULT_MAX_AGE, sampleCensusBirthplace());
     }
 
     /**
-     * Generates a reproducible sample HKID card using caller-controlled random
-     * state and reference date.
+     * Generates a complete card for a holder in the requested age range as of today.
      *
-     * <p>Supplying equivalent {@link Random} state and the same reference date
-     * produces the same card within this Java implementation. This overload is
-     * useful for deterministic tests, fixtures, and reproducing generated data.</p>
-     *
-     * @param random random generator used for every generated card value
-     * @param referenceDate date used to calculate age and registration ranges
-     * @return a generated card valid as of {@code referenceDate}
-     * @throws IllegalArgumentException if {@code random} or {@code referenceDate} is null,
-     *         or if {@code referenceDate} precedes the first issuance of the current smart HKID
+     * @param minAge minimum age in completed years, inclusive
+     * @param maxAge maximum age in completed years, inclusive
+     * @param birthplace reported place-of-birth symbol
+     * @return a card with the requested age range and birthplace
+     * @throws IllegalArgumentException if the range is outside 11 to 100 or reversed,
+     *         or the birthplace is null or not a place-of-birth symbol
      */
-    public static HkidCard generateRandomCard(Random random, LocalDate referenceDate) {
-        return generateRandomCardInternal(random, referenceDate, null);
+    public static HkidCard generateRandomCard(int minAge, int maxAge, HkidSymbol birthplace) {
+        return generateRandomCard(LocalDate.now(), minAge, maxAge, birthplace);
     }
 
     /**
-     * Generates a reproducible sample HKID card with the requested sex using
-     * caller-controlled random state and reference date.
+     * Generates a complete card for a holder in the requested age range on the reference date.
+     * Equal bounds select an exact age. For a holder born outside Hong Kong the
+     * number prefix is selected from the first-issue period.
      *
-     * @param random random generator used for every generated card value
-     * @param referenceDate date used to calculate age and registration ranges
-     * @param sex requested card sex and generated-name association
-     * @return a generated card with {@code sex}, valid as of {@code referenceDate}
-     * @throws IllegalArgumentException if any argument is null, or if
-     *         {@code referenceDate} precedes the first issuance of the current smart HKID
+     * @param referenceDate date on which the holder's age is measured, on or after 2018-11-26
+     * @param minAge minimum age in completed years, inclusive
+     * @param maxAge maximum age in completed years, inclusive
+     * @param birthplace reported place-of-birth symbol
+     * @return a card with the requested age range and birthplace
+     * @throws IllegalArgumentException if an argument is null, the reference date is too early,
+     *         the range is outside 11 to 100 or reversed, or the symbol is not a birthplace
      */
     public static HkidCard generateRandomCard(
-            Random random, LocalDate referenceDate, Sex sex) {
+            LocalDate referenceDate, int minAge, int maxAge, HkidSymbol birthplace) {
+        return generateRandomCardInternal(referenceDate, null, minAge, maxAge, birthplace);
+    }
+
+    /**
+     * Generates a complete card with the requested sex, age range and birthplace.
+     *
+     * @param referenceDate date on which the holder's age is measured, on or after 2018-11-26
+     * @param sex requested card sex and generated-name association
+     * @param minAge minimum age in completed years, inclusive
+     * @param maxAge maximum age in completed years, inclusive
+     * @param birthplace symbol in {@link HkidSymbolCategory#REPORTED_PLACE_OF_BIRTH}
+     * @return a card with the requested sex, age range and birthplace
+     * @throws IllegalArgumentException if an argument is null, the reference date is too early,
+     *         the range is outside 11 to 100 or reversed, or the symbol is not a birthplace
+     */
+    public static HkidCard generateRandomCard(
+            LocalDate referenceDate, Sex sex, int minAge, int maxAge, HkidSymbol birthplace) {
         if (sex == null) {
             throw new IllegalArgumentException("Sex cannot be null");
         }
-        return generateRandomCardInternal(random, referenceDate, sex);
+        return generateRandomCardInternal(referenceDate, sex, minAge, maxAge, birthplace);
+    }
+
+    /**
+     * Generates a complete card with a birthplace sampled from the 2021 Hong Kong
+     * Population Census. Each call uses the same all-ages weights, independently of
+     * the requested age range or reference date. Taiwan is included in elsewhere.
+     *
+     * @param referenceDate date on which the holder's age is measured, on or after 2018-11-26
+     * @param minAge minimum age in completed years, inclusive
+     * @param maxAge maximum age in completed years, inclusive
+     * @return a card with the sampled birthplace and an age in the requested range
+     * @throws IllegalArgumentException if an argument is null, the reference date is too early,
+     *         or the range is outside 11 to 100 or reversed
+     * @see <a href="https://idds.census2021.gov.hk/api/query?cv.BORNPL=01,11,12,13,31-89&amp;sv.RP=RP_NPER&amp;period=2021&amp;lang=en">2021 Census birthplace counts</a>
+     */
+    public static HkidCard generateRandomCardByBirthplaceDistribution(
+            LocalDate referenceDate, int minAge, int maxAge) {
+        return generateRandomCard(referenceDate, minAge, maxAge, sampleCensusBirthplace());
+    }
+
+    private static HkidSymbol sampleCensusBirthplace() {
+        return censusBirthplaceForTicket(ThreadLocalRandom.current().nextInt(CENSUS_2021_POPULATION));
+    }
+
+    static HkidSymbol censusBirthplaceForTicket(int ticket) {
+        if (ticket < 0 || ticket >= CENSUS_2021_POPULATION) {
+            throw new IllegalArgumentException("Ticket must be within the 2021 census population");
+        }
+        if (ticket < CENSUS_2021_HONG_KONG_BORN) {
+            return HkidSymbol.BORN_IN_HONG_KONG;
+        }
+        if (ticket < CENSUS_2021_HONG_KONG_BORN + CENSUS_2021_MAINLAND_BORN) {
+            return HkidSymbol.BORN_IN_MAINLAND;
+        }
+        if (ticket < CENSUS_2021_HONG_KONG_BORN + CENSUS_2021_MAINLAND_BORN + CENSUS_2021_MACAO_BORN) {
+            return HkidSymbol.BORN_IN_MACAO;
+        }
+        return HkidSymbol.BORN_ELSEWHERE;
     }
 
     private static HkidCard generateRandomCardInternal(
-            Random random, LocalDate referenceDate, Sex requestedSex) {
-        if (random == null) {
-            throw new IllegalArgumentException("Random generator cannot be null");
-        }
+            LocalDate referenceDate, Sex requestedSex, int minAge, int maxAge, HkidSymbol birthplace) {
         if (referenceDate == null) {
             throw new IllegalArgumentException("Reference date cannot be null");
         }
@@ -449,7 +502,19 @@ public final class HkidCardUtil {
                             + HkidCard.CURRENT_SMART_HKID_START_DATE);
         }
 
-        LocalDate dateOfBirth = generateRandomDateOfBirth(random, referenceDate);
+        if (minAge < MIN_AGE || maxAge > MAX_AGE || minAge > maxAge) {
+            throw new IllegalArgumentException("Age range must be between " + MIN_AGE + " and " + MAX_AGE
+                    + " with minimum age no greater than maximum age");
+        }
+        if (birthplace == null || birthplace.getCategory() != HkidSymbolCategory.REPORTED_PLACE_OF_BIRTH) {
+            throw new IllegalArgumentException("Expected a reported place-of-birth symbol");
+        }
+        LocalDate dateOfBirth = generateRandomDateOfBirth(referenceDate, minAge, maxAge);
+        return generateCompleteCard(referenceDate, requestedSex, dateOfBirth, birthplace);
+    }
+
+    static HkidCard generateCompleteCard(
+            LocalDate referenceDate, Sex requestedSex, LocalDate dateOfBirth, HkidSymbol birthplace) {
         HkidSymbol ageSymbol = generateAgeSymbol(dateOfBirth, referenceDate);
         int minimumRegistrationAge = ageSymbol == HkidSymbol.ADULT_RE_ENTRY_PERMIT ? 18 : MIN_AGE;
         LocalDate earliestRegistrationDate = laterDate(
@@ -458,34 +523,28 @@ public final class HkidCardUtil {
                 earliestRegistrationDate,
                 HkidCard.ageAnniversary(dateOfBirth, minimumRegistrationAge));
         LocalDate dateOfRegistration = generateRandomDateInRangeInclusive(
-                random, earliestRegistrationDate, referenceDate);
-        YearMonth earliestFirstRegistrationMonth = laterYearMonth(
-                YearMonth.from(HkidCard.ageAnniversary(dateOfBirth, MIN_AGE)),
-                FIRST_HKID_ISSUE_MONTH);
+                earliestRegistrationDate, referenceDate);
+        LocalDate earliestFirstRegistrationDate = laterDate(
+                HkidCard.ageAnniversary(dateOfBirth, MIN_AGE), FIRST_HKID_ISSUE_DATE);
         YearMonth firstRegistrationYearMonth = generateRandomYearMonthInRangeInclusive(
-                random,
-                earliestFirstRegistrationMonth,
+                YearMonth.from(earliestFirstRegistrationDate),
                 YearMonth.from(dateOfRegistration));
-        LocalDate birthRegistrationDate = generateRandomDateInRangeInclusive(
-                random,
-                dateOfBirth,
-                dateOfBirth.plusDays(HONG_KONG_BIRTH_REGISTRATION_DAYS));
+        LocalDate birthRegistrationDate = birthplace == HkidSymbol.BORN_IN_HONG_KONG
+                ? generateRandomDateInRangeInclusive(dateOfBirth, dateOfBirth.plusDays(HONG_KONG_BIRTH_REGISTRATION_DAYS))
+                : null;
+        DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(birthRegistrationDate,
+                firstRegistrationYearMonth, earliestFirstRegistrationDate, dateOfRegistration);
 
-        Sex sex = requestedSex != null ? requestedSex : generateRandomSex(random);
-        GeneratedName name = HkidNameUtil.generateRandomName(random, sex);
-        DefinedPrefix[] compatiblePrefixes = compatiblePrefixesFor(
-                birthRegistrationDate, firstRegistrationYearMonth, dateOfRegistration);
+        Sex sex = requestedSex != null ? requestedSex : generateRandomSex();
+        GeneratedName name = HkidNameUtil.generateRandomName(sex);
 
         return HkidCard.builder()
-                .hkidNumber(HkidNumberUtil.generateRandomHkidNumber(random, compatiblePrefixes))
+                .hkidNumber(HkidNumberUtil.generateRandomHkidNumber(compatiblePrefixes))
                 .chineseName(name.getChineseName())
                 .englishName(name.getEnglishName())
                 .sex(sex)
                 .dateOfBirth(dateOfBirth)
-                .symbols(HkidSymbols.of(
-                        ageSymbol,
-                        HkidSymbol.RIGHT_OF_ABODE,
-                        HkidSymbol.BORN_IN_HONG_KONG))
+                .symbols(HkidSymbols.of(ageSymbol, HkidSymbol.RIGHT_OF_ABODE, birthplace))
                 .dateOfRegistration(dateOfRegistration)
                 .firstRegistrationYearMonth(firstRegistrationYearMonth)
                 .build();
@@ -531,9 +590,9 @@ public final class HkidCardUtil {
                 ThreadLocalRandom.current().nextLong(startEpochDay, endEpochDay));
     }
 
-    private static Sex generateRandomSex(Random random) {
+    private static Sex generateRandomSex() {
         Sex[] values = Sex.values();
-        return values[random.nextInt(values.length)];
+        return values[ThreadLocalRandom.current().nextInt(values.length)];
     }
 
     private static HkidSymbol generateAgeSymbol(LocalDate dateOfBirth, LocalDate referenceDate) {
@@ -542,19 +601,19 @@ public final class HkidCardUtil {
                 : HkidSymbol.MINOR_RE_ENTRY_PERMIT;
     }
 
-    private static DefinedPrefix[] compatiblePrefixesFor(
-            LocalDate birthRegistrationDate,
+    static DefinedPrefix[] compatiblePrefixesFor(
+            LocalDate hongKongBirthRegistrationDate,
             YearMonth firstRegistrationMonth,
+            LocalDate earliestFirstRegistrationDate,
             LocalDate dateOfRegistration) {
-        DefinedPrefix exactBirthRegistrationPrefix = DefinedPrefix
-                .fromHongKongBirthRegistrationDate(birthRegistrationDate)
+        DefinedPrefix birthPrefix = DefinedPrefix.fromHongKongBirthRegistrationDate(hongKongBirthRegistrationDate)
                 .orElse(null);
-        if (exactBirthRegistrationPrefix != null) {
-            return prefixes(exactBirthRegistrationPrefix);
+        if (birthPrefix != null) {
+            return new DefinedPrefix[] {birthPrefix};
         }
 
         DefinedPrefix[] compatiblePrefixes = DefinedPrefix
-                .fromFirstIssueMonth(firstRegistrationMonth, dateOfRegistration);
+                .fromFirstIssueMonth(firstRegistrationMonth, earliestFirstRegistrationDate, dateOfRegistration);
         if (compatiblePrefixes.length == 0) {
             throw new IllegalStateException(
                     "No HKID prefix supports first registration month " + firstRegistrationMonth);
@@ -562,42 +621,34 @@ public final class HkidCardUtil {
         return compatiblePrefixes;
     }
 
-    private static DefinedPrefix[] prefixes(DefinedPrefix... prefixes) {
-        return prefixes;
-    }
-
-    private static LocalDate generateRandomDateOfBirth(Random random, LocalDate referenceDate) {
-        int age = MIN_AGE + random.nextInt(MAX_AGE - MIN_AGE + 1);
+    private static LocalDate generateRandomDateOfBirth(LocalDate referenceDate, int minAge, int maxAge) {
+        int age = ThreadLocalRandom.current().nextInt(minAge, maxAge + 1);
         LocalDate earliestDateOfBirth = referenceDate.minusYears(age + 1L).plusDays(1);
         LocalDate latestDateOfBirth = referenceDate.minusYears(age);
-        return generateRandomDateInRangeInclusive(random, earliestDateOfBirth, latestDateOfBirth);
+        return generateRandomDateInRangeInclusive(earliestDateOfBirth, latestDateOfBirth);
     }
 
     private static LocalDate generateRandomDateInRangeInclusive(
-            Random random, LocalDate startDate, LocalDate endDate) {
+            LocalDate startDate, LocalDate endDate) {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Start date cannot be after end date");
         }
 
         int numberOfDays = Math.toIntExact(ChronoUnit.DAYS.between(startDate, endDate)) + 1;
-        return startDate.plusDays(random.nextInt(numberOfDays));
+        return startDate.plusDays(ThreadLocalRandom.current().nextInt(numberOfDays));
     }
 
     private static YearMonth generateRandomYearMonthInRangeInclusive(
-            Random random, YearMonth startMonth, YearMonth endMonth) {
+            YearMonth startMonth, YearMonth endMonth) {
         if (startMonth.isAfter(endMonth)) {
             throw new IllegalArgumentException("Start month cannot be after end month");
         }
 
         int numberOfMonths = Math.toIntExact(ChronoUnit.MONTHS.between(startMonth, endMonth)) + 1;
-        return startMonth.plusMonths(random.nextInt(numberOfMonths));
+        return startMonth.plusMonths(ThreadLocalRandom.current().nextInt(numberOfMonths));
     }
 
     private static LocalDate laterDate(LocalDate first, LocalDate second) {
-        return first.isAfter(second) ? first : second;
-    }
-
-    private static YearMonth laterYearMonth(YearMonth first, YearMonth second) {
         return first.isAfter(second) ? first : second;
     }
 }

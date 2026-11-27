@@ -164,9 +164,10 @@ fn load_entries(input: &str) -> Result<Vec<ChineseNameEntry>, String> {
         .collect()
 }
 
-fn draw<'a>(rng: &mut fastrand::Rng, pool: &mut Vec<&'a ChineseNameEntry>) -> &'a ChineseNameEntry {
-    let total = pool.iter().map(|entry| entry.weight).sum::<u64>();
-    let mut ticket = rng.u64(..total);
+fn take_weighted_entry<'a>(
+    pool: &mut Vec<&'a ChineseNameEntry>,
+    mut ticket: u64,
+) -> &'a ChineseNameEntry {
     for (index, entry) in pool.iter().enumerate() {
         if ticket < entry.weight {
             return pool.swap_remove(index);
@@ -176,7 +177,16 @@ fn draw<'a>(rng: &mut fastrand::Rng, pool: &mut Vec<&'a ChineseNameEntry>) -> &'
     unreachable!("ticket is below the sum of the positive weights")
 }
 
+fn default_personal_name_length(roll: u8) -> usize {
+    if roll == 0 { 1 } else { 2 }
+}
+
 impl HkidGenerator {
+    fn draw<'a>(&mut self, pool: &mut Vec<&'a ChineseNameEntry>) -> &'a ChineseNameEntry {
+        let total = pool.iter().map(|entry| entry.weight).sum::<u64>();
+        take_weighted_entry(pool, self.rng.u64(..total))
+    }
+
     /// Generates a weighted surname and distinct given-name entries from the bundled CSV.
     ///
     /// A supplied sex permits matching and unisex given names. The personal name can
@@ -188,7 +198,7 @@ impl HkidGenerator {
         personal_name_length: Option<usize>,
     ) -> Result<GeneratedName, GenerationError> {
         let length =
-            personal_name_length.unwrap_or_else(|| if self.rng.u8(..10) == 0 { 1 } else { 2 });
+            personal_name_length.unwrap_or_else(|| default_personal_name_length(self.rng.u8(..10)));
         if !(1..ChineseName::MAX_LENGTH).contains(&length) {
             return Err(GenerationError::InvalidNameLength);
         }
@@ -200,12 +210,12 @@ impl HkidGenerator {
         if surnames.is_empty() || given.len() < length {
             return Err(GenerationError::InsufficientNameEntries);
         }
-        let surname = draw(&mut self.rng, &mut surnames);
+        let surname = self.draw(&mut surnames);
         let mut personal_name = String::new();
         let mut romanisations = Vec::with_capacity(length);
         let mut codes = vec![surname.code.clone()];
         for _ in 0..length {
-            let entry = draw(&mut self.rng, &mut given);
+            let entry = self.draw(&mut given);
             personal_name.push(entry.character);
             romanisations.push(entry.romanisation.as_str());
             codes.push(entry.code.clone());
@@ -288,40 +298,25 @@ mod tests {
             HEADER.join(",")
         );
         let entries = load_entries(&seed).unwrap();
-        let mut rng = fastrand::Rng::with_seed(23);
-        let mut expected = rng.clone();
-        let mut seen = [false; 4];
-        for _ in 0..64 {
+        for ticket in 0..4 {
             let mut pool: Vec<_> = entries.iter().collect();
-            let ticket = expected.u64(..4);
-            seen[ticket as usize] = true;
-            let selected = draw(&mut rng, &mut pool);
+            let selected = take_weighted_entry(&mut pool, ticket);
             assert_eq!(selected.character, if ticket == 0 { '文' } else { '明' });
             assert_eq!(pool.len(), 1);
             assert_ne!(selected.character, pool[0].character);
         }
-        assert_eq!(seen, [true; 4]);
     }
 
     #[test]
     fn default_length_uses_one_of_ten_equally_likely_rolls_for_one_character() {
-        let mut seen = [false; 10];
-        for seed in 0..128 {
-            let roll = fastrand::Rng::with_seed(seed).u8(..10);
-            seen[usize::from(roll)] = true;
-            let name = HkidGenerator::with_seed(seed).name(None, None).unwrap();
-            assert_eq!(
-                name.chinese.personal_name().chars().count(),
-                if roll == 0 { 1 } else { 2 }
-            );
-        }
-        assert_eq!(seen, [true; 10]);
+        assert_eq!(default_personal_name_length(0), 1);
+        assert!((1..10).all(|roll| default_personal_name_length(roll) == 2));
     }
 
     #[test]
     fn complete_cards_use_the_holders_sex_for_given_name_selection() {
         let entries = ENTRIES.as_ref().unwrap();
-        let mut generator = HkidGenerator::with_seed(82);
+        let mut generator = HkidGenerator::new();
         let reference = crate::NaiveDate::from_ymd_opt(2026, 7, 27).unwrap();
         for requested in [None, Some(Sex::Male), Some(Sex::Female)] {
             for _ in 0..64 {
@@ -344,7 +339,7 @@ mod tests {
     #[test]
     fn aligns_sex_romanisation_and_codes_for_each_character_at_all_lengths() {
         let entries = ENTRIES.as_ref().unwrap();
-        let mut generator = HkidGenerator::with_seed(91);
+        let mut generator = HkidGenerator::new();
         for sex in [None, Some(Sex::Male), Some(Sex::Female)] {
             for length in 1..ChineseName::MAX_LENGTH {
                 for _ in 0..24 {

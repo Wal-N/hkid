@@ -11,7 +11,6 @@ import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Locale;
-import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -514,6 +513,12 @@ class HkidNumberTest {
         assertArrayEquals(new DefinedPrefix[0], DefinedPrefix.fromFirstIssueMonth(null, transitionDate));
         assertArrayEquals(new DefinedPrefix[0], DefinedPrefix.fromFirstIssueMonth(july, null));
         assertArrayEquals(new DefinedPrefix[0], DefinedPrefix.fromFirstIssueMonth(july, beforeMonth));
+        assertArrayEquals(new DefinedPrefix[0], DefinedPrefix.fromFirstIssueMonth(july, null, transitionDate));
+        assertArrayEquals(new DefinedPrefix[0], DefinedPrefix.fromFirstIssueMonth(july, transitionDate, null));
+        assertArrayEquals(new DefinedPrefix[0],
+                DefinedPrefix.fromFirstIssueMonth(july, transitionDate, transitionDate.minusDays(1)));
+        assertArrayEquals(new DefinedPrefix[0],
+                DefinedPrefix.fromFirstIssueMonth(july, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 2)));
     }
 
     @Test
@@ -543,24 +548,46 @@ class HkidNumberTest {
     }
 
     @Test
-    void generatedRandomNumbersSatisfyFormatInvariants() {
-        assertGeneratedNumber(HkidNumberUtil.generateRandomHkidNumber(), true);
-        assertGeneratedNumber(HkidNumberUtil.generateRandomHkidNumber(false), false);
+    void definedPrefixGenerationRespectsAllowedPrefixes() {
+        HkidNumber defined = HkidNumberUtil.generateRandomHkidNumber();
+        assertGeneratedNumber(defined);
+        assertTrue(defined.getDefinedPrefix().isPresent());
+        HkidNumber restricted = HkidNumberUtil.generateRandomHkidNumber(DefinedPrefix.Z);
+        assertGeneratedNumber(restricted);
+        assertEquals("Z", restricted.getPrefix());
     }
 
     @Test
-    void randomNumberGenerationRejectsNullInAnyAllowedPrefixPosition() {
-        Random alwaysSelectsFirst = new Random() {
-            @Override
-            public int nextInt(int bound) {
-                return 0;
+    void arbitraryPrefixGenerationProducesBothLengthsUndefinedPrefixesAndLeadingZeros() {
+        boolean sawOneLetter = false;
+        boolean sawTwoLetters = false;
+        boolean sawUndefinedPrefix = false;
+        boolean sawLeadingZero = false;
+        for (int i = 0; i < 1024; i++) {
+            HkidNumber number = HkidNumberUtil.generateRandomHkidNumber(false);
+            assertGeneratedNumber(number);
+            sawOneLetter |= number.getPrefix().length() == 1;
+            sawTwoLetters |= number.getPrefix().length() == 2;
+            sawUndefinedPrefix |= !number.getDefinedPrefix().isPresent();
+            sawLeadingZero |= number.getNumerals().startsWith("0");
+            if (sawOneLetter && sawTwoLetters && sawUndefinedPrefix && sawLeadingZero) {
+                break;
             }
-        };
+        }
+        assertTrue(sawOneLetter, "Expected a one-letter prefix");
+        assertTrue(sawTwoLetters, "Expected a two-letter prefix");
+        assertTrue(sawUndefinedPrefix, "Expected a prefix outside DefinedPrefix");
+        assertTrue(sawLeadingZero, "Expected six numerals starting with zero");
+    }
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> HkidNumberUtil.generateRandomHkidNumber(
-                        alwaysSelectsFirst, DefinedPrefix.A, null));
+    @Test
+    void randomNumberGenerationRejectsInvalidAllowedPrefixes() {
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidNumberUtil.generateRandomHkidNumber(DefinedPrefix.A, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidNumberUtil.generateRandomHkidNumber(new DefinedPrefix[0]));
+        assertThrows(IllegalArgumentException.class,
+                () -> HkidNumberUtil.generateRandomHkidNumber((DefinedPrefix[]) null));
     }
 
     @Test
@@ -577,17 +604,13 @@ class HkidNumberTest {
         }
     }
 
-    private static void assertGeneratedNumber(
-            HkidNumber hkidNumber, boolean expectDefinedPrefix) {
+    private static void assertGeneratedNumber(HkidNumber hkidNumber) {
         assertNotNull(hkidNumber);
         assertTrue(hkidNumber.getPrefix().matches("[A-Z]{1,2}"));
         assertTrue(hkidNumber.getNumerals().matches("[0-9]{6}"));
         assertTrue(hkidNumber.getCheckDigit().matches("[0-9A]"));
         assertEquals(
                 hkidNumber,
-                new HkidNumber(hkidNumber.toString(HkidNumber.Format.COMPLETE)));
-        if (expectDefinedPrefix) {
-            assertTrue(hkidNumber.getDefinedPrefix().isPresent());
-        }
+                HkidNumber.parseWithCheckDigit(hkidNumber.toString(HkidNumber.Format.COMPLETE)));
     }
 }
