@@ -29,7 +29,7 @@ rules and edge cases so you don't have to implement them from scratch.
 
 ### Java 8+
 
-Add `hkid-utils` to the `<dependencies>` section of your Maven `pom.xml`.
+Add `hkid-utils` from [Maven Central](https://central.sonatype.com/artifact/io.github.wal-n/hkid-utils) to the `<dependencies>` section of your `pom.xml`.
 
 ```xml
 <dependency>
