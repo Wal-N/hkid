@@ -173,8 +173,6 @@ More examples are in the [Rust crate documentation](rust/README.md).
 
 ### Python
 
-The examples below use `hkid-utils` 1.3.0 or later.
-
 ```python
 from datetime import date
 
